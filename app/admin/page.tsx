@@ -339,8 +339,7 @@ function AgendaTab() {
               styles={{
                 day:           { color: '#F0EDE8', borderRadius: '0', minWidth: '38px', minHeight: '38px' },
                 caption_label: { color: '#F0EDE8', fontFamily: 'var(--font-display)', letterSpacing: '0.05em', fontSize: '0.85rem' },
-                nav_button:    { color: '#C9A84C' },
-                head_cell:     { color: '#444', textTransform: 'uppercase', fontSize: '0.55rem', letterSpacing: '0.15em' },
+                weekday:       { color: '#444', textTransform: 'uppercase', fontSize: '0.55rem', letterSpacing: '0.15em' },
                 root:          { background: 'transparent', padding: '12px' },
               }}
             />

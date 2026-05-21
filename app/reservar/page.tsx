@@ -400,8 +400,8 @@ function BookingContent() {
                 onSelect={setSelectedDate}
                 locale={es}
                 disabled={isDisabledDay}
-                fromDate={startOfToday()}
-                toDate={addDays(startOfToday(), 60)}
+                startMonth={startOfToday()}
+                endMonth={addDays(startOfToday(), 60)}
                 modifiersStyles={{
                   selected: { backgroundColor: '#C9A84C', color: '#000', fontWeight: '600', borderRadius: '0' },
                   today: { color: '#C9A84C', fontWeight: '600' },
@@ -409,9 +409,7 @@ function BookingContent() {
                 styles={{
                   day: { color: '#F0EDE8', borderRadius: '0', minWidth: '40px', minHeight: '40px' },
                   caption_label: { color: '#F0EDE8', fontFamily: 'var(--font-display)', letterSpacing: '0.05em' },
-                  nav_button: { color: '#C9A84C', minWidth: '40px', minHeight: '40px' },
-                  head_cell: { color: '#666', textTransform: 'uppercase', fontSize: '0.6rem', letterSpacing: '0.15em' },
-                  table: { borderCollapse: 'separate', borderSpacing: '2px' },
+                  weekday: { color: '#666', textTransform: 'uppercase', fontSize: '0.6rem', letterSpacing: '0.15em' },
                   root: { background: 'transparent' },
                   month: { width: '100%' },
                 }}

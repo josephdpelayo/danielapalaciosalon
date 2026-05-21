@@ -36,18 +36,15 @@ export async function GET(req: NextRequest) {
           .eq('block_date', date),
       ]);
 
-      appointments = (apptRes.data ?? []).map((a: {
-        start_time: string;
-        end_time: string;
-        status: string;
-        active_minutes?: number;
-        dp_services?: { active_minutes?: number } | null;
-      }) => ({
-        start_time:    a.start_time,
-        end_time:      a.end_time,
-        status:        a.status,
-        active_minutes: a.active_minutes ?? a.dp_services?.active_minutes,
-      }));
+      appointments = (apptRes.data ?? []).map((a: Record<string, unknown>) => {
+        const svc = Array.isArray(a.dp_services) ? a.dp_services[0] : a.dp_services;
+        return {
+          start_time:     a.start_time as string,
+          end_time:       a.end_time as string,
+          status:         a.status as string,
+          active_minutes: (a.active_minutes ?? (svc as Record<string, unknown>)?.active_minutes) as number | undefined,
+        };
+      });
 
       blockedSlots = blockRes.data ?? [];
     } catch { /* fall through to mock */ }
