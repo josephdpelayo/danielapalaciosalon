@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTimeSlots } from '@/lib/slots';
-import { MOCK_SERVICES, MOCK_SCHEDULE } from '@/lib/mock-data';
+import { MOCK_SCHEDULE } from '@/lib/mock-data';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const date          = searchParams.get('date');
-  const serviceId     = searchParams.get('service_id');
   const duration      = parseInt(searchParams.get('duration')      ?? '60');
   const activeMinutes = parseInt(searchParams.get('active_minutes') ?? String(duration));
 
@@ -21,46 +20,43 @@ export async function GET(req: NextRequest) {
   let blockedSlots: Array<{ start_time: string | null; end_time: string | null; all_day: boolean }> = [];
 
   if ((await import("@/lib/supabase")).supabaseReady) {
-    try {
-      const { supabase } = await import('@/lib/supabase');
-      const [apptRes, blockRes] = await Promise.all([
-        supabase
-          .from('dp_appointments')
-          .select('start_time, end_time, status, active_minutes, dp_services(active_minutes)')
-          .eq('appointment_date', date)
-          .neq('status', 'cancelled')
-          .neq('status', 'pending_payment'),
-        supabase
-          .from('dp_blocked_slots')
-          .select('start_time, end_time, all_day')
-          .eq('block_date', date),
-      ]);
+    const { supabase } = await import('@/lib/supabase');
 
-      appointments = (apptRes.data ?? []).map((a: Record<string, unknown>) => {
-        const svc = Array.isArray(a.dp_services) ? a.dp_services[0] : a.dp_services;
-        return {
-          start_time:     a.start_time as string,
-          end_time:       a.end_time as string,
-          status:         a.status as string,
-          active_minutes: (a.active_minutes ?? (svc as Record<string, unknown>)?.active_minutes) as number | undefined,
-        };
-      });
+    // Fetch appointments — exclude only cancelled (pending_payment still holds the slot)
+    const apptRes = await supabase
+      .from('dp_appointments')
+      .select('start_time, end_time, status')
+      .eq('appointment_date', date)
+      .neq('status', 'cancelled');
 
+    if (apptRes.error) {
+      console.error('available-slots appt error:', apptRes.error.message);
+    } else {
+      appointments = (apptRes.data ?? []).map((a) => ({
+        start_time:     a.start_time as string,
+        end_time:       a.end_time   as string,
+        status:         a.status     as string,
+        active_minutes: undefined,   // derived from end_time in generateTimeSlots
+      }));
+    }
+
+    // Fetch blocked slots
+    const blockRes = await supabase
+      .from('dp_blocked_slots')
+      .select('start_time, end_time, all_day')
+      .eq('block_date', date);
+
+    if (blockRes.error) {
+      console.error('available-slots block error:', blockRes.error.message);
+    } else {
       blockedSlots = blockRes.data ?? [];
-    } catch { /* fall through to mock */ }
-  }
-
-  // Resolve active_minutes for the requested service from mock if needed
-  let resolvedActive = activeMinutes;
-  if (serviceId && !searchParams.get('active_minutes')) {
-    const svc = MOCK_SERVICES.find((s) => s.id === serviceId);
-    if (svc) resolvedActive = svc.active_minutes;
+    }
   }
 
   const slots = generateTimeSlots(
     schedule,
     duration,
-    resolvedActive,
+    activeMinutes,
     appointments as never,
     blockedSlots as never
   );
