@@ -10,15 +10,15 @@ import { es } from 'date-fns/locale';
 import { DayPicker } from 'react-day-picker';
 import {
   ArrowLeft, Check, X, Scissors, Phone, RefreshCw,
-  Lock, Trash2, CalendarOff, Star, UserPlus, Calendar,
+  Trash2, CalendarOff, Star, UserPlus, Calendar, Plus, Pencil,
 } from 'lucide-react';
 import { Appointment, BlockedSlot } from '@/lib/types';
-import { formatTime, timeToMinutes, minutesToTime } from '@/lib/slots';
+import { formatTime, formatDuration, timeToMinutes, minutesToTime } from '@/lib/slots';
 import { MOCK_SCHEDULE } from '@/lib/mock-data';
 import 'react-day-picker/dist/style.css';
 
 const ADMIN_PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? 'daniela2025';
-type Tab = 'agenda' | 'frecuentes';
+type Tab = 'agenda' | 'servicios' | 'frecuentes';
 
 function serviceColor(name: string | undefined): string {
   if (!name) return '#888';
@@ -620,6 +620,229 @@ function AgendaTab() {
   );
 }
 
+// ── Services tab ─────────────────────────────────────────────────
+interface ServiceRow {
+  id: string; name: string; description: string | null;
+  price: number; duration_minutes: number; active_minutes: number;
+  deposit_amount: number; active: boolean; sort_order: number;
+}
+type FormState = { name: string; description: string; price: string; duration_minutes: string; active_minutes: string; deposit_amount: string; };
+const EMPTY_FORM: FormState = { name: '', description: '', price: '', duration_minutes: '', active_minutes: '', deposit_amount: '200' };
+
+function ServicesTab() {
+  const [services, setServices]   = useState<ServiceRow[]>([]);
+  const [loading, setLoading]     = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showAdd, setShowAdd]     = useState(false);
+  const [saving, setSaving]       = useState(false);
+  const [deleting, setDeleting]   = useState<string | null>(null);
+  const [form, setForm]           = useState<FormState>(EMPTY_FORM);
+  const f = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((prev) => ({ ...prev, [k]: e.target.value }));
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res  = await fetch('/api/services');
+      const data = await res.json();
+      setServices(data.services ?? []);
+    } catch { setServices([]); } finally { setLoading(false); }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const startEdit = (svc: ServiceRow) => {
+    setEditingId(svc.id); setShowAdd(false);
+    setForm({ name: svc.name, description: svc.description ?? '', price: String(svc.price),
+      duration_minutes: String(svc.duration_minutes), active_minutes: String(svc.active_minutes),
+      deposit_amount: String(svc.deposit_amount) });
+  };
+  const cancel = () => { setEditingId(null); setShowAdd(false); setForm(EMPTY_FORM); };
+
+  const handleSave = async (id?: string) => {
+    const dur = parseInt(form.duration_minutes);
+    const act = parseInt(form.active_minutes);
+    if (!form.name.trim() || !form.price || !dur || !act) return;
+    if (act > dur) { alert('El tiempo activo no puede superar la duración total'); return; }
+    setSaving(true);
+    try {
+      const payload = { name: form.name.trim(), description: form.description.trim() || null,
+        price: parseFloat(form.price), duration_minutes: dur, active_minutes: act,
+        deposit_amount: parseFloat(form.deposit_amount) || 200 };
+      const res = await fetch('/api/services', {
+        method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(id ? { id, ...payload } : payload),
+      });
+      if (res.ok) { await load(); cancel(); }
+      else { const e = await res.json(); alert(e.error ?? 'Error al guardar'); }
+    } finally { setSaving(false); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Eliminar este servicio? Los clientes ya no podrán seleccionarlo.')) return;
+    setDeleting(id);
+    try {
+      await fetch('/api/services', { method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }) });
+      setServices((prev) => prev.filter((s) => s.id !== id));
+    } finally { setDeleting(null); }
+  };
+
+  const ServiceForm = ({ id }: { id?: string }) => {
+    const dur = parseInt(form.duration_minutes) || 0;
+    const act = parseInt(form.active_minutes)   || 0;
+    const gap = Math.max(0, dur - act);
+    return (
+      <div className="border border-white/10 p-4 mt-1 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+          <div className="sm:col-span-2">
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Nombre *</label>
+            <input type="text" value={form.name} onChange={f('name')} placeholder="Ej: Mechas / Balayage"
+              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Descripción <span className="normal-case tracking-normal text-[#333]">— opcional</span></label>
+            <input type="text" value={form.description} onChange={f('description')} placeholder="Breve descripción para la clienta"
+              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+          </div>
+          <div>
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Precio total (MXN) *</label>
+            <input type="number" value={form.price} onChange={f('price')} placeholder="1400"
+              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+          </div>
+          <div>
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Anticipo (MXN)</label>
+            <input type="number" value={form.deposit_amount} onChange={f('deposit_amount')} placeholder="200"
+              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+          </div>
+          <div>
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Duración total (min) *</label>
+            <input type="number" value={form.duration_minutes} onChange={f('duration_minutes')} placeholder="240"
+              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+          </div>
+          <div>
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Tiempo contigo (min) *</label>
+            <input type="number" value={form.active_minutes} onChange={f('active_minutes')} placeholder="120"
+              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+          </div>
+        </div>
+
+        {/* Live gap preview */}
+        {dur > 0 && act > 0 && (
+          <div className="mb-4 p-3 border border-white/5" style={{ background: '#0a0a0a' }}>
+            <div className="flex h-1.5 mb-2 overflow-hidden">
+              <div title="Tiempo activo" style={{ width: `${Math.min(100, (act / dur) * 100)}%`, background: '#C9A84C' }} />
+              {gap > 0 && <div title="Procesando" style={{ width: `${(gap / dur) * 100}%`, background: '#1e1e1e', borderLeft: '1px solid #333' }} />}
+            </div>
+            <div className="flex justify-between text-[9px] tracking-[0.12em] uppercase">
+              <span style={{ color: '#C9A84C' }}>{formatDuration(act)} contigo</span>
+              {gap > 0 && <span style={{ color: '#333' }}>{formatDuration(gap)} procesando</span>}
+            </div>
+            {gap > 0 && (
+              <p className="text-[10px] mt-1.5" style={{ color: '#444' }}>
+                Puedes recibir otra cita {formatDuration(act)} después del inicio de esta
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <button onClick={() => handleSave(id)} disabled={saving}
+            className="flex items-center gap-2 bg-[#C9A84C] text-black px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-40">
+            {saving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={12} />}
+            {saving ? 'Guardando...' : id ? 'Actualizar' : 'Crear servicio'}
+          </button>
+          <button onClick={cancel}
+            className="px-4 py-2.5 text-[10px] tracking-[0.2em] uppercase text-[#555] border border-white/8 hover:text-white transition-colors">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <p className="text-[#555] text-sm leading-relaxed">
+          Gestiona los servicios, precios y tiempos. El <span style={{ color: '#C9A84C' }}>tiempo contigo</span> define cuándo puede iniciar la siguiente cita.
+        </p>
+        {!showAdd && (
+          <button onClick={() => { setShowAdd(true); setEditingId(null); setForm(EMPTY_FORM); }}
+            className="ml-4 flex items-center gap-2 shrink-0 text-[10px] tracking-[0.2em] uppercase border border-[#C9A84C]/40 text-[#C9A84C] px-4 py-2.5 hover:bg-[#C9A84C]/5 transition-colors">
+            <Plus size={12} /> Agregar
+          </button>
+        )}
+      </div>
+
+      {showAdd && (
+        <div className="mb-6">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-2">Nuevo servicio</p>
+          <ServiceForm />
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <div>
+          {services.map((svc, i) => {
+            const gap = Math.max(0, svc.duration_minutes - svc.active_minutes);
+            const isEditing = editingId === svc.id;
+            const activePct = Math.min(100, (svc.active_minutes / svc.duration_minutes) * 100);
+            return (
+              <div key={svc.id} className={`${i === 0 ? 'border-t border-white/5' : ''}`}>
+                <div className="border-b border-white/5 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-3 flex-wrap mb-1">
+                        <span className="font-[family-name:var(--font-display)] text-white text-base">{svc.name}</span>
+                        <span className="text-[#C9A84C] text-sm font-light">${svc.price.toLocaleString('es-MX')}</span>
+                        <span className="text-[#333] text-xs">anticipo ${svc.deposit_amount}</span>
+                      </div>
+                      {svc.description && <p className="text-[#555] text-xs mb-2">{svc.description}</p>}
+                      {/* Time bar */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="flex h-1 w-20 overflow-hidden flex-shrink-0">
+                          <div style={{ width: `${activePct}%`, background: '#C9A84C55' }} />
+                          {gap > 0 && <div style={{ width: `${100 - activePct}%`, background: '#1a1a1a' }} />}
+                        </div>
+                        <span className="text-[10px] text-[#555]">
+                          {formatDuration(svc.duration_minutes)} total
+                          {gap > 0 && (
+                            <span className="text-[#333]"> · {formatDuration(svc.active_minutes)} contigo · {formatDuration(gap)} procesando</span>
+                          )}
+                        </span>
+                      </div>
+                      {gap > 0 && (
+                        <p className="text-[9px] tracking-[0.05em] uppercase" style={{ color: '#2a2a2a' }}>
+                          Siguiente cita posible {formatDuration(svc.active_minutes)} después del inicio
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <button onClick={() => isEditing ? cancel() : startEdit(svc)}
+                        className="p-2 text-[#444] hover:text-[#C9A84C] transition-colors">
+                        <Pencil size={13} />
+                      </button>
+                      <button onClick={() => handleDelete(svc.id)} disabled={deleting === svc.id}
+                        className="p-2 text-[#2a2a2a] hover:text-red-400 transition-colors disabled:opacity-40">
+                        {deleting === svc.id ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={13} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                {isEditing && <ServiceForm id={svc.id} />}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Trusted clients tab ───────────────────────────────────────────
 interface TrustedClient { id: string; name: string; phone: string; notes: string | null; }
 
@@ -777,6 +1000,7 @@ export default function AdminPage() {
       <div className="border-b border-white/8 flex">
         {([
           { key: 'agenda',     label: 'Agenda',     icon: <Calendar size={13} /> },
+          { key: 'servicios',  label: 'Servicios',  icon: <Scissors size={13} /> },
           { key: 'frecuentes', label: 'Frecuentes', icon: <Star size={13} /> },
         ] as { key: Tab; label: string; icon: React.ReactNode }[]).map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
@@ -790,6 +1014,7 @@ export default function AdminPage() {
 
       <div className="max-w-4xl mx-auto px-5 py-8">
         {tab === 'agenda'     && <AgendaTab />}
+        {tab === 'servicios'  && <ServicesTab />}
         {tab === 'frecuentes' && <TrustedClientsTab />}
       </div>
     </div>
