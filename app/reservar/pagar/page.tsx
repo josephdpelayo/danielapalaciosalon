@@ -144,14 +144,6 @@ function PagarContent() {
             </div>
           </div>
 
-          {/* Quick fill for testing */}
-          <button
-            onClick={() => { setCardNumber('4509 9535 6623 3704'); setName('CLIENTE PRUEBA'); setExpiry('12/25'); setCvv('123'); }}
-            className="mt-3 text-[11px] text-[#009EE3] hover:underline"
-          >
-            Llenar con tarjeta de prueba →
-          </button>
-
           <button
             onClick={handlePay}
             disabled={!isValid || paying}

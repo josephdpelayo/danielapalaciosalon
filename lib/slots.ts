@@ -40,7 +40,7 @@ export function generateTimeSlots(
     // Solo hay conflicto si los períodos ACTIVOS se solapan.
     // Si la cita existente ya pasó su tiempo activo, Daniela está libre.
     const hasConflict = appointments.some((a) => {
-      if (a.status === 'cancelled' || a.status === 'pending_payment') return false;
+      if (a.status === 'cancelled') return false;
       const aStart  = timeToMinutes(a.start_time);
       const aActive = aStart + (a.active_minutes ?? timeToMinutes(a.end_time) - aStart);
       // El nuevo turno necesita a Daniela de slotStart a slotActive.

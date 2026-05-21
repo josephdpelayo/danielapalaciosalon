@@ -59,7 +59,7 @@ function BookingContent() {
     fetch(`/api/available-slots?date=${format(selectedDate, 'yyyy-MM-dd')}&service_id=${selectedService.id}&duration=${selectedService.duration_minutes}&active_minutes=${selectedService.active_minutes}`)
       .then((r) => r.json())
       .then((data) => { setSlots(data.slots || []); })
-      .catch(() => { setSlots([]); })
+      .catch(() => { setSlots([]); setLoadingSlots(false); })
       .finally(() => setLoadingSlots(false));
   }, [selectedDate, selectedService]);
 

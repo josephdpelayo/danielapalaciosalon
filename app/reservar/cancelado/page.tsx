@@ -32,7 +32,7 @@ function CanceladoContent() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <a
-          href="https://wa.me/526691234567"
+          href="https://wa.me/526699445566"
           target="_blank"
           rel="noopener noreferrer"
           className="border border-[#2A2620] text-[#7A7168] px-6 py-3 text-xs tracking-[0.2em] uppercase hover:border-[#C9A84C] hover:text-[#C9A84C] transition-colors"

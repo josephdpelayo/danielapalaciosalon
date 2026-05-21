@@ -626,8 +626,92 @@ interface ServiceRow {
   price: number; duration_minutes: number; active_minutes: number;
   deposit_amount: number; active: boolean; sort_order: number;
 }
-type FormState = { name: string; description: string; price: string; duration_minutes: string; active_minutes: string; deposit_amount: string; };
+type FormState = {
+  name: string; description: string; price: string;
+  duration_minutes: string; active_minutes: string; deposit_amount: string;
+};
 const EMPTY_FORM: FormState = { name: '', description: '', price: '', duration_minutes: '', active_minutes: '', deposit_amount: '200' };
+
+// Defined at module level so React never remounts it on parent re-render
+interface ServiceFormProps {
+  form: FormState;
+  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  onSave: (id?: string) => void;
+  onCancel: () => void;
+  saving: boolean;
+  id?: string;
+}
+function ServiceForm({ form, setForm, onSave, onCancel, saving, id }: ServiceFormProps) {
+  const field = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((prev) => ({ ...prev, [k]: e.target.value }));
+  const dur = parseInt(form.duration_minutes) || 0;
+  const act = parseInt(form.active_minutes)   || 0;
+  const gap = Math.max(0, dur - act);
+  return (
+    <div className="border border-white/10 p-4 mt-1 mb-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+        <div className="sm:col-span-2">
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Nombre *</label>
+          <input type="text" value={form.name} onChange={field('name')} placeholder="Ej: Mechas / Balayage"
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Descripción <span className="normal-case tracking-normal text-[#333]">— opcional</span></label>
+          <input type="text" value={form.description} onChange={field('description')} placeholder="Breve descripción para la clienta"
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+        </div>
+        <div>
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Precio total (MXN) *</label>
+          <input type="number" value={form.price} onChange={field('price')} placeholder="1400"
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+        </div>
+        <div>
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Anticipo (MXN)</label>
+          <input type="number" value={form.deposit_amount} onChange={field('deposit_amount')} placeholder="200"
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+        </div>
+        <div>
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Duración total (min) *</label>
+          <input type="number" value={form.duration_minutes} onChange={field('duration_minutes')} placeholder="240"
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+        </div>
+        <div>
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Tiempo contigo (min) *</label>
+          <input type="number" value={form.active_minutes} onChange={field('active_minutes')} placeholder="120"
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+        </div>
+      </div>
+      {dur > 0 && act > 0 && (
+        <div className="mb-4 p-3 border border-white/5" style={{ background: '#0a0a0a' }}>
+          <div className="flex h-1.5 mb-2 overflow-hidden">
+            <div style={{ width: `${Math.min(100, (act / dur) * 100)}%`, background: '#C9A84C' }} />
+            {gap > 0 && <div style={{ width: `${(gap / dur) * 100}%`, background: '#1e1e1e', borderLeft: '1px solid #333' }} />}
+          </div>
+          <div className="flex justify-between text-[9px] tracking-[0.12em] uppercase">
+            <span style={{ color: '#C9A84C' }}>{formatDuration(act)} contigo</span>
+            {gap > 0 && <span style={{ color: '#333' }}>{formatDuration(gap)} procesando</span>}
+          </div>
+          {gap > 0 && (
+            <p className="text-[10px] mt-1.5" style={{ color: '#444' }}>
+              Puedes recibir otra cita {formatDuration(act)} después del inicio de esta
+            </p>
+          )}
+        </div>
+      )}
+      <div className="flex gap-2">
+        <button onClick={() => onSave(id)} disabled={saving}
+          className="flex items-center gap-2 bg-[#C9A84C] text-black px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-40">
+          {saving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={12} />}
+          {saving ? 'Guardando...' : id ? 'Actualizar' : 'Crear servicio'}
+        </button>
+        <button onClick={onCancel}
+          className="px-4 py-2.5 text-[10px] tracking-[0.2em] uppercase text-[#555] border border-white/8 hover:text-white transition-colors">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function ServicesTab() {
   const [services, setServices]   = useState<ServiceRow[]>([]);
@@ -637,8 +721,6 @@ function ServicesTab() {
   const [saving, setSaving]       = useState(false);
   const [deleting, setDeleting]   = useState<string | null>(null);
   const [form, setForm]           = useState<FormState>(EMPTY_FORM);
-  const f = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((prev) => ({ ...prev, [k]: e.target.value }));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -658,7 +740,7 @@ function ServicesTab() {
   };
   const cancel = () => { setEditingId(null); setShowAdd(false); setForm(EMPTY_FORM); };
 
-  const handleSave = async (id?: string) => {
+  const handleSave = useCallback(async (id?: string) => {
     const dur = parseInt(form.duration_minutes);
     const act = parseInt(form.active_minutes);
     if (!form.name.trim() || !form.price || !dur || !act) return;
@@ -675,7 +757,8 @@ function ServicesTab() {
       if (res.ok) { await load(); cancel(); }
       else { const e = await res.json(); alert(e.error ?? 'Error al guardar'); }
     } finally { setSaving(false); }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, load]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('¿Eliminar este servicio? Los clientes ya no podrán seleccionarlo.')) return;
@@ -685,79 +768,6 @@ function ServicesTab() {
         body: JSON.stringify({ id }) });
       setServices((prev) => prev.filter((s) => s.id !== id));
     } finally { setDeleting(null); }
-  };
-
-  const ServiceForm = ({ id }: { id?: string }) => {
-    const dur = parseInt(form.duration_minutes) || 0;
-    const act = parseInt(form.active_minutes)   || 0;
-    const gap = Math.max(0, dur - act);
-    return (
-      <div className="border border-white/10 p-4 mt-1 mb-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-          <div className="sm:col-span-2">
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Nombre *</label>
-            <input type="text" value={form.name} onChange={f('name')} placeholder="Ej: Mechas / Balayage"
-              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Descripción <span className="normal-case tracking-normal text-[#333]">— opcional</span></label>
-            <input type="text" value={form.description} onChange={f('description')} placeholder="Breve descripción para la clienta"
-              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
-          </div>
-          <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Precio total (MXN) *</label>
-            <input type="number" value={form.price} onChange={f('price')} placeholder="1400"
-              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
-          </div>
-          <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Anticipo (MXN)</label>
-            <input type="number" value={form.deposit_amount} onChange={f('deposit_amount')} placeholder="200"
-              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
-          </div>
-          <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Duración total (min) *</label>
-            <input type="number" value={form.duration_minutes} onChange={f('duration_minutes')} placeholder="240"
-              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
-          </div>
-          <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Tiempo contigo (min) *</label>
-            <input type="number" value={form.active_minutes} onChange={f('active_minutes')} placeholder="120"
-              className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
-          </div>
-        </div>
-
-        {/* Live gap preview */}
-        {dur > 0 && act > 0 && (
-          <div className="mb-4 p-3 border border-white/5" style={{ background: '#0a0a0a' }}>
-            <div className="flex h-1.5 mb-2 overflow-hidden">
-              <div title="Tiempo activo" style={{ width: `${Math.min(100, (act / dur) * 100)}%`, background: '#C9A84C' }} />
-              {gap > 0 && <div title="Procesando" style={{ width: `${(gap / dur) * 100}%`, background: '#1e1e1e', borderLeft: '1px solid #333' }} />}
-            </div>
-            <div className="flex justify-between text-[9px] tracking-[0.12em] uppercase">
-              <span style={{ color: '#C9A84C' }}>{formatDuration(act)} contigo</span>
-              {gap > 0 && <span style={{ color: '#333' }}>{formatDuration(gap)} procesando</span>}
-            </div>
-            {gap > 0 && (
-              <p className="text-[10px] mt-1.5" style={{ color: '#444' }}>
-                Puedes recibir otra cita {formatDuration(act)} después del inicio de esta
-              </p>
-            )}
-          </div>
-        )}
-
-        <div className="flex gap-2">
-          <button onClick={() => handleSave(id)} disabled={saving}
-            className="flex items-center gap-2 bg-[#C9A84C] text-black px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-40">
-            {saving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={12} />}
-            {saving ? 'Guardando...' : id ? 'Actualizar' : 'Crear servicio'}
-          </button>
-          <button onClick={cancel}
-            className="px-4 py-2.5 text-[10px] tracking-[0.2em] uppercase text-[#555] border border-white/8 hover:text-white transition-colors">
-            Cancelar
-          </button>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -777,7 +787,7 @@ function ServicesTab() {
       {showAdd && (
         <div className="mb-6">
           <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-2">Nuevo servicio</p>
-          <ServiceForm />
+          <ServiceForm form={form} setForm={setForm} onSave={handleSave} onCancel={cancel} saving={saving} />
         </div>
       )}
 
@@ -833,7 +843,7 @@ function ServicesTab() {
                     </div>
                   </div>
                 </div>
-                {isEditing && <ServiceForm id={svc.id} />}
+                {isEditing && <ServiceForm form={form} setForm={setForm} onSave={handleSave} onCancel={cancel} saving={saving} id={svc.id} />}
               </div>
             );
           })}
