@@ -10,8 +10,15 @@ export async function GET(req: NextRequest) {
 
   if (!date) return NextResponse.json({ error: 'Missing date' }, { status: 400 });
 
-  const dow      = new Date(date + 'T12:00:00').getDay();
-  const schedule = MOCK_SCHEDULE.find((s) => s.day_of_week === dow);
+  const dow = new Date(date + 'T12:00:00').getDay();
+
+  // Try DB schedule first, fall back to mock
+  let schedule = MOCK_SCHEDULE.find((s) => s.day_of_week === dow);
+  if ((await import('@/lib/supabase')).supabaseReady) {
+    const { supabase } = await import('@/lib/supabase');
+    const { data } = await supabase.from('dp_schedule').select('*').eq('day_of_week', dow).maybeSingle();
+    if (data) schedule = data as typeof schedule;
+  }
 
   if (!schedule || !schedule.is_active) return NextResponse.json({ slots: [] });
 

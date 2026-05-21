@@ -11,6 +11,7 @@ import { DayPicker } from 'react-day-picker';
 import {
   ArrowLeft, Check, X, Scissors, Phone, RefreshCw,
   Trash2, CalendarOff, Star, UserPlus, Calendar, Plus, Pencil, LayoutDashboard,
+  Settings, Copy, Check as CheckIcon,
 } from 'lucide-react';
 import { Appointment, BlockedSlot } from '@/lib/types';
 import { formatTime, formatDuration, timeToMinutes, minutesToTime } from '@/lib/slots';
@@ -18,7 +19,7 @@ import { MOCK_SCHEDULE } from '@/lib/mock-data';
 import 'react-day-picker/dist/style.css';
 
 const ADMIN_PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? 'daniela2025';
-type Tab = 'inicio' | 'agenda' | 'servicios' | 'frecuentes';
+type Tab = 'inicio' | 'agenda' | 'frecuentes' | 'config';
 
 function serviceColor(name: string | undefined): string {
   if (!name) return '#888';
@@ -1142,6 +1143,259 @@ function TrustedClientsTab({ adminSecret }: { adminSecret: string }) {
   );
 }
 
+// ── Config tab ────────────────────────────────────────────────────
+const DAYS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Mon–Sun display order
+
+interface ScheduleDay { day_of_week: number; is_active: boolean; start_time: string; end_time: string; }
+interface AppSettings { [key: string]: string; }
+
+const DEFAULT_SETTINGS: AppSettings = {
+  salon_name:       'Daniela Palacio Hair Room',
+  city:             'Mazatlán, Sin.',
+  whatsapp:         '526699445566',
+  instagram:        'danielapalaciosalon',
+  description:      'Estudio especializado en color, cortes y tratamientos.',
+  advance_days:     '60',
+  min_notice_hours: '2',
+  msg_confirmation: 'Hola {nombre} 👋 Tu cita para *{servicio}* está confirmada para el *{fecha}* a las *{hora}* 💛 Si necesitas cancelar o reagendar, escríbeme con al menos 24h de anticipación.',
+  msg_reminder_24h: 'Hola {nombre} 👋 Te recuerdo que mañana tienes cita para *{servicio}* a las *{hora}* ✨ ¿Confirmas tu asistencia? Responde Sí ✅ o No ❌',
+};
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      className="flex items-center gap-1.5 text-[9px] tracking-[0.12em] uppercase border border-white/10 text-[#555] px-2.5 py-1.5 hover:border-[#C9A84C]/40 hover:text-[#C9A84C] transition-colors"
+    >
+      {copied ? <CheckIcon size={10} className="text-emerald-400" /> : <Copy size={10} />}
+      {copied ? 'Copiado' : 'Copiar'}
+    </button>
+  );
+}
+
+function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="border-b border-white/5 pb-4 mb-5">
+      <p className="text-[10px] tracking-[0.3em] uppercase text-[#555]">{title}</p>
+      {subtitle && <p className="text-[#333] text-xs mt-1">{subtitle}</p>}
+    </div>
+  );
+}
+
+function ConfigTab({ adminSecret }: { adminSecret: string }) {
+  const [settings, setSettings]   = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [schedule, setSchedule]   = useState<ScheduleDay[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [savingSection, setSavingSection] = useState<string | null>(null);
+
+  // local editable copies per section
+  const [identity, setIdentity]   = useState<AppSettings>({});
+  const [booking, setBooking]     = useState<AppSettings>({});
+  const [messages, setMessages]   = useState<AppSettings>({});
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [sRes, schRes] = await Promise.all([fetch('/api/settings'), fetch('/api/schedule')]);
+      const sData   = await sRes.json();
+      const schData = await schRes.json();
+      const merged = { ...DEFAULT_SETTINGS, ...sData.settings };
+      setSettings(merged);
+      setIdentity({ salon_name: merged.salon_name, city: merged.city, whatsapp: merged.whatsapp, instagram: merged.instagram, description: merged.description });
+      setBooking({ advance_days: merged.advance_days, min_notice_hours: merged.min_notice_hours });
+      setMessages({ msg_confirmation: merged.msg_confirmation, msg_reminder_24h: merged.msg_reminder_24h });
+      setSchedule(schData.schedule ?? []);
+    } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const saveSection = async (section: string, data: AppSettings) => {
+    setSavingSection(section);
+    try {
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify(data),
+      });
+      setSettings(prev => ({ ...prev, ...data }));
+    } finally { setSavingSection(null); }
+  };
+
+  const updateDay = async (dow: number, patch: Partial<ScheduleDay>) => {
+    const current = schedule.find(d => d.day_of_week === dow) ?? { day_of_week: dow, is_active: false, start_time: '10:00', end_time: '19:00' };
+    const updated = { ...current, ...patch };
+    setSchedule(prev => prev.some(d => d.day_of_week === dow) ? prev.map(d => d.day_of_week === dow ? updated : d) : [...prev, updated]);
+    await fetch('/api/schedule', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+      body: JSON.stringify(updated),
+    });
+  };
+
+  const inputCls = "w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15 text-sm";
+  const SaveBtn = ({ section }: { section: string }) => (
+    <button
+      onClick={() => {
+        if (section === 'identity') saveSection('identity', identity);
+        if (section === 'booking')  saveSection('booking',  booking);
+        if (section === 'messages') saveSection('messages', messages);
+      }}
+      disabled={savingSection === section}
+      className="flex items-center gap-2 bg-[#C9A84C] text-black px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-40"
+    >
+      {savingSection === section ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={12} />}
+      {savingSection === section ? 'Guardando…' : 'Guardar'}
+    </button>
+  );
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-24">
+      <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  return (
+    <div className="space-y-12">
+
+      {/* ── Identidad ── */}
+      <section>
+        <SectionHeader title="Identidad del negocio" subtitle="Nombre, ciudad y redes que aparecen en el sitio" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          {[
+            { key: 'salon_name',  label: 'Nombre del salón',     placeholder: 'Daniela Palacio Hair Room' },
+            { key: 'city',        label: 'Ciudad',               placeholder: 'Mazatlán, Sin.' },
+            { key: 'whatsapp',    label: 'WhatsApp (con código)', placeholder: '526699445566' },
+            { key: 'instagram',   label: 'Instagram (sin @)',     placeholder: 'danielapalaciosalon' },
+          ].map(({ key, label, placeholder }) => (
+            <div key={key}>
+              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">{label}</label>
+              <input
+                type="text" value={identity[key] ?? ''} placeholder={placeholder}
+                onChange={e => setIdentity(p => ({ ...p, [key]: e.target.value }))}
+                className={inputCls} style={{ fontSize: '16px' }}
+              />
+            </div>
+          ))}
+          <div className="sm:col-span-2">
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Descripción corta</label>
+            <input
+              type="text" value={identity.description ?? ''} placeholder="Breve texto que aparece bajo el nombre"
+              onChange={e => setIdentity(p => ({ ...p, description: e.target.value }))}
+              className={inputCls} style={{ fontSize: '16px' }}
+            />
+          </div>
+        </div>
+        <SaveBtn section="identity" />
+      </section>
+
+      {/* ── Horario ── */}
+      <section>
+        <SectionHeader title="Horario de trabajo" subtitle="Activa los días y define la apertura y cierre" />
+        <div className="space-y-1">
+          {DAYS_ORDER.map(dow => {
+            const day = schedule.find(d => d.day_of_week === dow) ?? { day_of_week: dow, is_active: false, start_time: '10:00', end_time: '19:00' };
+            return (
+              <div key={dow} className={`flex items-center gap-3 py-3 border-b border-white/5 ${!day.is_active ? 'opacity-50' : ''}`}>
+                <button
+                  onClick={() => updateDay(dow, { is_active: !day.is_active })}
+                  className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${day.is_active ? 'bg-[#C9A84C]' : 'bg-white/10'}`}
+                >
+                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${day.is_active ? 'left-4' : 'left-0.5'}`} />
+                </button>
+                <span className="text-sm w-24 shrink-0 text-[#F0EDE8]">{DAYS_ES[dow]}</span>
+                {day.is_active ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <input type="time" value={day.start_time}
+                      onChange={e => updateDay(dow, { start_time: e.target.value })}
+                      className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#C9A84C]/50 w-28"
+                      style={{ fontSize: '16px' }}
+                    />
+                    <span className="text-[#444] text-xs">—</span>
+                    <input type="time" value={day.end_time}
+                      onChange={e => updateDay(dow, { end_time: e.target.value })}
+                      className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#C9A84C]/50 w-28"
+                      style={{ fontSize: '16px' }}
+                    />
+                  </div>
+                ) : (
+                  <span className="text-[#333] text-xs">Cerrado</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-[#333] text-xs mt-3">Los cambios de horario se guardan al instante.</p>
+      </section>
+
+      {/* ── Reservaciones ── */}
+      <section>
+        <SectionHeader title="Ventana de reservaciones" subtitle="Controla cuándo pueden reservar las clientas" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Días de anticipación máxima</label>
+            <input type="number" min="7" max="365" value={booking.advance_days ?? '60'}
+              onChange={e => setBooking(p => ({ ...p, advance_days: e.target.value }))}
+              className={inputCls} style={{ fontSize: '16px' }} />
+            <p className="text-[#333] text-[10px] mt-1">Las clientas podrán ver hasta este número de días adelante</p>
+          </div>
+          <div>
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Aviso mínimo (horas)</label>
+            <input type="number" min="0" max="72" value={booking.min_notice_hours ?? '2'}
+              onChange={e => setBooking(p => ({ ...p, min_notice_hours: e.target.value }))}
+              className={inputCls} style={{ fontSize: '16px' }} />
+            <p className="text-[#333] text-[10px] mt-1">No se puede reservar con menos de X horas de anticipación</p>
+          </div>
+        </div>
+        <SaveBtn section="booking" />
+      </section>
+
+      {/* ── Servicios ── */}
+      <section>
+        <SectionHeader title="Servicios" subtitle="Crea, edita o desactiva los servicios disponibles" />
+        <ServicesTab adminSecret={adminSecret} />
+      </section>
+
+      {/* ── Mensajes WhatsApp ── */}
+      <section>
+        <SectionHeader title="Mensajes de WhatsApp" subtitle="Plantillas con variables: {nombre} {servicio} {fecha} {hora}" />
+        <div className="space-y-5 mb-4">
+          {[
+            { key: 'msg_confirmation', label: 'Confirmación de reserva', hint: 'Se envía después de que una clienta completa su reserva' },
+            { key: 'msg_reminder_24h', label: 'Recordatorio 24h antes', hint: 'Cópialo y envíalo manualmente el día anterior a la cita' },
+          ].map(({ key, label, hint }) => (
+            <div key={key}>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[10px] tracking-[0.15em] uppercase text-[#555]">{label}</label>
+                <CopyButton text={messages[key] ?? ''} />
+              </div>
+              <textarea
+                rows={4} value={messages[key] ?? ''}
+                onChange={e => setMessages(p => ({ ...p, [key]: e.target.value }))}
+                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15 text-sm resize-none"
+                style={{ fontSize: '16px' }}
+              />
+              <p className="text-[#333] text-[10px] mt-1">{hint}</p>
+            </div>
+          ))}
+        </div>
+        <div className="p-3 border border-white/5 mb-4" style={{ background: '#0a0a0a' }}>
+          <p className="text-[10px] tracking-[0.15em] uppercase text-[#444] mb-2">Variables disponibles</p>
+          <div className="flex flex-wrap gap-2">
+            {['{nombre}', '{servicio}', '{fecha}', '{hora}'].map(v => (
+              <span key={v} className="text-[11px] font-mono px-2 py-0.5 border border-white/10 text-[#C9A84C]">{v}</span>
+            ))}
+          </div>
+        </div>
+        <SaveBtn section="messages" />
+      </section>
+
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [authed, setAuthed]           = useState(false);
@@ -1166,8 +1420,8 @@ export default function AdminPage() {
         {([
           { key: 'inicio',     label: 'Inicio',     icon: <LayoutDashboard size={12} /> },
           { key: 'agenda',     label: 'Agenda',     icon: <Calendar size={12} /> },
-          { key: 'servicios',  label: 'Servicios',  icon: <Scissors size={12} /> },
           { key: 'frecuentes', label: 'Frecuentes', icon: <Star size={12} /> },
+          { key: 'config',     label: 'Config',     icon: <Settings size={12} /> },
         ] as { key: Tab; label: string; icon: React.ReactNode }[]).map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-3.5 text-[9px] tracking-[0.18em] uppercase border-b-2 transition-colors ${
@@ -1181,8 +1435,8 @@ export default function AdminPage() {
       <div className="max-w-4xl mx-auto px-5 py-8">
         {tab === 'inicio'     && <InicioTab adminSecret={adminSecret} />}
         {tab === 'agenda'     && <AgendaTab adminSecret={adminSecret} />}
-        {tab === 'servicios'  && <ServicesTab adminSecret={adminSecret} />}
         {tab === 'frecuentes' && <TrustedClientsTab adminSecret={adminSecret} />}
+        {tab === 'config'     && <ConfigTab adminSecret={adminSecret} />}
       </div>
     </div>
   );
