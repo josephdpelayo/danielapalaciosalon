@@ -65,55 +65,94 @@ body::before {
   opacity: 0.4;
 }
 
-/* Calendar custom styles */
+/* ── DayPicker overrides (v8 + v9 class names) ─────────────────── */
 .rdp {
   --rdp-accent-color: #C9A84C;
-  --rdp-background-color: #1E1E1E;
+  --rdp-background-color: transparent;
   --rdp-accent-color-dark: #C9A84C;
-  --rdp-background-color-dark: #1E1E1E;
+  --rdp-background-color-dark: transparent;
+  --rdp-today-color: #C9A84C;
   margin: 0;
 }
 
+/* Remove ALL focus rings from calendar buttons */
+.rdp button,
+.rdp button:focus,
+.rdp button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Nav arrows — gold fill for v9 chevron SVG */
+.rdp-chevron {
+  fill: #C9A84C !important;
+}
+.rdp-button_previous,
+.rdp-button_next,
+.rdp-nav_button,
+.rdp-nav button {
+  color: #C9A84C !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Today — gold text, no blue circle/border */
+.rdp-day_today,
+[data-today="true"] {
+  border: none !important;
+  outline: none !important;
+}
+.rdp-day_today:not(.rdp-day_selected):not([aria-selected="true"]) {
+  color: #C9A84C !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+}
+
+/* Selected — flat gold square, no radius, no ring */
 .rdp-day_selected,
-.rdp-day_selected:hover {
+.rdp-day_selected:hover,
+[aria-selected="true"] {
   background-color: #C9A84C !important;
-  color: #0D0D0D !important;
-  font-weight: 600;
+  color: #000 !important;
+  font-weight: 700 !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  border: none !important;
 }
 
-.rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
-  background-color: #2A2620 !important;
-}
-
-.rdp-day_disabled {
-  opacity: 0.3;
-}
-
-.rdp-caption_label {
-  color: #F5F0E8;
-  text-transform: capitalize;
-}
-
-.rdp-nav_button {
-  color: #C9A84C !important;
-}
-
-/* Square hover on calendar cells */
-.rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
+/* Hover */
+.rdp-day:not(.rdp-day_disabled):not(.rdp-day_selected):not([aria-selected="true"]):hover {
+  background-color: rgba(201,168,76,0.1) !important;
   border-radius: 0 !important;
 }
 
-/* Nav arrows gold */
-.rdp-nav button,
-.rdp-nav_button svg,
-.rdp button[name="previous-month"],
-.rdp button[name="next-month"] {
-  color: #C9A84C !important;
-  stroke: #C9A84C !important;
+/* Disabled */
+.rdp-day_disabled { opacity: 0.25 !important; }
+
+/* Caption / month label — light weight, no bold */
+.rdp-caption_label,
+.rdp-month_caption,
+.rdp-caption_label span {
+  font-weight: 300 !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: #F0EDE8 !important;
+  font-family: var(--font-display, inherit) !important;
 }
 
-/* Selected cell square */
-.rdp-day_selected,
-.rdp-day_selected:hover {
+/* Weekday headers */
+.rdp-weekday,
+.rdp-head_cell {
+  color: #444 !important;
+  font-size: 0.5rem !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+  font-weight: 400 !important;
+}
+
+/* Day cells — consistent font */
+.rdp-day {
   border-radius: 0 !important;
+  font-family: var(--font-body, inherit) !important;
 }

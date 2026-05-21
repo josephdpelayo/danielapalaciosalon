@@ -500,14 +500,15 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                 medio:    { color: '#fb923c' },
                 lleno:    { color: '#f87171' },
                 blocked:  { color: '#555', textDecoration: 'line-through' },
-                selected: { backgroundColor: '#C9A84C', color: '#000', fontWeight: '700', borderRadius: '0' },
-                today:    { color: '#C9A84C', fontWeight: '600' },
+                selected: { backgroundColor: '#C9A84C', color: '#000000', fontWeight: '700', borderRadius: '0', outline: 'none', border: 'none', boxShadow: 'none' },
+                today:    { color: '#C9A84C', fontWeight: '600', outline: 'none', border: 'none', boxShadow: 'none' },
               }}
               styles={{
-                day:           { color: '#F0EDE8', borderRadius: '0', minWidth: '38px', minHeight: '38px' },
-                caption_label: { color: '#F0EDE8', fontFamily: 'var(--font-display)', letterSpacing: '0.05em', fontSize: '0.85rem' },
-                weekday:       { color: '#444', textTransform: 'uppercase', fontSize: '0.55rem', letterSpacing: '0.15em' },
+                day:           { color: '#F0EDE8', borderRadius: '0', minWidth: '36px', minHeight: '36px', fontFamily: 'var(--font-body)' },
+                caption_label: { color: '#F0EDE8', fontFamily: 'var(--font-display)', letterSpacing: '0.08em', fontSize: '0.75rem', fontWeight: '300', textTransform: 'uppercase' },
+                weekday:       { color: '#3a3a3a', textTransform: 'uppercase', fontSize: '0.5rem', letterSpacing: '0.15em', fontWeight: '400' },
                 root:          { background: 'transparent', padding: '12px' },
+                nav:           { gap: '4px' },
               }}
             />
           </div>
@@ -616,15 +617,8 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                       );
                     }
 
-                    /* ── Appointment continuation ── */
-                    if (row.appt && !row.apptIsStart) {
-                      return (
-                        <div key={i} className="flex items-center py-1.5 border-b border-white/[0.02]"
-                          style={{ borderLeft: `2px solid ${color}28`, paddingLeft: '13px' }}>
-                          <span className="text-[#252525] text-[10px]">{formatTime(row.time)}</span>
-                        </div>
-                      );
-                    }
+                    /* ── Appointment continuation — hidden ── */
+                    if (row.appt && !row.apptIsStart) return null;
 
                     /* ── Block start ── */
                     if (row.block && row.blockIsStart) {
@@ -651,15 +645,8 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                       );
                     }
 
-                    /* ── Block continuation ── */
-                    if (row.block && !row.blockIsStart) {
-                      return (
-                        <div key={i} className="flex items-center py-1.5 border-b border-white/[0.02]"
-                          style={{ borderLeft: '2px solid rgba(239,68,68,0.15)', paddingLeft: '13px', background: 'rgba(239,68,68,0.01)' }}>
-                          <span className="text-[#252525] text-[10px]">{formatTime(row.time)}</span>
-                        </div>
-                      );
-                    }
+                    /* ── Block continuation — hidden ── */
+                    if (row.block && !row.blockIsStart) return null;
 
                     /* ── Free slot ── */
                     return (
@@ -1174,17 +1161,17 @@ export default function AdminPage() {
         <div className="w-10 sm:w-16" />
       </div>
 
-      {/* 2 tabs */}
-      <div className="border-b border-white/8 flex">
+      {/* Tabs */}
+      <div className="border-b border-white/8 flex overflow-x-auto scrollbar-none">
         {([
-          { key: 'inicio',     label: 'Inicio',     icon: <LayoutDashboard size={13} /> },
-          { key: 'agenda',     label: 'Agenda',     icon: <Calendar size={13} /> },
-          { key: 'servicios',  label: 'Servicios',  icon: <Scissors size={13} /> },
-          { key: 'frecuentes', label: 'Frecuentes', icon: <Star size={13} /> },
+          { key: 'inicio',     label: 'Inicio',     icon: <LayoutDashboard size={12} /> },
+          { key: 'agenda',     label: 'Agenda',     icon: <Calendar size={12} /> },
+          { key: 'servicios',  label: 'Servicios',  icon: <Scissors size={12} /> },
+          { key: 'frecuentes', label: 'Frecuentes', icon: <Star size={12} /> },
         ] as { key: Tab; label: string; icon: React.ReactNode }[]).map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-6 py-4 text-[10px] tracking-[0.2em] uppercase border-b-2 transition-colors ${
-              tab === t.key ? 'border-[#C9A84C] text-[#C9A84C]' : 'border-transparent text-[#555] hover:text-[#888]'
+            className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-3.5 text-[9px] tracking-[0.18em] uppercase border-b-2 transition-colors ${
+              tab === t.key ? 'border-[#C9A84C] text-[#C9A84C]' : 'border-transparent text-[#444] hover:text-[#777]'
             }`}>
             {t.icon}{t.label}
           </button>
