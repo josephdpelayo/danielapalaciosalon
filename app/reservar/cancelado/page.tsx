@@ -3,17 +3,25 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { X } from 'lucide-react';
 
 function CanceladoContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#0D0D0D' }}>
-      <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-red-800"
-        style={{ background: 'rgba(239,68,68,0.08)' }}>
-        <X size={36} className="text-red-500" />
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#000000' }}>
+      <div className="mb-10">
+        <svg
+          width="96"
+          height="96"
+          viewBox="0 0 96 96"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle cx="48" cy="48" r="46" stroke="rgba(239,68,68,0.5)" strokeWidth="1.5" />
+          <line x1="34" y1="34" x2="62" y2="62" stroke="rgba(239,68,68,0.7)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="62" y1="34" x2="34" y2="62" stroke="rgba(239,68,68,0.7)" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
       </div>
 
       <h1 className="font-[family-name:var(--font-display)] text-4xl text-[#F5F0E8] mb-4">

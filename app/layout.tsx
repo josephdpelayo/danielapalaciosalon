@@ -23,6 +23,9 @@ export const metadata: Metadata = {
     description: "Estudio especializado en color, cortes y tratamientos. Mazatlán, Sinaloa.",
     siteName: "Daniela Palacio Hair Room",
   },
+  other: {
+    'theme-color': '#000000',
+  },
 };
 
 export default function RootLayout({

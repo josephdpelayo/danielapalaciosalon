@@ -85,7 +85,7 @@ function buildTimeline(date: Date, appts: Appointment[], blocks: BlockedSlot[]):
 }
 
 // ── Auth ─────────────────────────────────────────────────────────
-function AuthScreen({ onAuth }: { onAuth: () => void }) {
+function AuthScreen({ onAuth }: { onAuth: (password: string) => void }) {
   const [pass, setPass] = useState('');
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 font-[family-name:var(--font-body)]" style={{ background: '#000' }}>
@@ -95,13 +95,13 @@ function AuthScreen({ onAuth }: { onAuth: () => void }) {
         <input
           type="password" value={pass}
           onChange={(e) => setPass(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && pass === ADMIN_PASS) onAuth(); }}
+          onKeyDown={(e) => { if (e.key === 'Enter' && pass === ADMIN_PASS) onAuth(pass); }}
           placeholder="Contraseña"
           className="w-full bg-transparent border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/20 mb-3"
           style={{ fontSize: '16px' }}
         />
         <button
-          onClick={() => { if (pass === ADMIN_PASS) onAuth(); else alert('Contraseña incorrecta'); }}
+          onClick={() => { if (pass === ADMIN_PASS) onAuth(pass); else alert('Contraseña incorrecta'); }}
           className="w-full bg-[#C9A84C] text-black py-3.5 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors"
         >
           Entrar
@@ -115,7 +115,7 @@ function AuthScreen({ onAuth }: { onAuth: () => void }) {
 }
 
 // ── Agenda (Calendar + Appointments combined) ─────────────────────
-function AgendaTab() {
+function AgendaTab({ adminSecret }: { adminSecret: string }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [blocks, setBlocks]             = useState<BlockedSlot[]>([]);
   const [loading, setLoading]           = useState(false);
@@ -227,7 +227,7 @@ function AgendaTab() {
     setUpdating(id);
     try {
       await fetch('/api/admin', {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
         body: JSON.stringify({ id, status }),
       });
       setAppointments((prev) => prev.map((a) => a.id === id ? { ...a, status } : a));
@@ -239,7 +239,7 @@ function AgendaTab() {
     setSaving(true);
     try {
       const res = await fetch('/api/blocked-slots', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
         body: JSON.stringify({
           block_date: format(selectedDate, 'yyyy-MM-dd'),
           all_day: allDay,
@@ -260,7 +260,7 @@ function AgendaTab() {
     setDeleting(id);
     try {
       await fetch('/api/blocked-slots', {
-        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
         body: JSON.stringify({ id }),
       });
       setBlocks((prev) => prev.filter((b) => b.id !== id));
@@ -713,7 +713,7 @@ function ServiceForm({ form, setForm, onSave, onCancel, saving, id }: ServiceFor
   );
 }
 
-function ServicesTab() {
+function ServicesTab({ adminSecret }: { adminSecret: string }) {
   const [services, setServices]   = useState<ServiceRow[]>([]);
   const [loading, setLoading]     = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -751,7 +751,7 @@ function ServicesTab() {
         price: parseFloat(form.price), duration_minutes: dur, active_minutes: act,
         deposit_amount: parseFloat(form.deposit_amount) || 200 };
       const res = await fetch('/api/services', {
-        method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' },
+        method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
         body: JSON.stringify(id ? { id, ...payload } : payload),
       });
       if (res.ok) { await load(); cancel(); }
@@ -764,7 +764,7 @@ function ServicesTab() {
     if (!confirm('¿Eliminar este servicio? Los clientes ya no podrán seleccionarlo.')) return;
     setDeleting(id);
     try {
-      await fetch('/api/services', { method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      await fetch('/api/services', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
         body: JSON.stringify({ id }) });
       setServices((prev) => prev.filter((s) => s.id !== id));
     } finally { setDeleting(null); }
@@ -856,7 +856,7 @@ function ServicesTab() {
 // ── Trusted clients tab ───────────────────────────────────────────
 interface TrustedClient { id: string; name: string; phone: string; notes: string | null; }
 
-function TrustedClientsTab() {
+function TrustedClientsTab({ adminSecret }: { adminSecret: string }) {
   const [clients, setClients]             = useState<TrustedClient[]>([]);
   const [loading, setLoading]             = useState(false);
   const [deleting, setDeleting]           = useState<string | null>(null);
@@ -883,7 +883,7 @@ function TrustedClientsTab() {
     setSaving(true);
     try {
       const res = await fetch('/api/trusted-clients', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
         body: JSON.stringify({ name: name.trim(), phone: `${countryCode.trim()} ${phone.trim()}`, notes: notes.trim() || null }),
       });
       if (res.ok) {
@@ -897,7 +897,7 @@ function TrustedClientsTab() {
   const handleDelete = async (id: string) => {
     setDeleting(id);
     try {
-      await fetch('/api/trusted-clients', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+      await fetch('/api/trusted-clients', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret }, body: JSON.stringify({ id }) });
       setClients((prev) => prev.filter((c) => c.id !== id));
     } finally { setDeleting(null); }
   };
@@ -990,10 +990,11 @@ function TrustedClientsTab() {
 
 // ── Main ──────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const [authed, setAuthed] = useState(false);
-  const [tab, setTab]       = useState<Tab>('agenda');
+  const [authed, setAuthed]           = useState(false);
+  const [adminSecret, setAdminSecret] = useState('');
+  const [tab, setTab]                 = useState<Tab>('agenda');
 
-  if (!authed) return <AuthScreen onAuth={() => setAuthed(true)} />;
+  if (!authed) return <AuthScreen onAuth={(password) => { setAuthed(true); setAdminSecret(password); }} />;
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-body)]" style={{ background: '#000' }}>
@@ -1023,9 +1024,9 @@ export default function AdminPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-5 py-8">
-        {tab === 'agenda'     && <AgendaTab />}
-        {tab === 'servicios'  && <ServicesTab />}
-        {tab === 'frecuentes' && <TrustedClientsTab />}
+        {tab === 'agenda'     && <AgendaTab adminSecret={adminSecret} />}
+        {tab === 'servicios'  && <ServicesTab adminSecret={adminSecret} />}
+        {tab === 'frecuentes' && <TrustedClientsTab adminSecret={adminSecret} />}
       </div>
     </div>
   );

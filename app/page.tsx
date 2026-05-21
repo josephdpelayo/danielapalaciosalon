@@ -174,12 +174,19 @@ export default function Home() {
                     {formatDuration(service.duration_minutes)}
                   </span>
                 </div>
-                <span
-                  className="text-sm font-light tabular-nums ml-8 shrink-0"
-                  style={{ color: '#F0EDE8' }}
-                >
-                  {formatPrice(service.price)}
-                </span>
+                <div className="flex items-center gap-3 ml-8 shrink-0">
+                  <span
+                    className="text-sm font-light tabular-nums"
+                    style={{ color: '#F0EDE8' }}
+                  >
+                    {formatPrice(service.price)}
+                  </span>
+                  <span
+                    className="text-[#C9A84C] opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 text-xs"
+                  >
+                    →
+                  </span>
+                </div>
               </Link>
             ))}
           </div>
@@ -289,7 +296,7 @@ export default function Home() {
 
       {/* ── FOOTER ── */}
       <footer
-        className="px-5 md:px-16 py-8"
+        className="px-5 md:px-16 py-8 flex items-center justify-between gap-4 flex-wrap"
         style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
       >
         <p
@@ -298,6 +305,15 @@ export default function Home() {
         >
           © 2025 Daniela Palacio Hair Room — Mazatlán, Sin.
         </p>
+        <a
+          href="https://wa.me/526699445566"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[11px] tracking-[0.2em] transition-opacity hover:opacity-60"
+          style={{ color: '#C9A84C' }}
+        >
+          WhatsApp →
+        </a>
       </footer>
 
     </main>

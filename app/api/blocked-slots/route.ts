@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
 
 export async function GET() {
-  if (!(await import("@/lib/supabase")).supabaseReady) return NextResponse.json({ blocks: [] });
+  if (!(await import('@/lib/supabase')).supabaseReady) return NextResponse.json({ blocks: [] });
 
   const { supabase } = await import('@/lib/supabase');
   const today = new Date().toISOString().split('T')[0];
@@ -17,12 +18,14 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
   const body = await req.json();
   const { block_date, start_time, end_time, reason, all_day } = body;
-
   if (!block_date) return NextResponse.json({ error: 'Missing block_date' }, { status: 400 });
 
-  if (!(await import("@/lib/supabase")).supabaseReady) {
+  if (!(await import('@/lib/supabase')).supabaseReady) {
     return NextResponse.json({ id: 'mock-' + Date.now(), block_date, all_day, reason });
   }
 
@@ -38,10 +41,13 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-  if (!(await import("@/lib/supabase")).supabaseReady) return NextResponse.json({ ok: true });
+  if (!(await import('@/lib/supabase')).supabaseReady) return NextResponse.json({ ok: true });
 
   const { supabase } = await import('@/lib/supabase');
   const { error } = await supabase.from('dp_blocked_slots').delete().eq('id', id);

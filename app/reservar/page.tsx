@@ -15,6 +15,18 @@ import 'react-day-picker/dist/style.css';
 type Step = 'info' | 'service' | 'date' | 'time' | 'confirm';
 const STEPS_LIST: Step[] = ['info', 'service', 'date', 'time', 'confirm'];
 
+function svcDotColor(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes('corte') && !n.includes('tinte')) return '#60a5fa';
+  if (n.includes('color') && !n.includes('tinte')) return '#c084fc';
+  if (n.includes('mecha') || n.includes('balayage')) return '#fbbf24';
+  if (n.includes('retoque')) return '#fb923c';
+  if (n.includes('antifrizz') || n.includes('brazilian') || n.includes('brasi')) return '#2dd4bf';
+  if (n.includes('tinte')) return '#f472b6';
+  if (n.includes('peinado')) return '#86efac';
+  return '#C9A84C';
+}
+
 function BookingContent() {
   const searchParams = useSearchParams();
 
@@ -190,7 +202,7 @@ function BookingContent() {
               const isPast = i < stepIndex;
               const isCurrent = i === stepIndex;
               return (
-                <div key={s} className="w-2 h-2 rounded-full border transition-all duration-300 shrink-0"
+                <div key={s} className={`${isCurrent ? 'w-3 h-3' : 'w-2 h-2'} rounded-full border transition-all duration-300 shrink-0`}
                   style={{
                     background: isPast || isCurrent ? '#C9A84C' : 'transparent',
                     borderColor: isPast || isCurrent ? '#C9A84C' : 'rgba(255,255,255,0.2)',
@@ -349,6 +361,10 @@ function BookingContent() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
+                        <span
+                          className="inline-block w-2 h-2 rounded-full shrink-0"
+                          style={{ background: svcDotColor(svc.name) }}
+                        />
                         <span className="text-[#F0EDE8] text-sm font-medium group-hover:text-white transition-colors">
                           {svc.name}
                         </span>
