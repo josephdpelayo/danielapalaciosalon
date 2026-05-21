@@ -4,13 +4,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
   format, parseISO, isToday, isTomorrow,
-  startOfToday, addDays, getDay,
+  startOfToday, addDays, getDay, formatDistanceToNow,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DayPicker } from 'react-day-picker';
 import {
   ArrowLeft, Check, X, Scissors, Phone, RefreshCw,
-  Trash2, CalendarOff, Star, UserPlus, Calendar, Plus, Pencil,
+  Trash2, CalendarOff, Star, UserPlus, Calendar, Plus, Pencil, LayoutDashboard,
 } from 'lucide-react';
 import { Appointment, BlockedSlot } from '@/lib/types';
 import { formatTime, formatDuration, timeToMinutes, minutesToTime } from '@/lib/slots';
@@ -18,7 +18,7 @@ import { MOCK_SCHEDULE } from '@/lib/mock-data';
 import 'react-day-picker/dist/style.css';
 
 const ADMIN_PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? 'daniela2025';
-type Tab = 'agenda' | 'servicios' | 'frecuentes';
+type Tab = 'inicio' | 'agenda' | 'servicios' | 'frecuentes';
 
 function serviceColor(name: string | undefined): string {
   if (!name) return '#888';
@@ -110,6 +110,173 @@ function AuthScreen({ onAuth }: { onAuth: (password: string) => void }) {
           <Link href="/" className="text-[#444] text-xs hover:text-[#666] transition-colors tracking-wider">← Volver al sitio</Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Inicio / Bitácora ─────────────────────────────────────────────
+function InicioTab({ adminSecret }: { adminSecret: string }) {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading]           = useState(false);
+  const [updating, setUpdating]         = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res  = await fetch('/api/appointments');
+      const data = await res.json();
+      setAppointments(data.appointments ?? []);
+    } catch { /* keep */ }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const updateStatus = async (id: string, status: 'confirmed' | 'cancelled') => {
+    setUpdating(id);
+    try {
+      await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ id, status }),
+      });
+      setAppointments((prev) => prev.map((a) => a.id === id ? { ...a, status } : a));
+    } finally { setUpdating(null); }
+  };
+
+  const needsAction = useMemo(() =>
+    appointments
+      .filter((a) => a.status === 'pending' || a.status === 'pending_payment')
+      .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date) || a.start_time.localeCompare(b.start_time)),
+    [appointments]
+  );
+
+  const recent = useMemo(() =>
+    [...appointments]
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, 20),
+    [appointments]
+  );
+
+  const todayKey = format(startOfToday(), 'yyyy-MM-dd');
+  const todayAppts = appointments.filter((a) => a.appointment_date === todayKey && a.status !== 'cancelled');
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-24">
+      <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  return (
+    <div className="space-y-10">
+
+      {/* ── Stats ── */}
+      <div className="grid grid-cols-3 gap-px border border-white/8">
+        {[
+          { label: 'Hoy',          val: todayAppts.length,                                      color: '#F0EDE8' },
+          { label: 'Sin confirmar', val: needsAction.length,                                    color: needsAction.length > 0 ? '#fb923c' : '#444' },
+          { label: 'Total activas', val: appointments.filter((a) => a.status !== 'cancelled').length, color: '#C9A84C' },
+        ].map((s) => (
+          <div key={s.label} className="p-4 text-center" style={{ background: '#0A0A0A' }}>
+            <div className="font-[family-name:var(--font-display)] text-3xl font-light mb-1" style={{ color: s.color }}>{s.val}</div>
+            <div className="text-[9px] tracking-[0.2em] uppercase text-[#444]">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Requieren atención ── */}
+      {needsAction.length > 0 && (
+        <div>
+          <p className="text-[10px] tracking-[0.3em] uppercase mb-4 flex items-center gap-2" style={{ color: '#fb923c' }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+            Requieren atención · {needsAction.length}
+          </p>
+          <div className="space-y-2">
+            {needsAction.map((apt) => {
+              const color = serviceColor(apt.dp_services?.name);
+              const dtStr = isToday(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Hoy'
+                : isTomorrow(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Mañana'
+                : format(parseISO(apt.appointment_date + 'T12:00:00'), "EEE d MMM", { locale: es });
+              return (
+                <div key={apt.id} className="border border-orange-900/40 p-4"
+                  style={{ background: 'rgba(251,146,60,0.03)', borderLeft: `3px solid ${color}` }}>
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-white text-sm font-medium">{apt.client_name}</span>
+                        <StatusBadge status={apt.status} />
+                      </div>
+                      <p className="text-[#666] text-xs mb-0.5">{apt.dp_services?.name ?? '—'}</p>
+                      <p className="text-[#555] text-xs">
+                        {dtStr} · {formatTime(apt.start_time)} – {formatTime(apt.end_time)}
+                      </p>
+                      <a href={`https://wa.me/52${apt.client_phone.replace(/\D/g, '')}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[#444] hover:text-[#25D366] transition-colors text-xs mt-1 w-fit">
+                        <Phone size={10} /> {apt.client_phone}
+                      </a>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button onClick={() => updateStatus(apt.id, 'confirmed')} disabled={updating === apt.id}
+                        className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-emerald-800 text-emerald-400 px-3 py-1.5 hover:bg-emerald-900/20 transition-colors disabled:opacity-40">
+                        <Check size={10} /> Confirmar
+                      </button>
+                      <button onClick={() => updateStatus(apt.id, 'cancelled')} disabled={updating === apt.id}
+                        className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-white/8 text-[#444] px-3 py-1.5 hover:border-red-800 hover:text-red-400 transition-colors disabled:opacity-40">
+                        <X size={10} /> Cancelar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Bitácora ── */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-[#555]">Bitácora · últimas reservas</p>
+          <button onClick={load} disabled={loading} className="text-[#444] hover:text-[#C9A84C] transition-colors">
+            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+          </button>
+        </div>
+
+        {recent.length === 0 ? (
+          <div className="border border-white/5 py-14 text-center">
+            <p className="text-[#444] text-sm">No hay reservas registradas.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {recent.map((apt) => {
+              const color = serviceColor(apt.dp_services?.name);
+              const dtStr = isToday(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Hoy'
+                : isTomorrow(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Mañana'
+                : format(parseISO(apt.appointment_date + 'T12:00:00'), "d MMM", { locale: es });
+              const ago = formatDistanceToNow(parseISO(apt.created_at), { locale: es, addSuffix: true });
+              return (
+                <div key={apt.id} className="py-3.5 flex items-start gap-3"
+                  style={{ borderLeft: `2px solid ${color}40`, paddingLeft: '12px' }}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <span className="text-[#F0EDE8] text-sm">{apt.client_name}</span>
+                      <StatusBadge status={apt.status} />
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'}</span>
+                      <span className="text-[#333] text-xs">·</span>
+                      <span className="text-[#555] text-xs">{dtStr} {formatTime(apt.start_time)}</span>
+                    </div>
+                  </div>
+                  <span className="text-[#333] text-[10px] shrink-0 mt-0.5">{ago}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
@@ -992,7 +1159,7 @@ function TrustedClientsTab({ adminSecret }: { adminSecret: string }) {
 export default function AdminPage() {
   const [authed, setAuthed]           = useState(false);
   const [adminSecret, setAdminSecret] = useState('');
-  const [tab, setTab]                 = useState<Tab>('agenda');
+  const [tab, setTab]                 = useState<Tab>('inicio');
 
   if (!authed) return <AuthScreen onAuth={(password) => { setAuthed(true); setAdminSecret(password); }} />;
 
@@ -1010,6 +1177,7 @@ export default function AdminPage() {
       {/* 2 tabs */}
       <div className="border-b border-white/8 flex">
         {([
+          { key: 'inicio',     label: 'Inicio',     icon: <LayoutDashboard size={13} /> },
           { key: 'agenda',     label: 'Agenda',     icon: <Calendar size={13} /> },
           { key: 'servicios',  label: 'Servicios',  icon: <Scissors size={13} /> },
           { key: 'frecuentes', label: 'Frecuentes', icon: <Star size={13} /> },
@@ -1024,6 +1192,7 @@ export default function AdminPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-5 py-8">
+        {tab === 'inicio'     && <InicioTab adminSecret={adminSecret} />}
         {tab === 'agenda'     && <AgendaTab adminSecret={adminSecret} />}
         {tab === 'servicios'  && <ServicesTab adminSecret={adminSecret} />}
         {tab === 'frecuentes' && <TrustedClientsTab adminSecret={adminSecret} />}
