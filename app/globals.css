@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #0D0D0D;
+  --color-surface: #161616;
+  --color-surface-2: #1E1E1E;
+  --color-border: #2A2620;
+  --color-gold: #C9A84C;
+  --color-gold-light: #E8C97A;
+  --color-gold-dim: #8A7035;
+  --color-cream: #F5F0E8;
+  --color-muted: #7A7168;
+  --color-font-display: var(--font-display);
+  --color-font-body: var(--font-body);
+}
+
+:root {
+  --background: #0D0D0D;
+  --foreground: #F5F0E8;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #0D0D0D;
+  color: #F5F0E8;
+  font-family: var(--font-body, 'Jost', sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Gold shimmer animation */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.gold-text {
+  background: linear-gradient(90deg, #C9A84C 0%, #E8C97A 40%, #C9A84C 60%, #8A7035 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Subtle noise texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* Calendar custom styles */
+.rdp {
+  --rdp-accent-color: #C9A84C;
+  --rdp-background-color: #1E1E1E;
+  --rdp-accent-color-dark: #C9A84C;
+  --rdp-background-color-dark: #1E1E1E;
+  margin: 0;
+}
+
+.rdp-day_selected,
+.rdp-day_selected:hover {
+  background-color: #C9A84C !important;
+  color: #0D0D0D !important;
+  font-weight: 600;
+}
+
+.rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
+  background-color: #2A2620 !important;
+}
+
+.rdp-day_disabled {
+  opacity: 0.3;
+}
+
+.rdp-caption_label {
+  color: #F5F0E8;
+  text-transform: capitalize;
+}
+
+.rdp-nav_button {
+  color: #C9A84C !important;
+}
