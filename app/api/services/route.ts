@@ -33,24 +33,26 @@ export async function POST(req: NextRequest) {
   }
 
   const { supabase } = await import('@/lib/supabase');
-  const { data: maxRow } = await supabase
-    .from('dp_services').select('sort_order').order('sort_order', { ascending: false }).limit(1).single();
+  const { data: maxRows } = await supabase
+    .from('dp_services').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+  const nextOrder = ((maxRows?.[0] as Record<string, number> | null)?.sort_order ?? 0) + 1;
 
+  const payload = {
+    name, description: description || null,
+    price: parseFloat(price),
+    duration_minutes: parseInt(duration_minutes),
+    active_minutes: parseInt(active_minutes),
+    deposit_amount: parseFloat(deposit_amount) || 200,
+    active: true,
+    sort_order: nextOrder,
+  };
   const { data, error } = await supabase
     .from('dp_services')
-    .insert({
-      name, description: description || null,
-      price: parseFloat(price),
-      duration_minutes: parseInt(duration_minutes),
-      active_minutes: parseInt(active_minutes),
-      deposit_amount: parseFloat(deposit_amount) || 200,
-      active: true,
-      sort_order: ((maxRow as Record<string, number> | null)?.sort_order ?? 0) + 1,
-    })
-    .select().single();
+    .insert(payload)
+    .select();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json(data?.[0] ?? payload);
 }
 
 export async function PATCH(req: NextRequest) {
@@ -71,10 +73,10 @@ export async function PATCH(req: NextRequest) {
   if (fields.deposit_amount   !== undefined) updates.deposit_amount   = parseFloat(fields.deposit_amount);
 
   const { data, error } = await supabase
-    .from('dp_services').update(updates).eq('id', id).select().single();
+    .from('dp_services').update(updates).eq('id', id).select();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json(data?.[0] ?? { id, ...updates });
 }
 
 export async function DELETE(req: NextRequest) {
