@@ -11,14 +11,14 @@ import { DayPicker } from 'react-day-picker';
 import {
   ArrowLeft, Check, X, Scissors, Phone, RefreshCw,
   Trash2, CalendarOff, Star, UserPlus, Calendar, Plus, Pencil, LayoutDashboard,
-  Settings, Copy, Check as CheckIcon, MessageCircle, Bell,
+  Settings, Copy, Check as CheckIcon, MessageCircle, Bell, Users,
 } from 'lucide-react';
 import { Appointment, BlockedSlot } from '@/lib/types';
 import { formatTime, formatDuration, timeToMinutes, minutesToTime } from '@/lib/slots';
 import { MOCK_SCHEDULE } from '@/lib/mock-data';
 import 'react-day-picker/dist/style.css';
 
-type Tab = 'inicio' | 'agenda' | 'frecuentes' | 'config';
+type Tab = 'inicio' | 'agenda' | 'clientes' | 'config';
 
 function serviceColor(name: string | undefined): string {
   if (!name) return '#888';
@@ -226,6 +226,22 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
     .filter((a) => a.status === 'confirmed' && a.appointment_date.startsWith(monthKey))
     .reduce((sum, a) => sum + ((a as unknown as Record<string, number>).deposit_amount ?? 0), 0);
 
+  const upcoming = useMemo(() =>
+    appointments
+      .filter(a => a.appointment_date > todayKey && a.status !== 'cancelled')
+      .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date) || a.start_time.localeCompare(b.start_time))
+      .slice(0, 20),
+    [appointments, todayKey]
+  );
+  const upcomingByDate = useMemo(() => {
+    const grouped: Record<string, Appointment[]> = {};
+    for (const a of upcoming) {
+      if (!grouped[a.appointment_date]) grouped[a.appointment_date] = [];
+      grouped[a.appointment_date].push(a);
+    }
+    return grouped;
+  }, [upcoming]);
+
   if (loading) return (
     <div className="flex items-center justify-center py-24">
       <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
@@ -249,6 +265,34 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
           </div>
         ))}
       </div>
+
+      {/* ── Próximas citas ── */}
+      {Object.keys(upcomingByDate).length > 0 && (
+        <div>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-4">Próximas citas</p>
+          <div className="space-y-4">
+            {Object.keys(upcomingByDate).sort().map((date) => {
+              const dt = parseISO(date + 'T12:00:00');
+              const label = isTomorrow(dt) ? 'Mañana' : format(dt, "EEE d MMM", { locale: es });
+              return (
+                <div key={date}>
+                  <p className="text-[9px] tracking-[0.2em] uppercase text-[#C9A84C] mb-1 capitalize">{label} · {format(dt, "d 'de' MMMM", { locale: es })}</p>
+                  {upcomingByDate[date].map(apt => (
+                    <div key={apt.id} className="flex items-center justify-between py-2.5 border-b border-white/5"
+                      style={{ borderLeft: `2px solid ${serviceColor(apt.dp_services?.name)}50`, paddingLeft: '10px' }}>
+                      <div>
+                        <p className="text-[#F0EDE8] text-sm">{apt.client_name}</p>
+                        <p className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
+                      </div>
+                      <StatusBadge status={apt.status} />
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Recordatorios de mañana ── */}
       {tomorrowAppts.length > 0 && (
@@ -1143,146 +1187,253 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
 
 // ── Trusted clients tab ───────────────────────────────────────────
 interface TrustedClient { id: string; name: string; phone: string; notes: string | null; email: string | null; }
+interface ClientRecord {
+  name: string;
+  phone: string;
+  phone_normalized: string;
+  email: string | null;
+  appt_count: number;
+  last_appt: string | null;
+}
+type ClientFilter = 'todos' | 'nuevos' | 'frecuentes';
 
-function TrustedClientsTab({ adminSecret }: { adminSecret: string }) {
-  const [clients, setClients]             = useState<TrustedClient[]>([]);
-  const [loading, setLoading]             = useState(false);
-  const [deleting, setDeleting]           = useState<string | null>(null);
-  const [saving, setSaving]               = useState(false);
-  const [name, setName]                   = useState('');
-  const [countryCode, setCountryCode]     = useState('+52');
-  const [phone, setPhone]                 = useState('');
-  const [notes, setNotes]                 = useState('');
-  const [email, setEmail]                 = useState('');
+function ClientesTab({ adminSecret }: { adminSecret: string }) {
+  const [filter, setFilter]             = useState<ClientFilter>('todos');
+  const [trustedClients, setTrustedClients] = useState<TrustedClient[]>([]);
+  const [allClients, setAllClients]     = useState<ClientRecord[]>([]);
+  const [loading, setLoading]           = useState(false);
+  const [promoting, setPromoting]       = useState<string | null>(null);
+  const [deleting, setDeleting]         = useState<string | null>(null);
+  // form
+  const [showForm, setShowForm]         = useState(false);
+  const [formSaving, setFormSaving]     = useState(false);
+  const [name, setName]                 = useState('');
+  const [countryCode, setCountryCode]   = useState('+52');
+  const [phone, setPhone]               = useState('');
+  const [email, setEmail]               = useState('');
+  const [notes, setNotes]               = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/trusted-clients', { headers: { 'x-admin-secret': adminSecret } });
-      const data = await res.json();
-      setClients(data.clients ?? []);
-    } catch { setClients([]); }
+      const [apptRes, trustedRes] = await Promise.all([
+        fetch('/api/appointments', { headers: { 'x-admin-secret': adminSecret } }),
+        fetch('/api/trusted-clients', { headers: { 'x-admin-secret': adminSecret } }),
+      ]);
+      const apptData    = await apptRes.json();
+      const trustedData = await trustedRes.json();
+      setTrustedClients(trustedData.clients ?? []);
+
+      const appts: Appointment[] = [...(apptData.appointments ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at));
+      const seen = new Map<string, ClientRecord>();
+      for (const a of appts) {
+        const norm = a.client_phone.replace(/\D/g, '').slice(-10);
+        if (!seen.has(norm)) {
+          seen.set(norm, { name: a.client_name, phone: a.client_phone, phone_normalized: norm, email: a.client_email, appt_count: 0, last_appt: a.appointment_date });
+        }
+        seen.get(norm)!.appt_count++;
+      }
+      setAllClients([...seen.values()].sort((a, b) => a.name.localeCompare(b.name)));
+    } catch { /* */ }
     finally { setLoading(false); }
   }, [adminSecret]);
 
   useEffect(() => { load(); }, [load]);
 
-  const handleAdd = async () => {
-    if (!name.trim() || phone.length !== 10) return;
-    setSaving(true);
+  const promote = async (client: ClientRecord) => {
+    setPromoting(client.phone_normalized);
     try {
       const res = await fetch('/api/trusted-clients', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-        body: JSON.stringify({ name: name.trim(), phone: `${countryCode.trim()} ${phone.trim()}`, notes: notes.trim() || null, email: email.trim() || null }),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ name: client.name, phone: client.phone, email: client.email || null, notes: null }),
       });
-      if (res.ok) {
-        const client = await res.json();
-        setClients((prev) => [...prev, client].sort((a, b) => a.name.localeCompare(b.name)));
-        setName(''); setPhone(''); setNotes(''); setEmail(''); setCountryCode('+52');
-      }
-    } finally { setSaving(false); }
+      if (res.ok) { const tc = await res.json(); setTrustedClients(prev => [...prev, tc]); }
+    } finally { setPromoting(null); }
   };
 
-  const handleDelete = async (id: string) => {
+  const demote = async (id: string) => {
     setDeleting(id);
     try {
-      await fetch('/api/trusted-clients', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret }, body: JSON.stringify({ id }) });
-      setClients((prev) => prev.filter((c) => c.id !== id));
+      await fetch('/api/trusted-clients', {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ id }),
+      });
+      setTrustedClients(prev => prev.filter(c => c.id !== id));
     } finally { setDeleting(null); }
   };
 
-  return (
-    <div className="space-y-8">
-      <p className="text-[#555] text-sm leading-relaxed">
-        Clientas en esta lista reservan sin anticipo. Se reconocen automáticamente por su número de WhatsApp.
-      </p>
+  const handleAdd = async () => {
+    if (!name.trim() || phone.length !== 10) return;
+    setFormSaving(true);
+    try {
+      const res = await fetch('/api/trusted-clients', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ name: name.trim(), phone: `${countryCode.trim()} ${phone.trim()}`, email: email.trim() || null, notes: notes.trim() || null }),
+      });
+      if (res.ok) {
+        const tc = await res.json();
+        setTrustedClients(prev => [...prev, tc].sort((a, b) => a.name.localeCompare(b.name)));
+        setName(''); setPhone(''); setEmail(''); setNotes(''); setCountryCode('+52'); setShowForm(false);
+      }
+    } finally { setFormSaving(false); }
+  };
 
-      <div>
-        <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-4">Agregar clienta frecuente</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-          <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Nombre</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre completo"
-              className="w-full bg-transparent border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/15"
-              style={{ fontSize: '16px' }} />
-          </div>
-          <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">
-              WhatsApp <span className="normal-case tracking-normal text-[#333]">— 10 dígitos</span>
-            </label>
-            <div className="flex border border-white/10 focus-within:border-[#C9A84C]/60 transition-colors">
-              <input type="text" value={countryCode} onChange={(e) => setCountryCode(e.target.value)}
-                className="w-14 bg-transparent text-[#888] px-2 py-3 text-center focus:outline-none border-r border-white/10 shrink-0"
-                style={{ fontSize: '16px' }} />
-              <input type="tel" inputMode="numeric" value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                placeholder="669 123 4567"
-                className="flex-1 bg-transparent text-white px-3 py-3 focus:outline-none placeholder:text-white/15"
-                style={{ fontSize: '16px' }} />
-              {phone.length > 0 && (
-                <span className={`flex items-center pr-3 text-[10px] shrink-0 ${phone.length === 10 ? 'text-emerald-500' : 'text-[#444]'}`}>
-                  {phone.length}/10
-                </span>
-              )}
+  const displayed = useMemo(() => {
+    const trustedNorms = new Map(trustedClients.map(tc => [tc.phone.replace(/\D/g, '').slice(-10), tc]));
+    if (filter === 'frecuentes') {
+      return trustedClients.map(tc => {
+        const norm = tc.phone.replace(/\D/g, '').slice(-10);
+        const fromAppts = allClients.find(c => c.phone_normalized === norm);
+        return { name: tc.name, phone: tc.phone, phone_normalized: norm, email: tc.email, appt_count: fromAppts?.appt_count ?? 0, last_appt: fromAppts?.last_appt ?? null, trusted_id: tc.id, notes: tc.notes };
+      }).sort((a, b) => a.name.localeCompare(b.name));
+    }
+    if (filter === 'nuevos') {
+      return allClients.filter(c => !trustedNorms.has(c.phone_normalized)).map(c => ({ ...c, trusted_id: null as string | null, notes: null as string | null }));
+    }
+    // todos
+    const result: (ClientRecord & { trusted_id: string | null; notes: string | null })[] = allClients.map(c => ({
+      ...c, trusted_id: trustedNorms.get(c.phone_normalized)?.id ?? null, notes: null,
+    }));
+    for (const tc of trustedClients) {
+      const norm = tc.phone.replace(/\D/g, '').slice(-10);
+      if (!allClients.find(c => c.phone_normalized === norm)) {
+        result.push({ name: tc.name, phone: tc.phone, phone_normalized: norm, email: tc.email, appt_count: 0, last_appt: null, trusted_id: tc.id, notes: tc.notes });
+      }
+    }
+    return result.sort((a, b) => a.name.localeCompare(b.name));
+  }, [filter, allClients, trustedClients]);
+
+  const counts = useMemo(() => {
+    const trustedNorms = new Set(trustedClients.map(tc => tc.phone.replace(/\D/g, '').slice(-10)));
+    const notInAppts = trustedClients.filter(tc => !allClients.find(c => c.phone_normalized === tc.phone.replace(/\D/g, '').slice(-10))).length;
+    return {
+      todos: allClients.length + notInAppts,
+      nuevos: allClients.filter(c => !trustedNorms.has(c.phone_normalized)).length,
+      frecuentes: trustedClients.length,
+    };
+  }, [allClients, trustedClients]);
+
+  return (
+    <div className="space-y-6">
+      {/* Filter + actions */}
+      <div className="flex items-center gap-0 border-b border-white/8 flex-wrap">
+        {(['todos', 'nuevos', 'frecuentes'] as ClientFilter[]).map(f => (
+          <button key={f} onClick={() => setFilter(f)}
+            className={`px-4 py-3 text-[9px] tracking-[0.18em] uppercase border-b-2 transition-colors capitalize ${
+              filter === f ? 'border-[#C9A84C] text-[#C9A84C]' : 'border-transparent text-[#444] hover:text-[#777]'
+            }`}>
+            {f} <span className="ml-1 opacity-50">({counts[f]})</span>
+          </button>
+        ))}
+        <div className="ml-auto flex items-center gap-2 pb-1">
+          <button onClick={load} disabled={loading} className="text-[#444] hover:text-[#C9A84C] transition-colors p-1">
+            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+          </button>
+          <button onClick={() => setShowForm(v => !v)}
+            className="flex items-center gap-1.5 text-[9px] tracking-[0.15em] uppercase border border-[#C9A84C]/30 text-[#C9A84C] px-3 py-1.5 hover:bg-[#C9A84C]/10 transition-colors">
+            <UserPlus size={11} /> Agregar
+          </button>
+        </div>
+      </div>
+
+      {/* Add form */}
+      {showForm && (
+        <div className="border border-white/10 p-4">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-4">Nueva clienta frecuente</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Nombre</label>
+              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nombre completo"
+                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            </div>
+            <div>
+              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">WhatsApp — 10 dígitos</label>
+              <div className="flex border border-white/10 focus-within:border-[#C9A84C]/60 transition-colors">
+                <input type="text" value={countryCode} onChange={e => setCountryCode(e.target.value)}
+                  className="w-14 bg-transparent text-[#888] px-2 py-2.5 text-center focus:outline-none border-r border-white/10 shrink-0" style={{ fontSize: '16px' }} />
+                <input type="tel" inputMode="numeric" value={phone}
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="669 123 4567"
+                  className="flex-1 bg-transparent text-white px-3 py-2.5 focus:outline-none placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                {phone.length > 0 && (
+                  <span className={`flex items-center pr-3 text-[10px] shrink-0 ${phone.length === 10 ? 'text-emerald-500' : 'text-[#444]'}`}>{phone.length}/10</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Correo (opcional)</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="cliente@correo.com"
+                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            </div>
+            <div>
+              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Notas (opcional)</label>
+              <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Prefiere tinte oscuro..."
+                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
             </div>
           </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-          <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Correo electrónico (opcional)</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="cliente@correo.com"
-              className="w-full bg-transparent border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/15"
-              style={{ fontSize: '16px' }} />
-          </div>
-          <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Notas (opcional)</label>
-            <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ej: clienta desde 2022, prefiere tinte oscuro..."
-              className="w-full bg-transparent border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/15"
-              style={{ fontSize: '16px' }} />
+          <div className="flex gap-2">
+            <button onClick={handleAdd} disabled={formSaving || !name.trim() || phone.length !== 10}
+              className="flex items-center gap-2 bg-[#C9A84C] text-black px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-30">
+              {formSaving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <UserPlus size={12} />}
+              Guardar
+            </button>
+            <button onClick={() => setShowForm(false)} className="px-4 py-2.5 text-[10px] tracking-[0.15em] uppercase text-[#444] border border-white/8 hover:border-white/20 transition-colors">Cancelar</button>
           </div>
         </div>
-        <button onClick={handleAdd} disabled={saving || !name.trim() || phone.length !== 10}
-          className="flex items-center gap-2 bg-[#C9A84C] text-black px-6 py-3 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-30">
-          {saving ? <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <UserPlus size={13} />}
-          Agregar
-        </button>
-      </div>
+      )}
 
-      <div>
-        <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-4 flex items-center gap-2">
-          <Star size={11} /> {clients.length} frecuentes registradas
-        </p>
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : clients.length === 0 ? (
-          <div className="text-center py-12 border border-white/5">
-            <p className="text-[#444] text-sm">Ninguna clienta frecuente registrada.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-white/5">
-            {clients.map((c) => (
-              <div key={c.id} className="flex items-center justify-between py-3.5">
-                <div className="flex items-center gap-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shrink-0" />
-                  <div>
+      {/* List */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : displayed.length === 0 ? (
+        <div className="border border-white/5 py-14 text-center">
+          <p className="text-[#444] text-sm">
+            {filter === 'frecuentes' ? 'No hay clientas frecuentes registradas.'
+              : filter === 'nuevos' ? 'Todas las clientas ya son frecuentes.'
+              : 'No hay clientas registradas.'}
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y divide-white/5">
+          {displayed.map(c => (
+            <div key={c.phone_normalized} className="flex items-center justify-between py-3.5 gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {c.trusted_id
+                  ? <Star size={11} className="text-[#C9A84C] shrink-0" />
+                  : <span className="w-2.5 h-2.5 rounded-full border border-white/10 shrink-0" />
+                }
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-white text-sm">{c.name}</p>
-                    <p className="text-[#555] text-xs mt-0.5">{c.phone}{c.notes && <span className="text-[#333]"> · {c.notes}</span>}</p>
-                    {c.email && <p className="text-[#444] text-xs mt-0.5">{c.email}</p>}
+                    {c.appt_count > 0 && (
+                      <span className="text-[9px] tracking-wider text-[#333]">{c.appt_count} visita{c.appt_count !== 1 ? 's' : ''}</span>
+                    )}
                   </div>
+                  <p className="text-[#555] text-xs mt-0.5 truncate">{c.phone}{c.email ? <span className="text-[#333]"> · {c.email}</span> : null}</p>
+                  {c.notes && <p className="text-[#333] text-[10px] mt-0.5 italic">{c.notes}</p>}
                 </div>
-                <button onClick={() => handleDelete(c.id)} disabled={deleting === c.id}
-                  className="text-[#333] hover:text-red-400 transition-colors disabled:opacity-40 p-1.5">
-                  {deleting === c.id ? <div className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={14} />}
-                </button>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              <div className="shrink-0">
+                {!c.trusted_id ? (
+                  <button onClick={() => promote(c)} disabled={promoting === c.phone_normalized}
+                    className="flex items-center gap-1 text-[9px] tracking-[0.1em] uppercase border border-[#C9A84C]/25 text-[#C9A84C]/60 px-2.5 py-1.5 hover:bg-[#C9A84C]/10 hover:text-[#C9A84C] transition-colors disabled:opacity-40">
+                    {promoting === c.phone_normalized ? <div className="w-3 h-3 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" /> : <Star size={9} />}
+                    Frecuente
+                  </button>
+                ) : (
+                  <button onClick={() => demote(c.trusted_id!)} disabled={deleting === c.trusted_id}
+                    className="text-[#333] hover:text-red-400 transition-colors disabled:opacity-40 p-1.5">
+                    {deleting === c.trusted_id ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={13} />}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1651,7 +1802,7 @@ export default function AdminPage() {
         {([
           { key: 'inicio',     label: 'Inicio',     icon: <LayoutDashboard size={12} /> },
           { key: 'agenda',     label: 'Agenda',     icon: <Calendar size={12} /> },
-          { key: 'frecuentes', label: 'Frecuentes', icon: <Star size={12} /> },
+          { key: 'clientes', label: 'Clientes', icon: <Users size={12} /> },
           { key: 'config',     label: 'Config',     icon: <Settings size={12} /> },
         ] as { key: Tab; label: string; icon: React.ReactNode }[]).map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
@@ -1666,7 +1817,7 @@ export default function AdminPage() {
       <div className="max-w-4xl mx-auto px-5 py-8">
         {tab === 'inicio'     && <InicioTab adminSecret={adminSecret} />}
         {tab === 'agenda'     && <AgendaTab adminSecret={adminSecret} />}
-        {tab === 'frecuentes' && <TrustedClientsTab adminSecret={adminSecret} />}
+        {tab === 'clientes'   && <ClientesTab adminSecret={adminSecret} />}
         {tab === 'config'     && <ConfigTab adminSecret={adminSecret} />}
       </div>
     </div>
