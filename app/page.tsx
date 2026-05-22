@@ -10,22 +10,22 @@ import type { Service } from '@/lib/types';
 
 const GALLERY = [
   {
-    src:    '/gallery/dp-wash.jpg',
-    alt:    'Tratamiento capilar',
-    pos:    'center 35%',
-    filter: 'brightness(0.92) contrast(1.06)',
+    src:    '/gallery/dp-galeria-1.svg',
+    alt:    'Estilo y color de cabello',
+    pos:    'center center',
+    filter: 'brightness(0.88) contrast(1.08) saturate(0.9)',
   },
   {
-    src:    '/gallery/dp-balayage.jpg',
-    alt:    'Balayage natural con ondas',
-    pos:    'center top',
-    filter: 'brightness(0.76) contrast(1.1) saturate(0.82)',
+    src:    '/gallery/dp-galeria-2.svg',
+    alt:    'Tratamiento capilar premium',
+    pos:    'center center',
+    filter: 'brightness(0.82) contrast(1.1) saturate(0.85)',
   },
   {
-    src:    '/gallery/dp-texture.jpg',
-    alt:    'Mechas y textura sedosa',
-    pos:    'center 28%',
-    filter: 'brightness(0.72) contrast(1.12) saturate(0.80)',
+    src:    '/gallery/dp-galeria-3.svg',
+    alt:    'Resultado final en salón',
+    pos:    'center center',
+    filter: 'brightness(0.85) contrast(1.08) saturate(0.88)',
   },
 ];
 
@@ -141,6 +141,7 @@ export default function Home() {
                 src={photo.src}
                 alt={photo.alt}
                 fill
+                unoptimized
                 className="object-cover transition-transform duration-700 hover:scale-[1.04]"
                 style={{ objectPosition: photo.pos, filter: photo.filter }}
               />
