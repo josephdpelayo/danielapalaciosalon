@@ -9,10 +9,24 @@ import { MOCK_SERVICES } from '@/lib/mock-data';
 import type { Service } from '@/lib/types';
 
 const GALLERY = [
-  { src: '/gallery/dp-red.jpg',   alt: 'Color rojo intenso' },
-  { src: '/gallery/dp-waves.jpg', alt: 'Ondas naturales' },
-  { src: '/gallery/dp-sign.jpg',  alt: 'Daniela Palacio Hair Room' },
-  { src: '/gallery/dp-back.jpg',  alt: 'Cabello liso sedoso' },
+  {
+    src:    '/gallery/dp-wash.jpg',
+    alt:    'Tratamiento capilar',
+    pos:    'center 35%',
+    filter: 'brightness(0.92) contrast(1.06)',
+  },
+  {
+    src:    '/gallery/dp-balayage.jpg',
+    alt:    'Balayage natural con ondas',
+    pos:    'center top',
+    filter: 'brightness(0.76) contrast(1.1) saturate(0.82)',
+  },
+  {
+    src:    '/gallery/dp-texture.jpg',
+    alt:    'Mechas y textura sedosa',
+    pos:    'center 28%',
+    filter: 'brightness(0.72) contrast(1.12) saturate(0.80)',
+  },
 ];
 
 const HOURS = [
@@ -115,20 +129,20 @@ export default function Home() {
       </section>
 
       {/* ── PHOTO STRIP ── */}
-      <section className="overflow-x-auto scrollbar-none" style={{ paddingBottom: '0' }}>
-        <div className="flex gap-1 min-w-max md:grid md:grid-cols-4 md:min-w-0">
+      <section className="overflow-x-auto scrollbar-none">
+        <div className="flex gap-px min-w-max md:grid md:grid-cols-3 md:min-w-0">
           {GALLERY.map((photo) => (
             <div
               key={photo.src}
               className="relative shrink-0 overflow-hidden"
-              style={{ width: '72vw', maxWidth: '320px', aspectRatio: '3/4' }}
+              style={{ width: '78vw', maxWidth: '420px', aspectRatio: '2/3' }}
             >
               <Image
                 src={photo.src}
                 alt={photo.alt}
                 fill
-                className="object-cover transition-transform duration-700 hover:scale-105"
-                style={{ objectPosition: 'center top', filter: 'brightness(0.9)' }}
+                className="object-cover transition-transform duration-700 hover:scale-[1.04]"
+                style={{ objectPosition: photo.pos, filter: photo.filter }}
               />
             </div>
           ))}
