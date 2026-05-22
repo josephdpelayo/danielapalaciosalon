@@ -311,8 +311,8 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                         <Check size={10} /> Confirmar
                       </button>
                       <button onClick={() => updateStatus(apt.id, 'cancelled')} disabled={updating === apt.id}
-                        className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-white/8 text-[#444] px-3 py-1.5 hover:border-red-800 hover:text-red-400 transition-colors disabled:opacity-40">
-                        <X size={10} /> Cancelar
+                        className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-red-900/60 text-red-400 px-3 py-1.5 hover:bg-red-950/30 transition-colors disabled:opacity-40">
+                        <X size={10} /> No aceptar
                       </button>
                     </div>
                   </div>
@@ -715,8 +715,8 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                                 <Check size={10} /> Confirmar
                               </button>
                               <button onClick={() => updateStatus(apt.id, 'cancelled')} disabled={updating === apt.id}
-                                className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-white/8 text-[#444] px-2.5 py-1.5 hover:border-red-800 hover:text-red-400 transition-colors disabled:opacity-40">
-                                <X size={10} /> Cancelar
+                                className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-red-900/60 text-red-400 px-2.5 py-1.5 hover:bg-red-950/30 transition-colors disabled:opacity-40">
+                                <X size={10} /> No aceptar
                               </button>
                             </div>
                           )}
@@ -1565,16 +1565,54 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
   );
 }
 
+// ── Push helpers ──────────────────────────────────────────────────
+function urlBase64ToUint8Array(b64: string): Uint8Array {
+  const padding = '='.repeat((4 - (b64.length % 4)) % 4);
+  const base64  = (b64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw     = atob(base64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+async function registerPush(secret: string): Promise<boolean> {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+  if (Notification.permission === 'denied') return false;
+  const reg  = await navigator.serviceWorker.register('/sw.js');
+  const perm = Notification.permission === 'granted'
+    ? 'granted'
+    : await Notification.requestPermission();
+  if (perm !== 'granted') return false;
+  const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  if (!vapidKey) return false;
+  const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer });
+  await fetch('/api/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+    body: JSON.stringify(sub),
+  });
+  return true;
+}
+
 // ── Main ──────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [authed, setAuthed]           = useState(false);
   const [adminSecret, setAdminSecret] = useState('');
   const [tab, setTab]                 = useState<Tab>('inicio');
+  const [pushEnabled, setPushEnabled] = useState(false);
 
   useEffect(() => {
     const saved = sessionStorage.getItem('dp_admin_secret');
     if (saved) { setAuthed(true); setAdminSecret(saved); }
   }, []);
+
+  useEffect(() => {
+    if (!authed || !adminSecret) return;
+    // Check if already subscribed
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.register('/sw.js').then((reg) =>
+        reg.pushManager.getSubscription().then((sub) => { if (sub) setPushEnabled(true); })
+      ).catch(() => {});
+    }
+  }, [authed, adminSecret]);
 
   if (!authed) return <AuthScreen onAuth={(pass) => {
     sessionStorage.setItem('dp_admin_secret', pass);
@@ -1589,12 +1627,21 @@ export default function AdminPage() {
           <span className="hidden sm:inline text-xs tracking-wider uppercase">Sitio</span>
         </Link>
         <span className="font-[family-name:var(--font-display)] text-xs tracking-[0.3em] uppercase text-[#C9A84C]">Admin</span>
-        <button
-          onClick={() => { sessionStorage.removeItem('dp_admin_secret'); setAuthed(false); setAdminSecret(''); }}
-          className="text-[#444] hover:text-red-400 transition-colors text-[9px] tracking-[0.15em] uppercase border border-white/8 px-2.5 py-1.5 hover:border-red-900"
-        >
-          Salir
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => registerPush(adminSecret).then(setPushEnabled).catch(() => {})}
+            title={pushEnabled ? 'Notificaciones activas' : 'Activar notificaciones'}
+            className={`transition-colors p-1 ${pushEnabled ? 'text-[#C9A84C]' : 'text-[#333] hover:text-[#777]'}`}
+          >
+            <Bell size={15} />
+          </button>
+          <button
+            onClick={() => { sessionStorage.removeItem('dp_admin_secret'); setAuthed(false); setAdminSecret(''); }}
+            className="text-[#444] hover:text-red-400 transition-colors text-[9px] tracking-[0.15em] uppercase border border-white/8 px-2.5 py-1.5 hover:border-red-900"
+          >
+            Salir
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}

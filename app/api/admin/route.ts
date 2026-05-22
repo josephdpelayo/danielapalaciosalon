@@ -23,6 +23,18 @@ export async function PATCH(req: NextRequest) {
       .select()
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    if (status === 'cancelled') {
+      import('@/lib/push').then(({ sendAdminPush }) =>
+        sendAdminPush({
+          title: '❌ Cita cancelada',
+          body: `${data.client_name} · ${data.appointment_date} ${data.start_time?.slice(0, 5) ?? ''}`,
+          url: '/admin',
+          tag: 'cancellation',
+        })
+      ).catch(() => {});
+    }
+
     return NextResponse.json(data);
   }
 

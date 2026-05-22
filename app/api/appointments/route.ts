@@ -48,6 +48,17 @@ export async function POST(req: NextRequest) {
     }).select().single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Notify admin (fire-and-forget)
+    import('@/lib/push').then(({ sendAdminPush }) =>
+      sendAdminPush({
+        title: '📅 Nueva reserva',
+        body: `${client_name} · ${appointment_date} a las ${start_time.slice(0, 5)}`,
+        url: '/admin',
+        tag: 'new-booking',
+      })
+    ).catch(() => {});
+
     return NextResponse.json(data);
   }
 
