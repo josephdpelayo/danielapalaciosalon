@@ -65,17 +65,29 @@ body::before {
   opacity: 0.4;
 }
 
-/* ── DayPicker overrides (v8 + v9 class names) ─────────────────── */
+/* ── DayPicker v10 overrides ────────────────────────────────────── */
+
+/* Use CSS custom properties for accent colors */
+.rdp-root {
+  --rdp-accent-color: #C9A84C;
+  --rdp-accent-background-color: transparent;
+  --rdp-today-color: #C9A84C;
+  --rdp-selected-border: 1.5px solid #C9A84C;
+  /* Keep button circular as v10 default, we override border-radius below */
+  --rdp-day_button-border-radius: 50%;
+}
+
+/* Legacy v8/v9 root class fallback */
 .rdp {
   --rdp-accent-color: #C9A84C;
   --rdp-background-color: transparent;
-  --rdp-accent-color-dark: #C9A84C;
-  --rdp-background-color-dark: transparent;
-  --rdp-today-color: #C9A84C;
   margin: 0;
 }
 
-/* Remove ALL focus rings from calendar buttons */
+/* Remove ALL focus outlines and box-shadows from every calendar button */
+.rdp-root button,
+.rdp-root button:focus,
+.rdp-root button:focus-visible,
 .rdp button,
 .rdp button:focus,
 .rdp button:focus-visible {
@@ -83,7 +95,7 @@ body::before {
   box-shadow: none !important;
 }
 
-/* Nav arrows — gold fill for v9 chevron SVG */
+/* Nav arrows — gold chevron */
 .rdp-chevron {
   fill: #C9A84C !important;
 }
@@ -96,40 +108,76 @@ body::before {
   background: transparent !important;
 }
 
-/* Today — gold text, no blue circle/border */
-.rdp-day_today,
-[data-today="true"] {
-  border: none !important;
+/* ── Day button base ─────────────────────────────────────────────
+   Strip every browser/library default hover/focus background from
+   the inner <button> so only our explicit styles apply.            */
+.rdp-day_button {
+  background: transparent !important;
+  border-color: transparent !important;
+  border-radius: 50% !important;
+}
+.rdp-day_button:hover,
+.rdp-day_button:focus,
+.rdp-day_button:focus-visible {
+  background: transparent !important;
+  border-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Non-selected, non-disabled day hover — subtle gold tint on the button */
+.rdp-day:not(.rdp-selected):not(.rdp-disabled) .rdp-day_button:hover {
+  background: rgba(201,168,76,0.08) !important;
+  border-color: transparent !important;
+}
+
+/* ── Selected day: circle outline only, NO fill ──────────────────
+   v10: the cell gets .rdp-selected; the inner button gets the border
+   via --rdp-selected-border (already set above).
+   We must make sure nothing adds a background to the cell or button. */
+.rdp-selected {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+.rdp-selected .rdp-day_button {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 1.5px solid #C9A84C !important;
+  border-radius: 50% !important;
+  color: #C9A84C !important;
+  font-weight: 700 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* v8/v9 selected fallback */
+.rdp-day_selected,
+.rdp-day_selected:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 1.5px solid #C9A84C !important;
+  border-radius: 50% !important;
+  color: #C9A84C !important;
+  font-weight: 700 !important;
   outline: none !important;
 }
-.rdp-day_today:not(.rdp-day_selected):not([aria-selected="true"]) {
+
+/* ── Today — gold text, no blue circle/border ────────────────────*/
+.rdp-today:not(.rdp-selected) .rdp-day_button,
+.rdp-day_today:not(.rdp-day_selected) {
   color: #C9A84C !important;
   font-weight: 600 !important;
   background: transparent !important;
-}
-
-/* Selected — flat gold square, no radius, no ring */
-.rdp-day_selected,
-.rdp-day_selected:hover,
-[aria-selected="true"] {
-  background-color: #C9A84C !important;
-  color: #000 !important;
-  font-weight: 700 !important;
-  border-radius: 0 !important;
-  outline: none !important;
-  border: none !important;
-}
-
-/* Hover */
-.rdp-day:not(.rdp-day_disabled):not(.rdp-day_selected):not([aria-selected="true"]):hover {
-  background-color: rgba(201,168,76,0.1) !important;
-  border-radius: 0 !important;
+  border-color: transparent !important;
 }
 
 /* Disabled */
-.rdp-day_disabled { opacity: 0.25 !important; }
+.rdp-disabled,
+.rdp-day_disabled {
+  opacity: 0.25 !important;
+}
 
-/* Caption / month label — light weight, no bold */
+/* ── Caption / month label ───────────────────────────────────────*/
 .rdp-caption_label,
 .rdp-month_caption,
 .rdp-caption_label span {
@@ -141,7 +189,7 @@ body::before {
   font-family: var(--font-display, inherit) !important;
 }
 
-/* Weekday headers */
+/* ── Weekday headers ─────────────────────────────────────────────*/
 .rdp-weekday,
 .rdp-head_cell {
   color: #444 !important;
@@ -151,8 +199,8 @@ body::before {
   font-weight: 400 !important;
 }
 
-/* Day cells — consistent font */
+/* ── Day cells ───────────────────────────────────────────────────*/
 .rdp-day {
-  border-radius: 0 !important;
   font-family: var(--font-body, inherit) !important;
+  background: transparent !important;
 }

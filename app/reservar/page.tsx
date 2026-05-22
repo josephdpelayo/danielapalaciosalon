@@ -429,7 +429,7 @@ function BookingContent() {
                 startMonth={startOfToday()}
                 endMonth={addDays(startOfToday(), 60)}
                 modifiersStyles={{
-                  selected: { backgroundColor: 'transparent', color: '#C9A84C', fontWeight: '700', borderRadius: '50%', border: '1.5px solid #C9A84C', outline: 'none', boxShadow: 'none' },
+                  selected: { backgroundColor: 'transparent', color: '#C9A84C', fontWeight: '700', outline: 'none', boxShadow: 'none' },
                   today: { color: '#C9A84C', fontWeight: '600' },
                 }}
                 styles={{

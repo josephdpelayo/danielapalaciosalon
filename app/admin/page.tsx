@@ -610,8 +610,8 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                 medio:    { color: '#fb923c' },
                 lleno:    { color: '#f87171' },
                 blocked:  { color: '#555', textDecoration: 'line-through' },
-                selected: { backgroundColor: '#C9A84C', color: '#000000', fontWeight: '700', borderRadius: '0', outline: 'none', border: 'none', boxShadow: 'none' },
-                today:    { color: '#C9A84C', fontWeight: '600', outline: 'none', border: 'none', boxShadow: 'none' },
+                selected: { backgroundColor: 'transparent', color: '#C9A84C', fontWeight: '700', outline: 'none', boxShadow: 'none' },
+                today:    { color: '#C9A84C', fontWeight: '600', outline: 'none', boxShadow: 'none' },
               }}
               styles={{
                 day:           { color: '#F0EDE8', borderRadius: '0', minWidth: '44px', minHeight: '44px', fontFamily: 'var(--font-body)' },
@@ -1570,7 +1570,9 @@ function urlBase64ToUint8Array(b64: string): Uint8Array {
   const padding = '='.repeat((4 - (b64.length % 4)) % 4);
   const base64  = (b64 + padding).replace(/-/g, '+').replace(/_/g, '/');
   const raw     = atob(base64);
-  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return bytes;
 }
 
 async function registerPush(secret: string): Promise<boolean> {
@@ -1583,7 +1585,7 @@ async function registerPush(secret: string): Promise<boolean> {
   if (perm !== 'granted') return false;
   const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!vapidKey) return false;
-  const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer });
+  const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidKey) as unknown as Uint8Array<ArrayBuffer> });
   await fetch('/api/push/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
