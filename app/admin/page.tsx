@@ -391,7 +391,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
   const [blocks, setBlocks]             = useState<BlockedSlot[]>([]);
   const [loading, setLoading]           = useState(false);
   const [updating, setUpdating]         = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   // Block form
   const [saving, setSaving]         = useState(false);
@@ -610,7 +610,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                 medio:    { color: '#fb923c' },
                 lleno:    { color: '#f87171' },
                 blocked:  { color: '#555', textDecoration: 'line-through' },
-                selected: { backgroundColor: 'transparent', color: '#C9A84C', fontWeight: '700', outline: 'none', boxShadow: 'none' },
+                selected: { backgroundColor: 'transparent', color: '#F0EDE8', fontWeight: '700', outline: 'none', boxShadow: 'none' },
                 today:    { color: '#C9A84C', fontWeight: '600', outline: 'none', boxShadow: 'none' },
               }}
               styles={{

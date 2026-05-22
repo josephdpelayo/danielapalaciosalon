@@ -72,7 +72,7 @@ body::before {
   --rdp-accent-color: #C9A84C;
   --rdp-accent-background-color: transparent;
   --rdp-today-color: #C9A84C;
-  --rdp-selected-border: 1.5px solid #C9A84C;
+  --rdp-selected-border: 1.5px solid #F0EDE8;
   /* Keep button circular as v10 default, we override border-radius below */
   --rdp-day_button-border-radius: 50%;
 }
@@ -142,9 +142,9 @@ body::before {
 .rdp-selected .rdp-day_button {
   background: transparent !important;
   background-color: transparent !important;
-  border: 1.5px solid #C9A84C !important;
+  border: 1.5px solid #F0EDE8 !important;
   border-radius: 50% !important;
-  color: #C9A84C !important;
+  color: #F0EDE8 !important;
   font-weight: 700 !important;
   outline: none !important;
   box-shadow: none !important;
@@ -155,9 +155,9 @@ body::before {
 .rdp-day_selected:hover {
   background: transparent !important;
   background-color: transparent !important;
-  border: 1.5px solid #C9A84C !important;
+  border: 1.5px solid #F0EDE8 !important;
   border-radius: 50% !important;
-  color: #C9A84C !important;
+  color: #F0EDE8 !important;
   font-weight: 700 !important;
   outline: none !important;
 }
