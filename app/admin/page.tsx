@@ -169,13 +169,14 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   const [updating, setUpdating]         = useState<string | null>(null);
   const [msgConf, setMsgConf]           = useState(DEFAULT_SETTINGS.msg_confirmation);
   const [msgReminder, setMsgReminder]   = useState(DEFAULT_SETTINGS.msg_reminder_24h);
+  const [search, setSearch]             = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const [apptRes, settingsRes] = await Promise.all([
-        fetch('/api/appointments'),
-        fetch('/api/settings'),
+        fetch('/api/appointments', { headers: { 'x-admin-secret': adminSecret } }),
+        fetch('/api/settings', { headers: { 'x-admin-secret': adminSecret } }),
       ]);
       const apptData     = await apptRes.json();
       const settingsData = await settingsRes.json();
@@ -185,7 +186,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
       setMsgReminder(s.msg_reminder_24h);
     } catch { /* keep */ }
     finally { setLoading(false); }
-  }, []);
+  }, [adminSecret]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -220,6 +221,11 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   const todayAppts    = appointments.filter((a) => a.appointment_date === todayKey    && a.status !== 'cancelled');
   const tomorrowAppts = appointments.filter((a) => a.appointment_date === tomorrowKey && a.status === 'confirmed');
 
+  const monthKey = format(startOfToday(), 'yyyy-MM');
+  const monthRevenue = appointments
+    .filter((a) => a.status === 'confirmed' && a.appointment_date.startsWith(monthKey))
+    .reduce((sum, a) => sum + ((a as unknown as Record<string, number>).deposit_amount ?? 0), 0);
+
   if (loading) return (
     <div className="flex items-center justify-center py-24">
       <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
@@ -230,11 +236,12 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
     <div className="space-y-10">
 
       {/* ── Stats ── */}
-      <div className="grid grid-cols-3 gap-px border border-white/8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px border border-white/8">
         {[
           { label: 'Hoy',          val: todayAppts.length,                                      color: '#F0EDE8' },
           { label: 'Sin confirmar', val: needsAction.length,                                    color: needsAction.length > 0 ? '#fb923c' : '#444' },
           { label: 'Total activas', val: appointments.filter((a) => a.status !== 'cancelled').length, color: '#C9A84C' },
+          { label: 'Este mes', val: `$${monthRevenue.toLocaleString('es-MX')}`, color: '#C9A84C' },
         ].map((s) => (
           <div key={s.label} className="p-4 text-center" style={{ background: '#0A0A0A' }}>
             <div className="font-[family-name:var(--font-display)] text-3xl font-light mb-1" style={{ color: s.color }}>{s.val}</div>
@@ -325,38 +332,53 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
           </button>
         </div>
 
-        {recent.length === 0 ? (
-          <div className="border border-white/5 py-14 text-center">
-            <p className="text-[#444] text-sm">No hay reservas registradas.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-white/5">
-            {recent.map((apt) => {
-              const color = serviceColor(apt.dp_services?.name);
-              const dtStr = isToday(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Hoy'
-                : isTomorrow(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Mañana'
-                : format(parseISO(apt.appointment_date + 'T12:00:00'), "d MMM", { locale: es });
-              const ago = formatDistanceToNow(parseISO(apt.created_at), { locale: es, addSuffix: true });
-              return (
-                <div key={apt.id} className="py-3.5 flex items-start gap-3"
-                  style={{ borderLeft: `2px solid ${color}40`, paddingLeft: '12px' }}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <span className="text-[#F0EDE8] text-sm">{apt.client_name}</span>
-                      <StatusBadge status={apt.status} />
+        <input
+          type="text" value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar clienta..."
+          className="w-full bg-transparent border border-white/8 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]/40 placeholder:text-white/20 mb-4"
+          style={{ fontSize: '16px' }}
+        />
+
+        {(() => {
+          const filteredRecent = search.trim()
+            ? recent.filter((a) => a.client_name.toLowerCase().includes(search.toLowerCase()))
+            : recent;
+          return filteredRecent.length === 0 ? (
+            <div className="border border-white/5 py-14 text-center">
+              <p className="text-[#444] text-sm">
+                {search.trim() ? 'Sin resultados para esta búsqueda.' : 'No hay reservas registradas.'}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {filteredRecent.map((apt) => {
+                const color = serviceColor(apt.dp_services?.name);
+                const dtStr = isToday(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Hoy'
+                  : isTomorrow(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Mañana'
+                  : format(parseISO(apt.appointment_date + 'T12:00:00'), "d MMM", { locale: es });
+                const ago = formatDistanceToNow(parseISO(apt.created_at), { locale: es, addSuffix: true });
+                return (
+                  <div key={apt.id} className="py-3.5 flex items-start gap-3"
+                    style={{ borderLeft: `2px solid ${color}40`, paddingLeft: '12px' }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span className="text-[#F0EDE8] text-sm">{apt.client_name}</span>
+                        <StatusBadge status={apt.status} />
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'}</span>
+                        <span className="text-[#333] text-xs">·</span>
+                        <span className="text-[#555] text-xs">{dtStr} {formatTime(apt.start_time)}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'}</span>
-                      <span className="text-[#333] text-xs">·</span>
-                      <span className="text-[#555] text-xs">{dtStr} {formatTime(apt.start_time)}</span>
-                    </div>
+                    <span className="text-[#333] text-[10px] shrink-0 mt-0.5">{ago}</span>
                   </div>
-                  <span className="text-[#333] text-[10px] shrink-0 mt-0.5">{ago}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
     </div>
@@ -386,9 +408,9 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
     setLoading(true);
     try {
       const [apptRes, blockRes, settingsRes] = await Promise.all([
-        fetch('/api/appointments'),
-        fetch('/api/blocked-slots'),
-        fetch('/api/settings'),
+        fetch('/api/appointments', { headers: { 'x-admin-secret': adminSecret } }),
+        fetch('/api/blocked-slots', { headers: { 'x-admin-secret': adminSecret } }),
+        fetch('/api/settings', { headers: { 'x-admin-secret': adminSecret } }),
       ]);
       const apptData     = await apptRes.json();
       const blockData    = await blockRes.json();
@@ -399,7 +421,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
       setMsgReminder(s.msg_reminder_24h);
     } catch { /* keep */ }
     finally { setLoading(false); }
-  }, []);
+  }, [adminSecret]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -592,7 +614,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                 today:    { color: '#C9A84C', fontWeight: '600', outline: 'none', border: 'none', boxShadow: 'none' },
               }}
               styles={{
-                day:           { color: '#F0EDE8', borderRadius: '0', minWidth: '36px', minHeight: '36px', fontFamily: 'var(--font-body)' },
+                day:           { color: '#F0EDE8', borderRadius: '0', minWidth: '44px', minHeight: '44px', fontFamily: 'var(--font-body)' },
                 caption_label: { color: '#F0EDE8', fontFamily: 'var(--font-display)', letterSpacing: '0.08em', fontSize: '0.75rem', fontWeight: '300', textTransform: 'uppercase' },
                 weekday:       { color: '#3a3a3a', textTransform: 'uppercase', fontSize: '0.5rem', letterSpacing: '0.15em', fontWeight: '400' },
                 root:          { background: 'transparent', padding: '12px' },
@@ -966,6 +988,8 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
   const [saving, setSaving]       = useState(false);
   const [deleting, setDeleting]   = useState<string | null>(null);
   const [form, setForm]           = useState<FormState>(EMPTY_FORM);
+  const [svcError, setSvcError]   = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -986,10 +1010,11 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
   const cancel = () => { setEditingId(null); setShowAdd(false); setForm(EMPTY_FORM); };
 
   const handleSave = useCallback(async (id?: string) => {
+    setSvcError('');
     const dur = parseInt(form.duration_minutes);
     const act = parseInt(form.active_minutes);
     if (!form.name.trim() || !form.price || !dur || !act) return;
-    if (act > dur) { alert('El tiempo activo no puede superar la duración total'); return; }
+    if (act > dur) { setSvcError('El tiempo activo no puede superar la duración total'); return; }
     setSaving(true);
     try {
       const payload = { name: form.name.trim(), description: form.description.trim() || null,
@@ -1000,13 +1025,14 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
         body: JSON.stringify(id ? { id, ...payload } : payload),
       });
       if (res.ok) { await load(); cancel(); }
-      else { const e = await res.json(); alert(e.error ?? 'Error al guardar'); }
+      else { const e = await res.json(); setSvcError(e.error ?? 'Error al guardar'); }
     } finally { setSaving(false); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, load]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Eliminar este servicio? Los clientes ya no podrán seleccionarlo.')) return;
+    if (confirmDeleteId !== id) { setConfirmDeleteId(id); return; }
+    setConfirmDeleteId(null);
     setDeleting(id);
     try {
       await fetch('/api/services', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
@@ -1034,6 +1060,10 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
           <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-2">Nuevo servicio</p>
           <ServiceForm form={form} setForm={setForm} onSave={handleSave} onCancel={cancel} saving={saving} />
         </div>
+      )}
+
+      {svcError && (
+        <p className="text-red-400 text-xs mb-4">{svcError}</p>
       )}
 
       {loading ? (
@@ -1081,10 +1111,23 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
                         className="p-2 text-[#444] hover:text-[#C9A84C] transition-colors">
                         <Pencil size={13} />
                       </button>
-                      <button onClick={() => handleDelete(svc.id)} disabled={deleting === svc.id}
-                        className="p-2 text-[#2a2a2a] hover:text-red-400 transition-colors disabled:opacity-40">
-                        {deleting === svc.id ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={13} />}
-                      </button>
+                      {confirmDeleteId === svc.id ? (
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleDelete(svc.id)} disabled={deleting === svc.id}
+                            className="text-[9px] tracking-wider uppercase border border-red-800 text-red-400 px-2 py-1 hover:bg-red-900/20 transition-colors">
+                            ¿Segura?
+                          </button>
+                          <button onClick={() => setConfirmDeleteId(null)}
+                            className="text-[9px] tracking-wider uppercase border border-white/8 text-[#444] px-2 py-1 hover:text-white transition-colors">
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={() => handleDelete(svc.id)} disabled={deleting === svc.id}
+                          className="p-2 text-[#2a2a2a] hover:text-red-400 transition-colors disabled:opacity-40">
+                          {deleting === svc.id ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={13} />}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1114,12 +1157,12 @@ function TrustedClientsTab({ adminSecret }: { adminSecret: string }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/trusted-clients');
+      const res = await fetch('/api/trusted-clients', { headers: { 'x-admin-secret': adminSecret } });
       const data = await res.json();
       setClients(data.clients ?? []);
     } catch { setClients([]); }
     finally { setLoading(false); }
-  }, []);
+  }, [adminSecret]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -1288,7 +1331,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [sRes, schRes] = await Promise.all([fetch('/api/settings'), fetch('/api/schedule')]);
+      const [sRes, schRes] = await Promise.all([fetch('/api/settings', { headers: { 'x-admin-secret': adminSecret } }), fetch('/api/schedule', { headers: { 'x-admin-secret': adminSecret } })]);
       const sData   = await sRes.json();
       const schData = await schRes.json();
       const merged = { ...DEFAULT_SETTINGS, ...sData.settings };
@@ -1298,7 +1341,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
       setMessages({ msg_confirmation: merged.msg_confirmation, msg_reminder_24h: merged.msg_reminder_24h });
       setSchedule(schData.schedule ?? []);
     } finally { setLoading(false); }
-  }, []);
+  }, [adminSecret]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -1492,7 +1535,15 @@ export default function AdminPage() {
   const [adminSecret, setAdminSecret] = useState('');
   const [tab, setTab]                 = useState<Tab>('inicio');
 
-  if (!authed) return <AuthScreen onAuth={(password) => { setAuthed(true); setAdminSecret(password); }} />;
+  useEffect(() => {
+    const saved = sessionStorage.getItem('dp_admin_secret');
+    if (saved) { setAuthed(true); setAdminSecret(saved); }
+  }, []);
+
+  if (!authed) return <AuthScreen onAuth={(pass) => {
+    sessionStorage.setItem('dp_admin_secret', pass);
+    setAuthed(true); setAdminSecret(pass);
+  }} />;
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-body)]" style={{ background: '#000' }}>
@@ -1502,7 +1553,12 @@ export default function AdminPage() {
           <span className="hidden sm:inline text-xs tracking-wider uppercase">Sitio</span>
         </Link>
         <span className="font-[family-name:var(--font-display)] text-xs tracking-[0.3em] uppercase text-[#C9A84C]">Admin</span>
-        <div className="w-10 sm:w-16" />
+        <button
+          onClick={() => { sessionStorage.removeItem('dp_admin_secret'); setAuthed(false); setAdminSecret(''); }}
+          className="text-[#444] hover:text-red-400 transition-colors text-[9px] tracking-[0.15em] uppercase border border-white/8 px-2.5 py-1.5 hover:border-red-900"
+        >
+          Salir
+        </button>
       </div>
 
       {/* Tabs */}
