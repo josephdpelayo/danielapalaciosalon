@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Jost } from "next/font/google";
+import { Josefin_Sans, Jost } from "next/font/google";
 import "./globals.css";
 import "react-day-picker/dist/style.css";
 
-const playfair = Playfair_Display({
+const josefinSans = Josefin_Sans({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["300", "400", "600", "700"],
 });
 
 const jost = Jost({
@@ -34,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${playfair.variable} ${jost.variable} h-full`}>
+    <html lang="es" className={`${josefinSans.variable} ${jost.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased">
         {children}
       </body>

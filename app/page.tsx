@@ -65,17 +65,17 @@ export default function Home() {
         className="min-h-screen relative flex flex-col justify-end px-5 pb-16 md:px-16 md:pb-28"
         style={{ paddingTop: '80px' }}
       >
-        {/* Background photo — very dark overlay */}
+        {/* Background — Daniela editorial portrait */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/gallery/hero-bg.jpg"
-            alt=""
+            src="/gallery/daniela-hero.jpg"
+            alt="Daniela Palacio"
             fill
             priority
             className="object-cover"
-            style={{ opacity: 0.25, objectPosition: 'center 60%' }}
+            style={{ objectPosition: 'center 18%', filter: 'brightness(0.42) contrast(1.12) saturate(0.85)' }}
           />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #000 40%, transparent 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #000 32%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0.52) 100%)' }} />
         </div>
         <div className="relative z-10">
         <p
@@ -95,7 +95,7 @@ export default function Home() {
 
         <p
           className="text-[13px] tracking-wide mb-12 max-w-xs"
-          style={{ color: '#555555', lineHeight: 1.7 }}
+          style={{ color: '#888888', lineHeight: 1.7 }}
         >
           Especialistas en color, cortes y tratamientos capilares de alta calidad.
         </p>
@@ -134,6 +134,11 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* Mobile scroll hint — only visible on small screens */}
+      <p className="md:hidden text-center text-[10px] tracking-[0.25em] uppercase py-3" style={{ color: '#2a2a2a' }}>
+        ← desliza →
+      </p>
 
       {/* ── SERVICES ── */}
       <section

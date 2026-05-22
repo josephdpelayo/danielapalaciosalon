@@ -41,7 +41,9 @@ function BookingContent() {
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [notes, setNotes] = useState('');
+  const [scheduleList, setScheduleList] = useState(MOCK_SCHEDULE);
   const [submitting, setSubmitting] = useState(false);
+  const [bookingError, setBookingError] = useState('');
   const [isTrusted, setIsTrusted] = useState(false);
   const [trustedName, setTrustedName] = useState<string | null>(null);
   const [checkingPhone, setCheckingPhone] = useState(false);
@@ -50,6 +52,10 @@ function BookingContent() {
     fetch('/api/services')
       .then((r) => r.json())
       .then((d) => { if (d.services?.length) setServices(d.services); })
+      .catch(() => {});
+    fetch('/api/schedule')
+      .then((r) => r.json())
+      .then((d) => { if (d.schedule?.length) setScheduleList(d.schedule); })
       .catch(() => {});
   }, []);
 
@@ -65,8 +71,8 @@ function BookingContent() {
     if (!selectedDate || !selectedService) { setSlots([]); return; }
     setLoadingSlots(true);
     const dow = getDay(selectedDate);
-    const schedule = MOCK_SCHEDULE.find((s) => s.day_of_week === dow);
-    if (!schedule || !schedule.is_active) { setSlots([]); setLoadingSlots(false); return; }
+    const daySchedule = scheduleList.find((s) => s.day_of_week === dow);
+    if (!daySchedule || !daySchedule.is_active) { setSlots([]); setLoadingSlots(false); return; }
 
     fetch(`/api/available-slots?date=${format(selectedDate, 'yyyy-MM-dd')}&service_id=${selectedService.id}&duration=${selectedService.duration_minutes}&active_minutes=${selectedService.active_minutes}`)
       .then((r) => r.json())
@@ -78,8 +84,8 @@ function BookingContent() {
   const isDisabledDay = (date: Date) => {
     if (isBefore(date, startOfToday())) return true;
     const dow = getDay(date);
-    const schedule = MOCK_SCHEDULE.find((s) => s.day_of_week === dow);
-    return !schedule?.is_active;
+    const daySchedule = scheduleList.find((s) => s.day_of_week === dow);
+    return !daySchedule?.is_active;
   };
 
   const checkTrustedPhone = async (phone: string) => {
@@ -98,6 +104,7 @@ function BookingContent() {
   const handlePay = async () => {
     if (!selectedService || !selectedDate || !selectedSlot) return;
     setSubmitting(true);
+    setBookingError('');
     try {
       // 1. Create appointment
       const apptRes = await fetch('/api/appointments', {
@@ -157,8 +164,13 @@ function BookingContent() {
         });
         window.location.href = `/reservar/pagar?${params}`;
       }
-    } catch {
-      alert('Hubo un error. Por favor intenta de nuevo o contáctanos por WhatsApp.');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '';
+      setBookingError(
+        msg.includes('disponible')
+          ? msg
+          : 'Hubo un error al procesar tu solicitud. Por favor intenta de nuevo o contáctanos por WhatsApp.'
+      );
       setSubmitting(false);
     }
   };
@@ -280,13 +292,10 @@ function BookingContent() {
                   </div>
                 </div>
                 {isTrusted && (
-                  <div className="mt-3 flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-[#C9A84C]/10 flex items-center justify-center shrink-0">
-                      <Check size={10} className="text-[#C9A84C]" />
+                  <div className="mt-2">
+                    <div className="w-5 h-5 rounded-full bg-[#C9A84C] flex items-center justify-center">
+                      <Check size={11} className="text-black" strokeWidth={2.5} />
                     </div>
-                    <span className="text-xs text-[#C9A84C] tracking-wide">
-                      ¡Hola{trustedName ? ` ${trustedName.split(' ')[0]}` : ''}! Como clienta frecuente no necesitas anticipo ✦
-                    </span>
                   </div>
                 )}
               </div>
@@ -419,7 +428,7 @@ function BookingContent() {
                 startMonth={startOfToday()}
                 endMonth={addDays(startOfToday(), 60)}
                 modifiersStyles={{
-                  selected: { backgroundColor: '#C9A84C', color: '#000', fontWeight: '600', borderRadius: '0' },
+                  selected: { backgroundColor: 'transparent', color: '#C9A84C', fontWeight: '700', borderRadius: '50%', border: '1.5px solid #C9A84C', outline: 'none', boxShadow: 'none' },
                   today: { color: '#C9A84C', fontWeight: '600' },
                 }}
                 styles={{
@@ -588,10 +597,20 @@ function BookingContent() {
             </div>
 
             {!isTrusted && (
-              <p className="text-[#444] text-[10px] tracking-[0.1em] uppercase text-center mb-8 leading-relaxed">
+              <p className="text-[#444] text-[10px] tracking-[0.1em] uppercase text-center mb-4 leading-relaxed">
                 El anticipo confirma tu cita automáticamente.<br />
                 Se descuenta del total el día de tu visita.
               </p>
+            )}
+
+            <p className="text-[#333] text-[10px] tracking-[0.08em] text-center mb-8 leading-relaxed">
+              Política de cancelación: notifica con al menos 24 h de anticipación para reagendar sin cargo.
+            </p>
+
+            {bookingError && (
+              <div className="mb-5 px-4 py-3 border border-red-900/40 bg-red-950/20">
+                <p className="text-red-400 text-xs leading-relaxed">{bookingError}</p>
+              </div>
             )}
 
             <button

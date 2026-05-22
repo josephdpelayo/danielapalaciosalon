@@ -29,7 +29,20 @@ function ExitoContent() {
       className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
       style={{ background: '#000000' }}
     >
-      {/* Thin gold circle with checkmark */}
+      <style>{`
+        @keyframes draw-circle {
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes draw-check {
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes fade-up {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+
+      {/* Thin gold circle with checkmark — animated */}
       <div className="mb-10">
         <svg
           width="96"
@@ -38,7 +51,13 @@ function ExitoContent() {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <circle cx="48" cy="48" r="46" stroke="#C9A84C" strokeWidth="1.5" />
+          <circle
+            cx="48" cy="48" r="46"
+            stroke="#C9A84C" strokeWidth="1.5"
+            strokeDasharray="289"
+            strokeDashoffset="289"
+            style={{ animation: 'draw-circle 0.9s cubic-bezier(0.4,0,0.2,1) 0.15s forwards' }}
+          />
           <polyline
             points="30,50 43,63 66,36"
             stroke="#C9A84C"
@@ -46,6 +65,8 @@ function ExitoContent() {
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
+            strokeDasharray="56"
+            style={{ strokeDashoffset: 56, animation: 'draw-check 0.45s ease-out 0.85s forwards' }}
           />
         </svg>
       </div>
@@ -53,14 +74,14 @@ function ExitoContent() {
       {/* Headline */}
       <h1
         className="font-[family-name:var(--font-display)] text-3xl font-light text-[#F0EDE8] mb-5 leading-tight"
-        style={{ letterSpacing: '-0.01em' }}
+        style={{ letterSpacing: '-0.01em', opacity: 0, animation: 'fade-up 0.6s ease-out 1.05s forwards' }}
       >
         {headline}
       </h1>
 
       {/* Service + date/time if available */}
       {(service || date || time) && (
-        <div className="mb-6 space-y-1">
+        <div className="mb-6 space-y-1" style={{ opacity: 0, animation: 'fade-up 0.6s ease-out 1.2s forwards' }}>
           {service && (
             <p className="text-[#C9A84C] text-xs tracking-[0.2em] uppercase">
               {service}
@@ -75,36 +96,35 @@ function ExitoContent() {
       )}
 
       {/* Subtext */}
-      <p className="text-[#555555] text-sm max-w-xs leading-relaxed mb-4">
+      <p className="text-[#555555] text-sm max-w-xs leading-relaxed mb-3"
+        style={{ opacity: 0, animation: 'fade-up 0.6s ease-out 1.3s forwards' }}>
         {subtext}
       </p>
 
+      {/* WA confirmation note */}
+      {!isTrusted && (
+        <p className="text-[#C9A84C]/70 text-[11px] tracking-[0.12em] uppercase max-w-xs leading-relaxed mb-2"
+          style={{ opacity: 0, animation: 'fade-up 0.6s ease-out 1.38s forwards' }}>
+          Daniela te confirmará tu cita por WhatsApp en breve.
+        </p>
+      )}
+
       {/* Reference */}
       {id && (
-        <p className="text-[#2a2a2a] text-[11px] tracking-[0.15em] uppercase mb-10">
+        <p className="text-[#2a2a2a] text-[11px] tracking-[0.15em] uppercase mb-10"
+          style={{ opacity: 0, animation: 'fade-up 0.6s ease-out 1.4s forwards' }}>
           Ref. #{id.toString().slice(-8).toUpperCase()}
         </p>
       )}
       {!id && <div className="mb-10" />}
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
-        <a
-          href="https://wa.me/526699445566"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 py-3 text-[11px] tracking-[0.2em] uppercase font-semibold transition-opacity hover:opacity-80"
-          style={{ background: '#C9A84C', color: '#000000' }}
-        >
-          WhatsApp
-        </a>
+      <div className="w-full max-w-xs"
+        style={{ opacity: 0, animation: 'fade-up 0.6s ease-out 1.5s forwards' }}>
         <Link
           href="/"
-          className="flex-1 py-3 text-[11px] tracking-[0.2em] uppercase transition-colors hover:text-[#C9A84C]"
-          style={{
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: '#555555',
-          }}
+          className="block w-full py-3 text-[11px] tracking-[0.2em] uppercase text-center transition-colors hover:text-[#C9A84C]"
+          style={{ border: '1px solid rgba(255,255,255,0.1)', color: '#555555' }}
         >
           Volver al inicio
         </Link>
