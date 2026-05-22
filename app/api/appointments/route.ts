@@ -66,6 +66,31 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ id: mockId, status: initialStatus });
 }
 
+export async function DELETE(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
+  const { phone } = await req.json();
+  if (!phone) return NextResponse.json({ error: 'Missing phone' }, { status: 400 });
+
+  const normalized = phone.replace(/\D/g, '').slice(-10);
+  if (!(await import('@/lib/supabase')).supabaseReady) return NextResponse.json({ ok: true, deleted: 0 });
+
+  const { supabase } = await import('@/lib/supabase');
+  const { data: appts } = await supabase.from('dp_appointments').select('id, client_phone');
+  if (!appts) return NextResponse.json({ ok: true, deleted: 0 });
+
+  const toDelete = appts
+    .filter(a => a.client_phone.replace(/\D/g, '').slice(-10) === normalized)
+    .map(a => a.id);
+
+  if (toDelete.length > 0) {
+    await supabase.from('dp_appointments').delete().in('id', toDelete);
+  }
+
+  return NextResponse.json({ ok: true, deleted: toDelete.length });
+}
+
 export async function GET(req: NextRequest) {
   const authErr = requireAdmin(req);
   if (authErr) return authErr;

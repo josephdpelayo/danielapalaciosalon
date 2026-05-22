@@ -46,6 +46,32 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(data);
 }
 
+export async function PUT(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
+  const body = await req.json();
+  const { id, name, phone, email, notes } = body;
+  if (!id || !name || !phone) return NextResponse.json({ error: 'id, nombre y teléfono requeridos' }, { status: 400 });
+
+  const normalized = normalizePhone(phone);
+
+  if (!(await import('@/lib/supabase')).supabaseReady) {
+    return NextResponse.json({ id, name, phone, phone_normalized: normalized, email: email || null, notes: notes || null });
+  }
+
+  const { supabase } = await import('@/lib/supabase');
+  const { data, error } = await supabase
+    .from('dp_trusted_clients')
+    .update({ name, phone, phone_normalized: normalized, email: email || null, notes: notes || null })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
+}
+
 export async function DELETE(req: NextRequest) {
   const authErr = requireAdmin(req);
   if (authErr) return authErr;

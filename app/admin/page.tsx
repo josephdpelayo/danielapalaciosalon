@@ -9,7 +9,7 @@ import {
 import { es } from 'date-fns/locale';
 import { DayPicker } from 'react-day-picker';
 import {
-  ArrowLeft, Check, X, Scissors, Phone, RefreshCw,
+  ArrowLeft, ArrowRight, Check, X, Scissors, Phone, RefreshCw,
   Trash2, CalendarOff, Star, UserPlus, Calendar, Plus, Pencil, LayoutDashboard,
   Settings, Copy, Check as CheckIcon, MessageCircle, Bell, Users,
 } from 'lucide-react';
@@ -170,6 +170,9 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   const [msgConf, setMsgConf]           = useState(DEFAULT_SETTINGS.msg_confirmation);
   const [msgReminder, setMsgReminder]   = useState(DEFAULT_SETTINGS.msg_reminder_24h);
   const [search, setSearch]             = useState('');
+  const [openProximas, setOpenProximas]       = useState(true);
+  const [openRecordatorios, setOpenRecordatorios] = useState(true);
+  const [openBitacora, setOpenBitacora]       = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -268,51 +271,69 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
 
       {/* ── Próximas citas ── */}
       {Object.keys(upcomingByDate).length > 0 && (
-        <div>
-          <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-4">Próximas citas</p>
-          <div className="space-y-4">
-            {Object.keys(upcomingByDate).sort().map((date) => {
-              const dt = parseISO(date + 'T12:00:00');
-              const label = isTomorrow(dt) ? 'Mañana' : format(dt, "EEE d MMM", { locale: es });
-              return (
-                <div key={date}>
-                  <p className="text-[9px] tracking-[0.2em] uppercase text-[#C9A84C] mb-1 capitalize">{label} · {format(dt, "d 'de' MMMM", { locale: es })}</p>
-                  {upcomingByDate[date].map(apt => (
-                    <div key={apt.id} className="flex items-center justify-between py-2.5 border-b border-white/5"
-                      style={{ borderLeft: `2px solid ${serviceColor(apt.dp_services?.name)}50`, paddingLeft: '10px' }}>
-                      <div>
-                        <p className="text-[#F0EDE8] text-sm">{apt.client_name}</p>
-                        <p className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
+        <div className="border border-white/5">
+          <button
+            onClick={() => setOpenProximas(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
+          >
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#555]">
+              Próximas citas <span className="text-[#333]">· {upcoming.length}</span>
+            </span>
+            <ArrowRight size={12} className={`text-[#333] transition-transform duration-200 ${openProximas ? 'rotate-90' : ''}`} />
+          </button>
+          {openProximas && (
+            <div className="px-4 pb-4 space-y-4 border-t border-white/5 pt-4">
+              {Object.keys(upcomingByDate).sort().map((date) => {
+                const dt = parseISO(date + 'T12:00:00');
+                const label = isTomorrow(dt) ? 'Mañana' : format(dt, "EEE d MMM", { locale: es });
+                return (
+                  <div key={date}>
+                    <p className="text-[9px] tracking-[0.2em] uppercase text-[#C9A84C] mb-1 capitalize">{label} · {format(dt, "d 'de' MMMM", { locale: es })}</p>
+                    {upcomingByDate[date].map(apt => (
+                      <div key={apt.id} className="flex items-center justify-between py-2.5 border-b border-white/5"
+                        style={{ borderLeft: `2px solid ${serviceColor(apt.dp_services?.name)}50`, paddingLeft: '10px' }}>
+                        <div>
+                          <p className="text-[#F0EDE8] text-sm">{apt.client_name}</p>
+                          <p className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
+                        </div>
+                        <StatusBadge status={apt.status} />
                       </div>
-                      <StatusBadge status={apt.status} />
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
       {/* ── Recordatorios de mañana ── */}
       {tomorrowAppts.length > 0 && (
-        <div>
-          <p className="text-[10px] tracking-[0.3em] uppercase mb-4 flex items-center gap-2 text-[#C9A84C]">
-            <Bell size={11} /> Recordatorios de mañana · {tomorrowAppts.length}
-          </p>
-          <div className="space-y-2">
-            {tomorrowAppts.map((apt) => (
-              <div key={apt.id} className="flex items-center justify-between gap-3 py-3 border-b border-white/5"
-                style={{ borderLeft: `2px solid ${serviceColor(apt.dp_services?.name)}40`, paddingLeft: '12px' }}>
-                <div className="min-w-0">
-                  <p className="text-[#F0EDE8] text-sm">{apt.client_name}</p>
-                  <p className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
+        <div className="border border-white/5">
+          <button
+            onClick={() => setOpenRecordatorios(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
+          >
+            <span className="text-[10px] tracking-[0.3em] uppercase flex items-center gap-2 text-[#C9A84C]">
+              <Bell size={11} /> Recordatorios de mañana <span className="text-[#555] ml-1">· {tomorrowAppts.length}</span>
+            </span>
+            <ArrowRight size={12} className={`text-[#333] transition-transform duration-200 ${openRecordatorios ? 'rotate-90' : ''}`} />
+          </button>
+          {openRecordatorios && (
+            <div className="px-4 pb-4 border-t border-white/5 pt-4 space-y-2">
+              {tomorrowAppts.map((apt) => (
+                <div key={apt.id} className="flex items-center justify-between gap-3 py-3 border-b border-white/5"
+                  style={{ borderLeft: `2px solid ${serviceColor(apt.dp_services?.name)}40`, paddingLeft: '12px' }}>
+                  <div className="min-w-0">
+                    <p className="text-[#F0EDE8] text-sm">{apt.client_name}</p>
+                    <p className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
+                  </div>
+                  <WaButton href={waHref(apt.client_phone, fillTemplate(msgReminder, apt))} label="Recordatorio" />
                 </div>
-                <WaButton href={waHref(apt.client_phone, fillTemplate(msgReminder, apt))} label="Recordatorio" />
-              </div>
-            ))}
-          </div>
-          <p className="text-[#333] text-[10px] mt-3">El botón abre WhatsApp con el mensaje pre-llenado listo para enviar.</p>
+              ))}
+              <p className="text-[#333] text-[10px] pt-1">El botón abre WhatsApp con el mensaje pre-llenado listo para enviar.</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -368,14 +389,21 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
       )}
 
       {/* ── Bitácora ── */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-[#555]">Bitácora · últimas reservas</p>
-          <button onClick={load} disabled={loading} className="text-[#444] hover:text-[#C9A84C] transition-colors">
-            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
-
+      <div className="border border-white/5">
+        <button
+          onClick={() => setOpenBitacora(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
+        >
+          <span className="text-[10px] tracking-[0.3em] uppercase text-[#555]">Bitácora · últimas reservas</span>
+          <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+            <button onClick={load} disabled={loading} className="text-[#444] hover:text-[#C9A84C] transition-colors p-0.5">
+              <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+            </button>
+            <ArrowRight size={12} className={`text-[#333] transition-transform duration-200 pointer-events-none ${openBitacora ? 'rotate-90' : ''}`} />
+          </div>
+        </button>
+        {openBitacora && (
+        <div className="px-4 pb-4 border-t border-white/5 pt-4">
         <input
           type="text" value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -423,6 +451,8 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
             </div>
           );
         })()}
+        </div>
+        )}
       </div>
 
     </div>
@@ -1199,12 +1229,21 @@ type ClientFilter = 'todos' | 'nuevos' | 'frecuentes';
 
 function ClientesTab({ adminSecret }: { adminSecret: string }) {
   const [filter, setFilter]             = useState<ClientFilter>('todos');
+  const [clientSearch, setClientSearch] = useState('');
   const [trustedClients, setTrustedClients] = useState<TrustedClient[]>([]);
   const [allClients, setAllClients]     = useState<ClientRecord[]>([]);
   const [loading, setLoading]           = useState(false);
   const [promoting, setPromoting]       = useState<string | null>(null);
   const [deleting, setDeleting]         = useState<string | null>(null);
-  // form
+  const [deletingPhone, setDeletingPhone] = useState<string | null>(null);
+  // edit trusted client
+  const [editingId, setEditingId]       = useState<string | null>(null);
+  const [editName, setEditName]         = useState('');
+  const [editPhone, setEditPhone]       = useState('');
+  const [editEmail, setEditEmail]       = useState('');
+  const [editNotes, setEditNotes]       = useState('');
+  const [editSaving, setEditSaving]     = useState(false);
+  // add form
   const [showForm, setShowForm]         = useState(false);
   const [formSaving, setFormSaving]     = useState(false);
   const [name, setName]                 = useState('');
@@ -1279,17 +1318,58 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
     } finally { setFormSaving(false); }
   };
 
+  const startEdit = (tc: TrustedClient) => {
+    setEditingId(tc.id);
+    setEditName(tc.name);
+    setEditPhone(tc.phone);
+    setEditEmail(tc.email ?? '');
+    setEditNotes(tc.notes ?? '');
+  };
+
+  const handleEdit = async () => {
+    if (!editingId || !editName.trim() || !editPhone.trim()) return;
+    setEditSaving(true);
+    try {
+      const res = await fetch('/api/trusted-clients', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ id: editingId, name: editName.trim(), phone: editPhone.trim(), email: editEmail.trim() || null, notes: editNotes.trim() || null }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setTrustedClients(prev => prev.map(c => c.id === editingId ? updated : c).sort((a, b) => a.name.localeCompare(b.name)));
+        setEditingId(null);
+      }
+    } finally { setEditSaving(false); }
+  };
+
+  const handleDeleteByPhone = async (phoneNorm: string, displayName: string) => {
+    if (!confirm(`¿Eliminar todos los registros de ${displayName}? Esta acción no se puede deshacer.`)) return;
+    setDeletingPhone(phoneNorm);
+    try {
+      await fetch('/api/appointments', {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ phone: phoneNorm }),
+      });
+      setAllClients(prev => prev.filter(c => c.phone_normalized !== phoneNorm));
+    } finally { setDeletingPhone(null); }
+  };
+
   const displayed = useMemo(() => {
     const trustedNorms = new Map(trustedClients.map(tc => [tc.phone.replace(/\D/g, '').slice(-10), tc]));
+    const q = clientSearch.trim().toLowerCase();
+    const applySearch = <T extends { name: string; phone: string }>(list: T[]) =>
+      q ? list.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)) : list;
     if (filter === 'frecuentes') {
-      return trustedClients.map(tc => {
+      const list = trustedClients.map(tc => {
         const norm = tc.phone.replace(/\D/g, '').slice(-10);
         const fromAppts = allClients.find(c => c.phone_normalized === norm);
         return { name: tc.name, phone: tc.phone, phone_normalized: norm, email: tc.email, appt_count: fromAppts?.appt_count ?? 0, last_appt: fromAppts?.last_appt ?? null, trusted_id: tc.id, notes: tc.notes };
       }).sort((a, b) => a.name.localeCompare(b.name));
+      return applySearch(list);
     }
     if (filter === 'nuevos') {
-      return allClients.filter(c => !trustedNorms.has(c.phone_normalized)).map(c => ({ ...c, trusted_id: null as string | null, notes: null as string | null }));
+      const list = allClients.filter(c => !trustedNorms.has(c.phone_normalized)).map(c => ({ ...c, trusted_id: null as string | null, notes: null as string | null }));
+      return applySearch(list);
     }
     // todos
     const result: (ClientRecord & { trusted_id: string | null; notes: string | null })[] = allClients.map(c => ({
@@ -1301,8 +1381,8 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         result.push({ name: tc.name, phone: tc.phone, phone_normalized: norm, email: tc.email, appt_count: 0, last_appt: null, trusted_id: tc.id, notes: tc.notes });
       }
     }
-    return result.sort((a, b) => a.name.localeCompare(b.name));
-  }, [filter, allClients, trustedClients]);
+    return applySearch(result.sort((a, b) => a.name.localeCompare(b.name)));
+  }, [filter, clientSearch, allClients, trustedClients]);
 
   const counts = useMemo(() => {
     const trustedNorms = new Set(trustedClients.map(tc => tc.phone.replace(/\D/g, '').slice(-10)));
@@ -1336,6 +1416,15 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
           </button>
         </div>
       </div>
+
+      {/* Search */}
+      <input
+        type="text" value={clientSearch}
+        onChange={e => setClientSearch(e.target.value)}
+        placeholder="Buscar por nombre o teléfono..."
+        className="w-full bg-transparent border border-white/8 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]/40 placeholder:text-white/20"
+        style={{ fontSize: '16px' }}
+      />
 
       {/* Add form */}
       {showForm && (
@@ -1391,7 +1480,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
       ) : displayed.length === 0 ? (
         <div className="border border-white/5 py-14 text-center">
           <p className="text-[#444] text-sm">
-            {filter === 'frecuentes' ? 'No hay clientas frecuentes registradas.'
+            {clientSearch.trim() ? 'Sin resultados.' : filter === 'frecuentes' ? 'No hay clientas frecuentes registradas.'
               : filter === 'nuevos' ? 'Todas las clientas ya son frecuentes.'
               : 'No hay clientas registradas.'}
           </p>
@@ -1399,37 +1488,87 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
       ) : (
         <div className="divide-y divide-white/5">
           {displayed.map(c => (
-            <div key={c.phone_normalized} className="flex items-center justify-between py-3.5 gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                {c.trusted_id
-                  ? <Star size={11} className="text-[#C9A84C] shrink-0" />
-                  : <span className="w-2.5 h-2.5 rounded-full border border-white/10 shrink-0" />
-                }
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-white text-sm">{c.name}</p>
-                    {c.appt_count > 0 && (
-                      <span className="text-[9px] tracking-wider text-[#333]">{c.appt_count} visita{c.appt_count !== 1 ? 's' : ''}</span>
-                    )}
+            <div key={c.phone_normalized}>
+              <div className="flex items-center justify-between py-3.5 gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  {c.trusted_id
+                    ? <Star size={11} className="text-[#C9A84C] shrink-0" />
+                    : <span className="w-2.5 h-2.5 rounded-full border border-white/10 shrink-0" />
+                  }
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-white text-sm">{c.name}</p>
+                      {c.appt_count > 0 && (
+                        <span className="text-[9px] tracking-wider text-[#333]">{c.appt_count} visita{c.appt_count !== 1 ? 's' : ''}</span>
+                      )}
+                    </div>
+                    <p className="text-[#555] text-xs mt-0.5 truncate">{c.phone}{c.email ? <span className="text-[#333]"> · {c.email}</span> : null}</p>
+                    {c.notes && <p className="text-[#333] text-[10px] mt-0.5 italic">{c.notes}</p>}
                   </div>
-                  <p className="text-[#555] text-xs mt-0.5 truncate">{c.phone}{c.email ? <span className="text-[#333]"> · {c.email}</span> : null}</p>
-                  {c.notes && <p className="text-[#333] text-[10px] mt-0.5 italic">{c.notes}</p>}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {c.trusted_id && (
+                    <button onClick={() => editingId === c.trusted_id ? setEditingId(null) : startEdit(trustedClients.find(t => t.id === c.trusted_id)!)}
+                      className="text-[#333] hover:text-[#C9A84C] transition-colors p-1.5">
+                      <Pencil size={12} />
+                    </button>
+                  )}
+                  {!c.trusted_id ? (
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => promote(c)} disabled={promoting === c.phone_normalized}
+                        className="flex items-center gap-1 text-[9px] tracking-[0.1em] uppercase border border-[#C9A84C]/25 text-[#C9A84C]/60 px-2.5 py-1.5 hover:bg-[#C9A84C]/10 hover:text-[#C9A84C] transition-colors disabled:opacity-40">
+                        {promoting === c.phone_normalized ? <div className="w-3 h-3 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" /> : <Star size={9} />}
+                        Frecuente
+                      </button>
+                      <button onClick={() => handleDeleteByPhone(c.phone_normalized, c.name)} disabled={deletingPhone === c.phone_normalized}
+                        className="text-[#333] hover:text-red-400 transition-colors disabled:opacity-40 p-1.5">
+                        {deletingPhone === c.phone_normalized ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={12} />}
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => demote(c.trusted_id!)} disabled={deleting === c.trusted_id}
+                      className="text-[#333] hover:text-red-400 transition-colors disabled:opacity-40 p-1.5">
+                      {deleting === c.trusted_id ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={13} />}
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="shrink-0">
-                {!c.trusted_id ? (
-                  <button onClick={() => promote(c)} disabled={promoting === c.phone_normalized}
-                    className="flex items-center gap-1 text-[9px] tracking-[0.1em] uppercase border border-[#C9A84C]/25 text-[#C9A84C]/60 px-2.5 py-1.5 hover:bg-[#C9A84C]/10 hover:text-[#C9A84C] transition-colors disabled:opacity-40">
-                    {promoting === c.phone_normalized ? <div className="w-3 h-3 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" /> : <Star size={9} />}
-                    Frecuente
-                  </button>
-                ) : (
-                  <button onClick={() => demote(c.trusted_id!)} disabled={deleting === c.trusted_id}
-                    className="text-[#333] hover:text-red-400 transition-colors disabled:opacity-40 p-1.5">
-                    {deleting === c.trusted_id ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={13} />}
-                  </button>
-                )}
-              </div>
+              {/* Inline edit form for trusted client */}
+              {editingId === c.trusted_id && (
+                <div className="border border-white/10 p-4 mb-2" style={{ background: '#080808' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Nombre</label>
+                      <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
+                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Teléfono</label>
+                      <input type="text" value={editPhone} onChange={e => setEditPhone(e.target.value)}
+                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Correo (opcional)</label>
+                      <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)}
+                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Notas (opcional)</label>
+                      <input type="text" value={editNotes} onChange={e => setEditNotes(e.target.value)}
+                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={handleEdit} disabled={editSaving || !editName.trim() || !editPhone.trim()}
+                      className="flex items-center gap-2 bg-[#C9A84C] text-black px-4 py-2 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-30">
+                      {editSaving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={11} />}
+                      Guardar
+                    </button>
+                    <button onClick={() => setEditingId(null)}
+                      className="px-3 py-2 text-[10px] tracking-[0.15em] uppercase text-[#444] border border-white/8 hover:border-white/20 transition-colors">Cancelar</button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
