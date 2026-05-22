@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
   if (!(await import('@/lib/supabase')).supabaseReady) return NextResponse.json({ blocks: [] });
 
   const { supabase } = await import('@/lib/supabase');

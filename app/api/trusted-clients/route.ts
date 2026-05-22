@@ -5,7 +5,10 @@ function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, '').slice(-10);
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
   if (!(await import('@/lib/supabase')).supabaseReady) return NextResponse.json({ clients: [] });
 
   const { supabase } = await import('@/lib/supabase');
