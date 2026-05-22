@@ -16,6 +16,8 @@ export interface ScheduleConfig {
   start_time: string;
   end_time: string;
   is_active: boolean;
+  break_start?: string | null;
+  break_end?: string | null;
 }
 
 export interface BlockedSlot {

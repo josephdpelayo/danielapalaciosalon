@@ -15,12 +15,28 @@ export async function GET(req: NextRequest) {
 
   if ((await import("@/lib/supabase")).supabaseReady) {
     const { supabase } = await import('@/lib/supabase');
-    const { data } = await supabase
-      .from('dp_trusted_clients')
-      .select('id, name, notes')
-      .eq('phone_normalized', normalized)
-      .single();
-    return NextResponse.json({ trusted: !!data, client: data ?? null });
+
+    const [clientRes, apptRes] = await Promise.all([
+      supabase
+        .from('dp_trusted_clients')
+        .select('id, name, notes, email')
+        .eq('phone_normalized', normalized)
+        .maybeSingle(),
+      supabase
+        .from('dp_appointments')
+        .select('client_email')
+        .ilike('client_phone', `%${normalized}%`)
+        .not('client_email', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    const client = clientRes.data
+      ? { ...clientRes.data, email: clientRes.data.email ?? apptRes.data?.client_email ?? null }
+      : null;
+
+    return NextResponse.json({ trusted: !!client, client });
   }
 
   // Mock: números que terminan en 0000 son clientes frecuentes

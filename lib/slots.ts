@@ -48,10 +48,14 @@ export function generateTimeSlots(
       return slotStart < aActive && slotActive > aStart;
     });
 
+    const inBreak = schedule.break_start && schedule.break_end
+      ? slotStart < timeToMinutes(schedule.break_end) && slotEnd > timeToMinutes(schedule.break_start)
+      : false;
+
     slots.push({
       start: minutesToTime(slotStart),
       end:   minutesToTime(slotEnd),
-      available: !isBlocked && !hasConflict,
+      available: !isBlocked && !hasConflict && !inBreak,
     });
 
     current += 30; // incrementos de 30 min

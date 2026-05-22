@@ -1142,7 +1142,7 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
 }
 
 // ── Trusted clients tab ───────────────────────────────────────────
-interface TrustedClient { id: string; name: string; phone: string; notes: string | null; }
+interface TrustedClient { id: string; name: string; phone: string; notes: string | null; email: string | null; }
 
 function TrustedClientsTab({ adminSecret }: { adminSecret: string }) {
   const [clients, setClients]             = useState<TrustedClient[]>([]);
@@ -1153,6 +1153,7 @@ function TrustedClientsTab({ adminSecret }: { adminSecret: string }) {
   const [countryCode, setCountryCode]     = useState('+52');
   const [phone, setPhone]                 = useState('');
   const [notes, setNotes]                 = useState('');
+  const [email, setEmail]                 = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1172,12 +1173,12 @@ function TrustedClientsTab({ adminSecret }: { adminSecret: string }) {
     try {
       const res = await fetch('/api/trusted-clients', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-        body: JSON.stringify({ name: name.trim(), phone: `${countryCode.trim()} ${phone.trim()}`, notes: notes.trim() || null }),
+        body: JSON.stringify({ name: name.trim(), phone: `${countryCode.trim()} ${phone.trim()}`, notes: notes.trim() || null, email: email.trim() || null }),
       });
       if (res.ok) {
         const client = await res.json();
         setClients((prev) => [...prev, client].sort((a, b) => a.name.localeCompare(b.name)));
-        setName(''); setPhone(''); setNotes(''); setCountryCode('+52');
+        setName(''); setPhone(''); setNotes(''); setEmail(''); setCountryCode('+52');
       }
     } finally { setSaving(false); }
   };
@@ -1226,12 +1227,21 @@ function TrustedClientsTab({ adminSecret }: { adminSecret: string }) {
             </div>
           </div>
         </div>
-        <div className="mb-4">
-          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Notas (opcional)</label>
-          <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
-            placeholder="Ej: clienta desde 2022, prefiere tinte oscuro..."
-            className="w-full bg-transparent border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/15"
-            style={{ fontSize: '16px' }} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+          <div>
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Correo electrónico (opcional)</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="cliente@correo.com"
+              className="w-full bg-transparent border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/15"
+              style={{ fontSize: '16px' }} />
+          </div>
+          <div>
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Notas (opcional)</label>
+            <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
+              placeholder="Ej: clienta desde 2022, prefiere tinte oscuro..."
+              className="w-full bg-transparent border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/15"
+              style={{ fontSize: '16px' }} />
+          </div>
         </div>
         <button onClick={handleAdd} disabled={saving || !name.trim() || phone.length !== 10}
           className="flex items-center gap-2 bg-[#C9A84C] text-black px-6 py-3 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-30">
@@ -1261,6 +1271,7 @@ function TrustedClientsTab({ adminSecret }: { adminSecret: string }) {
                   <div>
                     <p className="text-white text-sm">{c.name}</p>
                     <p className="text-[#555] text-xs mt-0.5">{c.phone}{c.notes && <span className="text-[#333]"> · {c.notes}</span>}</p>
+                    {c.email && <p className="text-[#444] text-xs mt-0.5">{c.email}</p>}
                   </div>
                 </div>
                 <button onClick={() => handleDelete(c.id)} disabled={deleting === c.id}
@@ -1280,7 +1291,7 @@ function TrustedClientsTab({ adminSecret }: { adminSecret: string }) {
 const DAYS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Mon–Sun display order
 
-interface ScheduleDay { day_of_week: number; is_active: boolean; start_time: string; end_time: string; }
+interface ScheduleDay { day_of_week: number; is_active: boolean; start_time: string; end_time: string; break_start?: string | null; break_end?: string | null; }
 interface AppSettings { [key: string]: string; }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -1429,32 +1440,57 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
         <SectionHeader title="Horario de trabajo" subtitle="Activa los días y define la apertura y cierre" />
         <div className="space-y-1">
           {DAYS_ORDER.map(dow => {
-            const day = schedule.find(d => d.day_of_week === dow) ?? { day_of_week: dow, is_active: false, start_time: '10:00', end_time: '19:00' };
+            const day = schedule.find(d => d.day_of_week === dow) ?? { day_of_week: dow, is_active: false, start_time: '10:00', end_time: '19:00', break_start: null, break_end: null };
+            const hasBreak = !!(day.break_start && day.break_end);
             return (
-              <div key={dow} className={`flex items-center gap-3 py-3 border-b border-white/5 ${!day.is_active ? 'opacity-50' : ''}`}>
-                <button
-                  onClick={() => updateDay(dow, { is_active: !day.is_active })}
-                  className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${day.is_active ? 'bg-[#C9A84C]' : 'bg-white/10'}`}
-                >
-                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${day.is_active ? 'left-4' : 'left-0.5'}`} />
-                </button>
-                <span className="text-sm w-24 shrink-0 text-[#F0EDE8]">{DAYS_ES[dow]}</span>
-                {day.is_active ? (
-                  <div className="flex items-center gap-2 flex-1">
-                    <input type="time" value={day.start_time}
-                      onChange={e => updateDay(dow, { start_time: e.target.value })}
-                      className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#C9A84C]/50 w-28"
+              <div key={dow} className={`py-3 border-b border-white/5 ${!day.is_active ? 'opacity-50' : ''}`}>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => updateDay(dow, { is_active: !day.is_active })}
+                    className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${day.is_active ? 'bg-[#C9A84C]' : 'bg-white/10'}`}
+                  >
+                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${day.is_active ? 'left-4' : 'left-0.5'}`} />
+                  </button>
+                  <span className="text-sm w-20 shrink-0 text-[#F0EDE8]">{DAYS_ES[dow]}</span>
+                  {day.is_active ? (
+                    <div className="flex items-center gap-1 flex-1 min-w-0 flex-wrap">
+                      <input type="time" value={day.start_time}
+                        onChange={e => updateDay(dow, { start_time: e.target.value })}
+                        className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#C9A84C]/50 flex-1 min-w-[96px]"
+                        style={{ fontSize: '16px' }}
+                      />
+                      <span className="text-[#444] text-xs">—</span>
+                      <input type="time" value={day.end_time}
+                        onChange={e => updateDay(dow, { end_time: e.target.value })}
+                        className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#C9A84C]/50 flex-1 min-w-[96px]"
+                        style={{ fontSize: '16px' }}
+                      />
+                      <button
+                        onClick={() => updateDay(dow, hasBreak ? { break_start: null, break_end: null } : { break_start: '14:00', break_end: '16:00' })}
+                        className={`text-[9px] tracking-[0.12em] uppercase px-2 py-1.5 border transition-colors shrink-0 ${hasBreak ? 'border-[#C9A84C]/40 text-[#C9A84C]' : 'border-white/10 text-[#444] hover:border-white/25 hover:text-[#888]'}`}
+                      >
+                        {hasBreak ? 'Descanso ✓' : '+ Descanso'}
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[#333] text-xs">Cerrado</span>
+                  )}
+                </div>
+                {day.is_active && hasBreak && (
+                  <div className="flex items-center gap-1 mt-2 ml-[116px] flex-wrap">
+                    <span className="text-[#555] text-[10px] tracking-[0.1em] uppercase shrink-0">Cerrado</span>
+                    <input type="time" value={day.break_start ?? '14:00'}
+                      onChange={e => updateDay(dow, { break_start: e.target.value })}
+                      className="bg-transparent border border-white/10 text-[#888] px-2 py-1 text-sm focus:outline-none focus:border-[#C9A84C]/50 flex-1 min-w-[96px]"
                       style={{ fontSize: '16px' }}
                     />
                     <span className="text-[#444] text-xs">—</span>
-                    <input type="time" value={day.end_time}
-                      onChange={e => updateDay(dow, { end_time: e.target.value })}
-                      className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#C9A84C]/50 w-28"
+                    <input type="time" value={day.break_end ?? '16:00'}
+                      onChange={e => updateDay(dow, { break_end: e.target.value })}
+                      className="bg-transparent border border-white/10 text-[#888] px-2 py-1 text-sm focus:outline-none focus:border-[#C9A84C]/50 flex-1 min-w-[96px]"
                       style={{ fontSize: '16px' }}
                     />
                   </div>
-                ) : (
-                  <span className="text-[#333] text-xs">Cerrado</span>
                 )}
               </div>
             );

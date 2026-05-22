@@ -96,7 +96,8 @@ function BookingContent() {
       const data = await res.json();
       setIsTrusted(data.trusted);
       setTrustedName(data.trusted ? data.client?.name ?? null : null);
-      if (data.trusted && data.client?.name && !clientName) setClientName(data.client.name);
+      if (data.trusted && data.client?.name) setClientName(data.client.name);
+      if (data.trusted && data.client?.email && !clientEmail) setClientEmail(data.client.email);
     } catch { setIsTrusted(false); }
     finally { setCheckingPhone(false); }
   };

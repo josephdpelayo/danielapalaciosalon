@@ -26,19 +26,19 @@ export async function POST(req: NextRequest) {
   if (authErr) return authErr;
 
   const body = await req.json();
-  const { name, phone, notes } = body;
+  const { name, phone, notes, email } = body;
   if (!name || !phone) return NextResponse.json({ error: 'Nombre y teléfono requeridos' }, { status: 400 });
 
   const normalized = normalizePhone(phone);
 
   if (!(await import('@/lib/supabase')).supabaseReady) {
-    return NextResponse.json({ id: 'mock-' + Date.now(), name, phone, phone_normalized: normalized, notes });
+    return NextResponse.json({ id: 'mock-' + Date.now(), name, phone, phone_normalized: normalized, notes, email: email || null });
   }
 
   const { supabase } = await import('@/lib/supabase');
   const { data, error } = await supabase
     .from('dp_trusted_clients')
-    .insert({ name, phone, phone_normalized: normalized, notes: notes || null })
+    .insert({ name, phone, phone_normalized: normalized, notes: notes || null, email: email || null })
     .select()
     .single();
 
