@@ -5,7 +5,7 @@ import { es } from 'date-fns/locale';
 export async function GET(req: NextRequest) {
   // Protect with CRON_SECRET (set in env vars)
   const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get('x-cron-secret') !== secret) {
+  if (!secret || req.headers.get('x-cron-secret') !== secret) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 

@@ -29,12 +29,14 @@ export async function GET(req: NextRequest) {
   if ((await import("@/lib/supabase")).supabaseReady) {
     const { supabase } = await import('@/lib/supabase');
 
-    // Fetch appointments — exclude only cancelled (pending_payment still holds the slot)
+    // Fetch appointments — exclude cancelled and stale pending_payment (older than 35 min)
+    const staleThreshold = new Date(Date.now() - 35 * 60 * 1000).toISOString();
     const apptRes = await supabase
       .from('dp_appointments')
-      .select('start_time, end_time, status')
+      .select('start_time, end_time, status, created_at')
       .eq('appointment_date', date)
-      .neq('status', 'cancelled');
+      .neq('status', 'cancelled')
+      .or(`status.neq.pending_payment,created_at.gt.${staleThreshold}`);
 
     if (apptRes.error) {
       console.error('available-slots appt error:', apptRes.error.message);

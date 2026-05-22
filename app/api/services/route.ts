@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
 import { MOCK_SERVICES } from '@/lib/mock-data';
 
 export async function GET() {
@@ -22,6 +23,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
   const body = await req.json();
   const { name, description, price, duration_minutes, active_minutes, deposit_amount } = body;
 
@@ -56,6 +60,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
   const body = await req.json();
   const { id, ...fields } = body;
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
@@ -80,6 +87,9 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
   if (!(await import('@/lib/supabase')).supabaseReady) {

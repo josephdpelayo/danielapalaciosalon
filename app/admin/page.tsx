@@ -18,7 +18,6 @@ import { formatTime, formatDuration, timeToMinutes, minutesToTime } from '@/lib/
 import { MOCK_SCHEDULE } from '@/lib/mock-data';
 import 'react-day-picker/dist/style.css';
 
-const ADMIN_PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? 'daniela2025';
 type Tab = 'inicio' | 'agenda' | 'frecuentes' | 'config';
 
 function serviceColor(name: string | undefined): string {
@@ -113,6 +112,27 @@ function buildTimeline(date: Date, appts: Appointment[], blocks: BlockedSlot[]):
 // ── Auth ─────────────────────────────────────────────────────────
 function AuthScreen({ onAuth }: { onAuth: (password: string) => void }) {
   const [pass, setPass] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleAuth() {
+    if (!pass || loading) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/auth/check', { headers: { 'x-admin-secret': pass } });
+      if (res.ok) {
+        onAuth(pass);
+      } else {
+        setError('Contraseña incorrecta');
+      }
+    } catch {
+      setError('Error de conexión');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 font-[family-name:var(--font-body)]" style={{ background: '#000' }}>
       <div className="w-full max-w-xs">
@@ -120,17 +140,19 @@ function AuthScreen({ onAuth }: { onAuth: (password: string) => void }) {
         <p className="text-[10px] tracking-[0.4em] uppercase text-[#555] text-center mb-10">Daniela Palacio Hair Room</p>
         <input
           type="password" value={pass}
-          onChange={(e) => setPass(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && pass === ADMIN_PASS) onAuth(pass); }}
+          onChange={(e) => { setPass(e.target.value); setError(''); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleAuth(); }}
           placeholder="Contraseña"
           className="w-full bg-transparent border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/20 mb-3"
           style={{ fontSize: '16px' }}
         />
+        {error && <p className="text-red-400 text-[11px] tracking-wider text-center mb-3">{error}</p>}
         <button
-          onClick={() => { if (pass === ADMIN_PASS) onAuth(pass); else alert('Contraseña incorrecta'); }}
-          className="w-full bg-[#C9A84C] text-black py-3.5 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors"
+          onClick={handleAuth}
+          disabled={loading}
+          className="w-full bg-[#C9A84C] text-black py-3.5 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-60"
         >
-          Entrar
+          {loading ? 'Verificando...' : 'Entrar'}
         </button>
         <div className="text-center mt-6">
           <Link href="/" className="text-[#444] text-xs hover:text-[#666] transition-colors tracking-wider">← Volver al sitio</Link>

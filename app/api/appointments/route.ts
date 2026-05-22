@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
+
+const PENDING_PAYMENT_TTL_MS = 35 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { service_id, client_name, client_phone, client_email, appointment_date, start_time, end_time, notes, deposit_amount } = body;
+  const { service_id, client_name, client_phone, client_email, appointment_date, start_time, end_time, notes, deposit_amount, active_minutes } = body;
 
   if (!service_id || !client_name || !client_phone || !appointment_date || !start_time || !end_time) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -13,6 +16,23 @@ export async function POST(req: NextRequest) {
 
   if ((await import("@/lib/supabase")).supabaseReady) {
     const { supabase } = await import('@/lib/supabase');
+
+    // Check for slot conflicts (guard against race conditions at app layer)
+    const staleThreshold = new Date(Date.now() - PENDING_PAYMENT_TTL_MS).toISOString();
+    const { data: conflicts } = await supabase
+      .from('dp_appointments')
+      .select('id')
+      .eq('appointment_date', appointment_date)
+      .neq('status', 'cancelled')
+      .or(`status.neq.pending_payment,created_at.gt.${staleThreshold}`)
+      .lt('start_time', end_time)
+      .gt('end_time', start_time)
+      .limit(1);
+
+    if (conflicts && conflicts.length > 0) {
+      return NextResponse.json({ error: 'El horario ya no está disponible. Por favor elige otro.' }, { status: 409 });
+    }
+
     const { data, error } = await supabase.from('dp_appointments').insert({
       service_id,
       client_name,
@@ -21,6 +41,7 @@ export async function POST(req: NextRequest) {
       appointment_date,
       start_time,
       end_time,
+      active_minutes: active_minutes || null,
       notes: notes || null,
       deposit_amount: deposit_amount || null,
       status: initialStatus,
@@ -34,7 +55,10 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ id: mockId, status: initialStatus });
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
   if (!(await import("@/lib/supabase")).supabaseReady) {
     return NextResponse.json({ appointments: [] });
   }
