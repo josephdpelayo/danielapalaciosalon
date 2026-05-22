@@ -11,7 +11,7 @@ import { DayPicker } from 'react-day-picker';
 import {
   ArrowLeft, Check, X, Scissors, Phone, RefreshCw,
   Trash2, CalendarOff, Star, UserPlus, Calendar, Plus, Pencil, LayoutDashboard,
-  Settings, Copy, Check as CheckIcon,
+  Settings, Copy, Check as CheckIcon, MessageCircle, Bell,
 } from 'lucide-react';
 import { Appointment, BlockedSlot } from '@/lib/types';
 import { formatTime, formatDuration, timeToMinutes, minutesToTime } from '@/lib/slots';
@@ -32,6 +32,31 @@ function serviceColor(name: string | undefined): string {
   if (n.includes('peinado'))                           return '#86efac';
   if (n.includes('corte'))                             return '#60a5fa';
   return '#C9A84C';
+}
+
+function fillTemplate(template: string, apt: Appointment): string {
+  const date = parseISO(apt.appointment_date + 'T12:00:00');
+  const dateStr = format(date, "EEEE d 'de' MMMM", { locale: es });
+  return template
+    .replace(/\{nombre\}/g, apt.client_name)
+    .replace(/\{servicio\}/g, apt.dp_services?.name ?? 'tu servicio')
+    .replace(/\{fecha\}/g, dateStr)
+    .replace(/\{hora\}/g, formatTime(apt.start_time));
+}
+
+function waHref(phone: string, message: string): string {
+  const digits = phone.replace(/\D/g, '');
+  const number = digits.length >= 12 ? digits : `52${digits.slice(-10)}`;
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+}
+
+function WaButton({ href, label }: { href: string; label: string }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer"
+      className="flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase border border-[#25D366]/30 text-[#25D366] px-2.5 py-1.5 hover:bg-[#25D366]/10 transition-colors shrink-0">
+      <MessageCircle size={9} /> {label}
+    </a>
+  );
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -120,13 +145,22 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading]           = useState(false);
   const [updating, setUpdating]         = useState<string | null>(null);
+  const [msgConf, setMsgConf]           = useState(DEFAULT_SETTINGS.msg_confirmation);
+  const [msgReminder, setMsgReminder]   = useState(DEFAULT_SETTINGS.msg_reminder_24h);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch('/api/appointments');
-      const data = await res.json();
-      setAppointments(data.appointments ?? []);
+      const [apptRes, settingsRes] = await Promise.all([
+        fetch('/api/appointments'),
+        fetch('/api/settings'),
+      ]);
+      const apptData     = await apptRes.json();
+      const settingsData = await settingsRes.json();
+      setAppointments(apptData.appointments ?? []);
+      const s = { ...DEFAULT_SETTINGS, ...settingsData.settings };
+      setMsgConf(s.msg_confirmation);
+      setMsgReminder(s.msg_reminder_24h);
     } catch { /* keep */ }
     finally { setLoading(false); }
   }, []);
@@ -159,8 +193,10 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
     [appointments]
   );
 
-  const todayKey = format(startOfToday(), 'yyyy-MM-dd');
-  const todayAppts = appointments.filter((a) => a.appointment_date === todayKey && a.status !== 'cancelled');
+  const todayKey    = format(startOfToday(), 'yyyy-MM-dd');
+  const tomorrowKey = format(addDays(startOfToday(), 1), 'yyyy-MM-dd');
+  const todayAppts    = appointments.filter((a) => a.appointment_date === todayKey    && a.status !== 'cancelled');
+  const tomorrowAppts = appointments.filter((a) => a.appointment_date === tomorrowKey && a.status === 'confirmed');
 
   if (loading) return (
     <div className="flex items-center justify-center py-24">
@@ -184,6 +220,28 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
           </div>
         ))}
       </div>
+
+      {/* ── Recordatorios de mañana ── */}
+      {tomorrowAppts.length > 0 && (
+        <div>
+          <p className="text-[10px] tracking-[0.3em] uppercase mb-4 flex items-center gap-2 text-[#C9A84C]">
+            <Bell size={11} /> Recordatorios de mañana · {tomorrowAppts.length}
+          </p>
+          <div className="space-y-2">
+            {tomorrowAppts.map((apt) => (
+              <div key={apt.id} className="flex items-center justify-between gap-3 py-3 border-b border-white/5"
+                style={{ borderLeft: `2px solid ${serviceColor(apt.dp_services?.name)}40`, paddingLeft: '12px' }}>
+                <div className="min-w-0">
+                  <p className="text-[#F0EDE8] text-sm">{apt.client_name}</p>
+                  <p className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
+                </div>
+                <WaButton href={waHref(apt.client_phone, fillTemplate(msgReminder, apt))} label="Recordatorio" />
+              </div>
+            ))}
+          </div>
+          <p className="text-[#333] text-[10px] mt-3">El botón abre WhatsApp con el mensaje pre-llenado listo para enviar.</p>
+        </div>
+      )}
 
       {/* ── Requieren atención ── */}
       {needsAction.length > 0 && (
@@ -217,7 +275,8 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                         <Phone size={10} /> {apt.client_phone}
                       </a>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                      <WaButton href={waHref(apt.client_phone, fillTemplate(msgConf, apt))} label="Enviar WA" />
                       <button onClick={() => updateStatus(apt.id, 'confirmed')} disabled={updating === apt.id}
                         className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-emerald-800 text-emerald-400 px-3 py-1.5 hover:bg-emerald-900/20 transition-colors disabled:opacity-40">
                         <Check size={10} /> Confirmar
@@ -299,17 +358,23 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
   const [blockEnd, setBlockEnd]     = useState('14:00');
   const [blockReason, setBlockReason] = useState('');
 
+  const [msgReminder, setMsgReminder] = useState(DEFAULT_SETTINGS.msg_reminder_24h);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [apptRes, blockRes] = await Promise.all([
+      const [apptRes, blockRes, settingsRes] = await Promise.all([
         fetch('/api/appointments'),
         fetch('/api/blocked-slots'),
+        fetch('/api/settings'),
       ]);
-      const apptData  = await apptRes.json();
-      const blockData = await blockRes.json();
+      const apptData     = await apptRes.json();
+      const blockData    = await blockRes.json();
+      const settingsData = await settingsRes.json();
       setAppointments(apptData.appointments ?? []);
       setBlocks(blockData.blocks ?? []);
+      const s = { ...DEFAULT_SETTINGS, ...settingsData.settings };
+      setMsgReminder(s.msg_reminder_24h);
     } catch { /* keep */ }
     finally { setLoading(false); }
   }, []);
@@ -588,13 +653,16 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color! }} />
                             <span className="text-[#666] text-xs">{apt.dp_services?.name ?? '—'}</span>
                           </div>
-                          <a
-                            href={`https://wa.me/52${apt.client_phone.replace(/\D/g, '')}`}
-                            target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-[#444] hover:text-[#25D366] transition-colors text-xs w-fit"
-                          >
-                            <Phone size={10} /> {apt.client_phone}
-                          </a>
+                          <div className="flex items-center gap-3 flex-wrap mt-1">
+                            <a
+                              href={`https://wa.me/52${apt.client_phone.replace(/\D/g, '')}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-[#444] hover:text-[#25D366] transition-colors text-xs"
+                            >
+                              <Phone size={10} /> {apt.client_phone}
+                            </a>
+                            <WaButton href={waHref(apt.client_phone, fillTemplate(msgReminder, apt))} label="Recordatorio WA" />
+                          </div>
                           {apt.notes && <p className="text-[#444] text-[11px] italic mt-1">{apt.notes}</p>}
                           {(apt.status === 'pending' || apt.status === 'pending_payment') && (
                             <div className="flex gap-2 mt-3">
