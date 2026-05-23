@@ -253,36 +253,38 @@ export default function Home() {
       {/* ── HOW IT WORKS ── */}
       <section
         className="px-5 md:px-16"
-        style={{ paddingTop: '96px', paddingBottom: '96px' }}
+        style={{ paddingTop: '56px', paddingBottom: '56px' }}
       >
         <p
-          className="text-[10px] tracking-[0.45em] uppercase mb-16"
+          className="text-[10px] tracking-[0.45em] uppercase mb-8"
           style={{ color: '#555555' }}
         >
           Proceso
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-8 max-w-5xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8 max-w-5xl">
           {STEPS.map((step) => (
-            <div key={step.n}>
+            <div key={step.n} className="flex gap-4 items-start">
               <span
-                className="font-[family-name:var(--font-display)] block leading-none mb-6"
-                style={{ fontSize: 'clamp(56px, 7vw, 96px)', color: '#1a1a1a', fontWeight: 300 }}
+                className="font-[family-name:var(--font-display)] leading-none shrink-0 mt-0.5"
+                style={{ fontSize: '32px', color: '#2a2a2a', fontWeight: 300 }}
               >
                 {step.n}
               </span>
-              <h3
-                className="font-[family-name:var(--font-display)] text-lg mb-3"
-                style={{ color: '#F0EDE8', fontWeight: 400 }}
-              >
-                {step.title}
-              </h3>
-              <p
-                className="text-[13px] leading-relaxed"
-                style={{ color: '#555555' }}
-              >
-                {step.desc}
-              </p>
+              <div>
+                <h3
+                  className="font-[family-name:var(--font-display)] text-base mb-1"
+                  style={{ color: '#F0EDE8', fontWeight: 400 }}
+                >
+                  {step.title}
+                </h3>
+                <p
+                  className="text-[12px] leading-relaxed"
+                  style={{ color: '#555555' }}
+                >
+                  {step.desc}
+                </p>
+              </div>
             </div>
           ))}
         </div>
@@ -291,11 +293,11 @@ export default function Home() {
       {/* ── HOURS ── */}
       <section
         className="px-5 md:px-16"
-        style={{ paddingTop: '64px', paddingBottom: '64px' }}
+        style={{ paddingTop: '40px', paddingBottom: '40px' }}
       >
         <div className="max-w-sm">
           <p
-            className="text-[10px] tracking-[0.45em] uppercase mb-8"
+            className="text-[10px] tracking-[0.45em] uppercase mb-5"
             style={{ color: '#555555' }}
           >
             Horarios
@@ -305,7 +307,7 @@ export default function Home() {
             {HOURS.map((h, i) => (
               <div
                 key={h.days}
-                className="flex items-baseline justify-between py-2.5"
+                className="flex items-baseline justify-between py-2"
                 style={{
                   borderTop: i === 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
                   borderBottom: '1px solid rgba(255,255,255,0.06)',
@@ -332,7 +334,7 @@ export default function Home() {
       {/* ── INSTAGRAM CTA ── */}
       <section
         className="px-5 md:px-16"
-        style={{ paddingTop: '64px', paddingBottom: '96px' }}
+        style={{ paddingTop: '32px', paddingBottom: '48px' }}
       >
         <a
           href="https://instagram.com/danielapalaciosalon"
