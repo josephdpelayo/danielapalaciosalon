@@ -116,11 +116,12 @@ export default function Home() {
 
         <Link
           href="/reservar"
-          className="inline-flex items-center gap-2 text-sm tracking-[0.15em] transition-opacity hover:opacity-70 py-3"
+          className="inline-flex items-center justify-center gap-2 text-[11px] tracking-[0.25em] uppercase transition-all hover:opacity-90 active:scale-[0.98]"
           style={{
-            color: '#F0EDE8',
-            borderBottom: '1px solid rgba(240,237,232,0.4)',
-            paddingBottom: '6px',
+            background: '#C9A84C',
+            color: '#000000',
+            padding: '14px 32px',
+            fontWeight: 500,
           }}
         >
           Reservar cita →
@@ -290,11 +291,11 @@ export default function Home() {
       {/* ── HOURS ── */}
       <section
         className="px-5 md:px-16"
-        style={{ paddingTop: '96px', paddingBottom: '96px' }}
+        style={{ paddingTop: '64px', paddingBottom: '64px' }}
       >
         <div className="max-w-sm">
           <p
-            className="text-[10px] tracking-[0.45em] uppercase mb-16"
+            className="text-[10px] tracking-[0.45em] uppercase mb-8"
             style={{ color: '#555555' }}
           >
             Horarios
@@ -304,7 +305,7 @@ export default function Home() {
             {HOURS.map((h, i) => (
               <div
                 key={h.days}
-                className="flex items-baseline justify-between py-4"
+                className="flex items-baseline justify-between py-2.5"
                 style={{
                   borderTop: i === 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
                   borderBottom: '1px solid rgba(255,255,255,0.06)',
