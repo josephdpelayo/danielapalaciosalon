@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { makeConfirmToken } from '@/app/api/confirm/route';
 
 export async function GET(req: NextRequest) {
   // Protect with CRON_SECRET (set in env vars)
@@ -33,16 +34,32 @@ export async function GET(req: NextRequest) {
     (settingsRes.data ?? []).map((r: { key: string; value: string }) => [r.key, r.value])
   );
   const template = settingsMap.msg_reminder_24h
-    ?? 'Hola {nombre} 👋 Te recuerdo que mañana tienes cita para *{servicio}* a las *{hora}* ✨ ¿Confirmas? Sí ✅ o No ❌';
+    ?? `Hola {nombre} 👋✨
+
+Te recuerdo que mañana tienes cita en *Daniela Palacio Hair Room*:
+
+📅 {fecha}
+⏰ {hora} hrs
+✂️ *{servicio}*
+
+✅ Confirma tu asistencia aquí: {confirm_url}
+
+¡Te esperamos! 🌟
+— Daniela Palacio Hair Room`;
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://danielapalaciosalon.vercel.app';
 
   const reminders = (apptRes.data ?? []).map((apt) => {
-    const service  = (apt.dp_services as unknown as { name: string } | null)?.name ?? 'tu servicio';
-    const hora     = apt.start_time?.slice(0, 5) ?? '';
+    const service     = (apt.dp_services as unknown as { name: string } | null)?.name ?? 'tu servicio';
+    const hora        = apt.start_time?.slice(0, 5) ?? '';
+    const confirmToken = makeConfirmToken(apt.id as string);
+    const confirmUrl  = `${appUrl}/confirmar?id=${apt.id}&token=${confirmToken}`;
     const message  = template
       .replace(/\{nombre\}/g, apt.client_name as string)
       .replace(/\{servicio\}/g, service)
       .replace(/\{fecha\}/g, tomorrowESStr)
-      .replace(/\{hora\}/g, hora);
+      .replace(/\{hora\}/g, hora)
+      .replace(/\{confirm_url\}/g, confirmUrl);
     const phone    = (apt.client_phone as string).replace(/\D/g, '');
     const waLink   = `https://wa.me/${phone.length >= 12 ? phone : `52${phone.slice(-10)}`}?text=${encodeURIComponent(message)}`;
     return {
@@ -52,6 +69,7 @@ export async function GET(req: NextRequest) {
       service,
       start_time:   apt.start_time,
       message,
+      confirm_url:  confirmUrl,
       wa_link:      waLink,
     };
   });

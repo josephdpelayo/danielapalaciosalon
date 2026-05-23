@@ -3,13 +3,18 @@ import { Service, ScheduleConfig } from './types';
 // active_minutes = tiempo que Daniela trabaja activamente
 // Si active_minutes < duration_minutes → puede recibir otra clienta mientras procesa
 export const MOCK_SERVICES: Service[] = [
-  { id: '1', name: 'Corte de cabello',     description: 'Corte personalizado según tu tipo de cabello y estilo',     duration_minutes: 60,  active_minutes: 60,  price: 350,  deposit_amount: 200, active: true, sort_order: 1 },
-  { id: '2', name: 'Color completo',       description: 'Coloración completa con productos de alta calidad',          duration_minutes: 180, active_minutes: 90,  price: 900,  deposit_amount: 200, active: true, sort_order: 2 },
-  { id: '3', name: 'Mechas / Balayage',   description: 'Técnica de iluminación natural o barrida de color',          duration_minutes: 240, active_minutes: 120, price: 1400, deposit_amount: 200, active: true, sort_order: 3 },
-  { id: '4', name: 'Retoque de raíz',     description: 'Retoque de color en raíz',                                   duration_minutes: 90,  active_minutes: 60,  price: 500,  deposit_amount: 200, active: true, sort_order: 4 },
-  { id: '5', name: 'Tratamiento Antifrizz',description: 'Brazilian blowout para alisar y nutrir el cabello',         duration_minutes: 180, active_minutes: 90,  price: 1200, deposit_amount: 200, active: true, sort_order: 5 },
-  { id: '6', name: 'Tinte + Corte',       description: 'Color completo más corte de cabello',                        duration_minutes: 240, active_minutes: 150, price: 1150, deposit_amount: 200, active: true, sort_order: 6 },
-  { id: '7', name: 'Peinado',             description: 'Peinado para eventos o uso diario',                           duration_minutes: 60,  active_minutes: 60,  price: 350,  deposit_amount: 200, active: true, sort_order: 7 },
+  // Basic
+  { id: '1', name: 'Corte de cabello',       description: null,                   duration_minutes: 60,  active_minutes: 60,  price: 600,  deposit_amount: 200, active: true, sort_order: 1, category: 'Basic' },
+  { id: '2', name: 'Planchado',              description: null,                   duration_minutes: 60,  active_minutes: 60,  price: 400,  deposit_amount: 200, active: true, sort_order: 2, category: 'Basic' },
+  { id: '3', name: 'Planchado + lavado',     description: null,                   duration_minutes: 75,  active_minutes: 75,  price: 500,  deposit_amount: 200, active: true, sort_order: 3, category: 'Basic' },
+  { id: '4', name: 'Moldeado',               description: null,                   duration_minutes: 60,  active_minutes: 60,  price: 500,  deposit_amount: 200, active: true, sort_order: 4, category: 'Basic' },
+  { id: '5', name: 'Moldeado + lavado',      description: null,                   duration_minutes: 75,  active_minutes: 75,  price: 600,  deposit_amount: 200, active: true, sort_order: 5, category: 'Basic' },
+  { id: '6', name: 'Ondas',                  description: null,                   duration_minutes: 60,  active_minutes: 60,  price: 500,  deposit_amount: 200, active: true, sort_order: 6, category: 'Basic' },
+  { id: '7', name: 'Ondas + lavado',         description: null,                   duration_minutes: 75,  active_minutes: 75,  price: 600,  deposit_amount: 200, active: true, sort_order: 7, category: 'Basic' },
+  // Hair color
+  { id: '8', name: 'Hair color',             description: null,                   duration_minutes: 180, active_minutes: 90,  price: null, deposit_amount: 200, active: true, sort_order: 8, category: 'Hair color' },
+  // Tratamientos capilares
+  { id: '9', name: 'Tratamientos capilares', description: 'Sujeto a cotización',  duration_minutes: 120, active_minutes: 90,  price: 999,  deposit_amount: 200, active: true, sort_order: 9, category: 'Tratamientos capilares' },
 ];
 
 export const MOCK_SCHEDULE: ScheduleConfig[] = [

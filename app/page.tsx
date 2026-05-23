@@ -169,47 +169,83 @@ export default function Home() {
             Servicios
           </p>
 
-          <div>
-            {services.map((service, i) => (
-              <Link
-                key={service.id}
-                href={`/reservar?service=${service.id}`}
-                className="group flex items-baseline justify-between py-5 transition-colors"
-                style={{
-                  borderTop: i === 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                  borderBottom: '1px solid rgba(255,255,255,0.06)',
-                }}
-              >
+          {(() => {
+            const serviceGroups = services.reduce((acc, s) => {
+              const cat = (s as Service & { category?: string }).category ?? '';
+              if (!acc[cat]) acc[cat] = [];
+              acc[cat].push(s);
+              return acc;
+            }, {} as Record<string, Service[]>);
+            const categoryOrder = ['Basic', 'Hair color', 'Tratamientos capilares', ''];
+            const sortedCategories = categoryOrder.filter(c => serviceGroups[c]?.length);
+
+            return sortedCategories.map((cat) => (
+              <div key={cat} className="mb-10 last:mb-0">
+                {cat && (
+                  <p
+                    className="text-[10px] tracking-[0.35em] uppercase mb-4"
+                    style={{ color: '#C9A84C' }}
+                  >
+                    {cat}
+                  </p>
+                )}
                 <div>
-                  <span
-                    className="font-[family-name:var(--font-display)] text-lg md:text-xl transition-colors group-hover:text-[#C9A84C]"
-                    style={{ color: '#F0EDE8' }}
-                  >
-                    {service.name}
-                  </span>
-                  <span
-                    className="block text-[11px] tracking-wide mt-0.5"
-                    style={{ color: '#555555' }}
-                  >
-                    {formatDuration(service.duration_minutes)}
-                  </span>
+                  {serviceGroups[cat].map((service, i) => {
+                    const isWhatsApp = service.price === null;
+                    const href = isWhatsApp
+                      ? `https://wa.me/526691877077?text=${encodeURIComponent('Hola, me interesa información sobre Hair color')}`
+                      : `/reservar?service=${service.id}`;
+                    const linkProps = isWhatsApp
+                      ? { target: '_blank', rel: 'noopener noreferrer' }
+                      : {};
+
+                    return (
+                      <Link
+                        key={service.id}
+                        href={href}
+                        {...linkProps}
+                        className="group flex items-baseline justify-between py-5 transition-colors"
+                        style={{
+                          borderTop: i === 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                          borderBottom: '1px solid rgba(255,255,255,0.06)',
+                        }}
+                      >
+                        <div>
+                          <span
+                            className="font-[family-name:var(--font-display)] text-lg md:text-xl transition-colors group-hover:text-[#C9A84C]"
+                            style={{ color: '#F0EDE8' }}
+                          >
+                            {service.name}
+                          </span>
+                          <span
+                            className="block text-[11px] tracking-wide mt-0.5"
+                            style={{ color: '#555555' }}
+                          >
+                            {formatDuration(service.duration_minutes)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 ml-8 shrink-0">
+                          <span
+                            className="text-sm font-light tabular-nums"
+                            style={{ color: '#F0EDE8' }}
+                          >
+                            {service.price === null
+                              ? 'Sujeto a cotización'
+                              : `desde ${formatPrice(service.price)}`}
+                          </span>
+                          <span
+                            className="text-[#C9A84C] opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 text-xs"
+                          >
+                            →
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
-                <div className="flex items-center gap-3 ml-8 shrink-0">
-                  <span
-                    className="text-sm font-light tabular-nums"
-                    style={{ color: '#F0EDE8' }}
-                  >
-                    {formatPrice(service.price)}
-                  </span>
-                  <span
-                    className="text-[#C9A84C] opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 text-xs"
-                  >
-                    →
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
+              </div>
+            ));
+          })()}
         </div>
       </section>
 
@@ -319,14 +355,22 @@ export default function Home() {
         className="px-5 md:px-16 py-8 flex items-center justify-between gap-4 flex-wrap"
         style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
       >
-        <p
-          className="text-[11px] tracking-[0.2em]"
-          style={{ color: '#333333' }}
-        >
-          © 2025 Daniela Palacio Hair Room — Mazatlán, Sin.
-        </p>
+        <div className="flex flex-col gap-1">
+          <p
+            className="text-[11px] tracking-[0.2em]"
+            style={{ color: '#333333' }}
+          >
+            © 2025 Daniela Palacio Hair Room
+          </p>
+          <p
+            className="text-[11px] tracking-[0.15em]"
+            style={{ color: '#2a2a2a' }}
+          >
+            Plaza A2, piso 3, local 3D — Mazatlán, Sin.
+          </p>
+        </div>
         <a
-          href="https://wa.me/526699445566"
+          href="https://wa.me/526691877077"
           target="_blank"
           rel="noopener noreferrer"
           className="text-[11px] tracking-[0.2em] transition-opacity hover:opacity-60"

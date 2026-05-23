@@ -1593,7 +1593,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   advance_days:     '60',
   min_notice_hours: '2',
   msg_confirmation: 'Hola {nombre} 👋 Tu cita para *{servicio}* está confirmada para el *{fecha}* a las *{hora}* 💛 Si necesitas cancelar o reagendar, escríbeme con al menos 24h de anticipación.',
-  msg_reminder_24h: 'Hola {nombre} 👋 Te recuerdo que mañana tienes cita para *{servicio}* a las *{hora}* ✨ ¿Confirmas tu asistencia? Responde Sí ✅ o No ❌',
+  msg_reminder_24h: 'Hola {nombre} 👋✨\n\nTe recuerdo que mañana tienes cita en *Daniela Palacio Hair Room*:\n\n📅 {fecha}\n⏰ {hora} hrs\n✂️ *{servicio}*\n\nPor favor confírmame tu asistencia respondiendo *SÍ ✅* o en caso de no poder asistir avísame con anticipación.\n\n¡Te esperamos! 🌟\n— Daniela Palacio Hair Room',
 };
 
 function CopyButton({ text }: { text: string }) {
@@ -1823,7 +1823,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
         <div className="space-y-5 mb-4">
           {[
             { key: 'msg_confirmation', label: 'Confirmación de reserva', hint: 'Se envía después de que una clienta completa su reserva' },
-            { key: 'msg_reminder_24h', label: 'Recordatorio 24h antes', hint: 'Cópialo y envíalo manualmente el día anterior a la cita' },
+            { key: 'msg_reminder_24h', label: 'Mensaje recordatorio 24h antes', hint: 'Usa los placeholders: {nombre} {servicio} {fecha} {hora}' },
           ].map(({ key, label, hint }) => (
             <div key={key}>
               <div className="flex items-center justify-between mb-1.5">
@@ -1831,7 +1831,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
                 <CopyButton text={messages[key] ?? ''} />
               </div>
               <textarea
-                rows={4} value={messages[key] ?? ''}
+                rows={key === 'msg_reminder_24h' ? 6 : 4} value={messages[key] ?? ''}
                 onChange={e => setMessages(p => ({ ...p, [key]: e.target.value }))}
                 className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15 text-sm resize-none"
                 style={{ fontSize: '16px' }}

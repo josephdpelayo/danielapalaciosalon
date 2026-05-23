@@ -8,6 +8,7 @@ export interface Service {
   deposit_amount: number;
   active: boolean;
   sort_order: number;
+  category?: string;
 }
 
 export interface ScheduleConfig {
