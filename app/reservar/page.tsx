@@ -284,7 +284,7 @@ function BookingContent() {
                       onChange={(e) => { setClientPhone(e.target.value); setIsTrusted(false); setTrustedName(null); }}
                       onBlur={(e) => checkTrustedPhone(e.target.value)}
                       placeholder="669 123 4567"
-                      className="flex-1 w-full bg-transparent px-3 py-3.5 text-white focus:outline-none"
+                      className="flex-1 w-full bg-transparent px-3 py-3.5 text-white focus:outline-none placeholder:text-white/20"
                       style={{ fontSize: '16px' }}
                     />
                     {checkingPhone && (
