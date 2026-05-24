@@ -252,7 +252,28 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   );
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
+
+      {/* ── Quick access ── */}
+      <div className="grid grid-cols-2 gap-2">
+        {[
+          { id: 'sec-proximas',      label: 'Próximas citas',  color: '#3B82F6', bg: '#EFF6FF', count: upcoming.length },
+          { id: 'sec-atencion',      label: 'Req. atención',   color: '#EF4444', bg: '#FEF2F2', count: needsAction.length },
+          { id: 'sec-recordatorios', label: 'Recordatorios',   color: '#F59E0B', bg: '#FFFBEB', count: tomorrowAppts.length },
+          { id: 'sec-bitacora',      label: 'Bitácora',        color: '#10B981', bg: '#ECFDF5', count: null },
+        ].map(({ id, label, color, bg, count }) => (
+          <button key={id} onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="text-left p-3 rounded-sm hover:opacity-80 active:opacity-60 transition-opacity"
+            style={{ background: bg, border: `1px solid ${color}30` }}>
+            <span className="block text-[10px] tracking-[0.15em] uppercase font-medium" style={{ color }}>
+              {label}
+            </span>
+            {count !== null && (
+              <span className="block text-xl font-light mt-0.5" style={{ color, fontFamily: 'var(--font-display)' }}>{count}</span>
+            )}
+          </button>
+        ))}
+      </div>
 
       {/* ── Stats ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-px border border-black/8">
@@ -271,7 +292,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
 
       {/* ── Próximas citas ── */}
       {Object.keys(upcomingByDate).length > 0 && (
-        <div className="border border-black/5">
+        <div id="sec-proximas" className="border border-black/5">
           <button
             onClick={() => setOpenProximas(v => !v)}
             className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/4 transition-colors"
@@ -291,7 +312,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                     <p className="text-[9px] tracking-[0.2em] uppercase text-[#81807F] mb-1 capitalize">{label} · {format(dt, "d 'de' MMMM", { locale: es })}</p>
                     {upcomingByDate[date].map(apt => (
                       <div key={apt.id} className="flex items-center justify-between py-2.5 border-b border-black/5"
-                        style={{ borderLeft: `2px solid ${serviceColor(apt.dp_services?.name)}50`, paddingLeft: '10px' }}>
+                        style={{ borderLeft: `3px solid ${serviceColor(apt.dp_services?.name)}`, paddingLeft: '10px' }}>
                         <div>
                           <p className="text-[#1C1A19] text-sm">{apt.client_name}</p>
                           <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
@@ -309,7 +330,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
 
       {/* ── Recordatorios de mañana ── */}
       {tomorrowAppts.length > 0 && (
-        <div className="border border-black/5">
+        <div id="sec-recordatorios" className="border border-black/5">
           <button
             onClick={() => setOpenRecordatorios(v => !v)}
             className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/4 transition-colors"
@@ -323,7 +344,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
             <div className="px-4 pb-4 border-t border-black/5 pt-4 space-y-2">
               {tomorrowAppts.map((apt) => (
                 <div key={apt.id} className="flex items-center justify-between gap-3 py-3 border-b border-black/5"
-                  style={{ borderLeft: `2px solid ${serviceColor(apt.dp_services?.name)}40`, paddingLeft: '12px' }}>
+                  style={{ borderLeft: `3px solid ${serviceColor(apt.dp_services?.name)}`, paddingLeft: '12px' }}>
                   <div className="min-w-0">
                     <p className="text-[#1C1A19] text-sm">{apt.client_name}</p>
                     <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
@@ -339,7 +360,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
 
       {/* ── Requieren atención ── */}
       {needsAction.length > 0 && (
-        <div>
+        <div id="sec-atencion">
           <p className="text-[10px] tracking-[0.3em] uppercase mb-4 flex items-center gap-2" style={{ color: '#fb923c' }}>
             <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
             Requieren atención · {needsAction.length}
@@ -389,7 +410,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
       )}
 
       {/* ── Bitácora ── */}
-      <div className="border border-black/5">
+      <div id="sec-bitacora" className="border border-black/5">
         <button
           onClick={() => setOpenBitacora(v => !v)}
           className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/4 transition-colors"
@@ -1285,10 +1306,21 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
       const res = await fetch('/api/trusted-clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-        body: JSON.stringify({ name: client.name, phone: client.phone, email: client.email || null, notes: null }),
+        body: JSON.stringify({ name: client.name, phone: client.phone, notes: null }),
       });
-      if (res.ok) { const tc = await res.json(); setTrustedClients(prev => [...prev, tc]); }
-    } finally { setPromoting(null); }
+      if (res.ok) {
+        const tc = await res.json();
+        setTrustedClients(prev => [...prev, tc]);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        const msg = (err as { error?: string }).error ?? 'Error desconocido';
+        alert(`No se pudo agregar: ${msg}`);
+      }
+    } catch {
+      alert('Error de conexión. Intenta de nuevo.');
+    } finally {
+      setPromoting(null);
+    }
   };
 
   const demote = async (id: string) => {
@@ -1936,29 +1968,30 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-black/8 flex overflow-x-auto scrollbar-none" style={{ background: '#FFFFFF' }}>
-        {([
-          { key: 'inicio',     label: 'Inicio',     icon: <LayoutDashboard size={12} /> },
-          { key: 'agenda',     label: 'Agenda',     icon: <Calendar size={12} /> },
-          { key: 'clientes', label: 'Clientes', icon: <Users size={12} /> },
-          { key: 'config',     label: 'Config',     icon: <Settings size={12} /> },
-        ] as { key: Tab; label: string; icon: React.ReactNode }[]).map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-3.5 text-[9px] tracking-[0.18em] uppercase border-b-2 transition-colors ${
-              tab === t.key ? 'border-[#1C1A19] text-[#1C1A19]' : 'border-transparent text-[#9A9590] hover:text-[#6B6560]'
-            }`}>
-            {t.icon}{t.label}
-          </button>
-        ))}
+      <div className="max-w-4xl mx-auto px-5 py-6 pb-24">
+        {tab === 'inicio'   && <InicioTab adminSecret={adminSecret} />}
+        {tab === 'agenda'   && <AgendaTab adminSecret={adminSecret} />}
+        {tab === 'clientes' && <ClientesTab adminSecret={adminSecret} />}
+        {tab === 'config'   && <ConfigTab adminSecret={adminSecret} />}
       </div>
 
-      <div className="max-w-4xl mx-auto px-5 py-8">
-        {tab === 'inicio'     && <InicioTab adminSecret={adminSecret} />}
-        {tab === 'agenda'     && <AgendaTab adminSecret={adminSecret} />}
-        {tab === 'clientes'   && <ClientesTab adminSecret={adminSecret} />}
-        {tab === 'config'     && <ConfigTab adminSecret={adminSecret} />}
-      </div>
+      {/* ── Bottom navigation ── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-black/8" style={{ background: '#FFFFFF' }}>
+        {([
+          { key: 'inicio',   label: 'Inicio',   icon: <LayoutDashboard size={20} /> },
+          { key: 'agenda',   label: 'Agenda',   icon: <Calendar size={20} /> },
+          { key: 'clientes', label: 'Clientes', icon: <Users size={20} /> },
+          { key: 'config',   label: 'Config',   icon: <Settings size={20} /> },
+        ] as { key: Tab; label: string; icon: React.ReactNode }[]).map((t) => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-colors ${
+              tab === t.key ? 'text-[#1C1A19]' : 'text-[#C0BBB6] hover:text-[#9A9590]'
+            }`}>
+            {t.icon}
+            <span className="text-[8px] tracking-[0.12em] uppercase">{t.label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
