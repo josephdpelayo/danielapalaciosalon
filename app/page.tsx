@@ -122,14 +122,17 @@ export default function Home() {
         </div>
 
         {/* Hero content — centered */}
-        <div className="relative z-10 flex flex-col items-center">
+        <div
+          className="relative z-10 flex flex-col items-center"
+          style={{ animation: 'heroFadeIn 1.2s ease forwards' }}
+        >
           {/* Location line above logo */}
           <p
             style={{
               fontSize: '9px',
               letterSpacing: '0.55em',
               textTransform: 'uppercase',
-              color: '#585858',
+              color: '#787878',
               marginBottom: '36px',
             }}
           >
@@ -159,7 +162,7 @@ export default function Home() {
               fontSize: '10px',
               letterSpacing: '0.4em',
               textTransform: 'uppercase',
-              color: '#585858',
+              color: '#787878',
               marginBottom: '48px',
             }}
           >
@@ -186,6 +189,21 @@ export default function Home() {
 
         </div>
 
+        {/* Scroll indicator — centro inferior */}
+        <div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center"
+          style={{ zIndex: 10 }}
+        >
+          <div
+            style={{
+              width: '1px',
+              height: '40px',
+              background: 'linear-gradient(to bottom, transparent, rgba(240,237,232,0.25))',
+              animation: 'scrollPulse 2s ease-in-out infinite',
+            }}
+          />
+        </div>
+
         {/* WhatsApp — esquina inferior derecha del hero */}
         <a
           href="https://wa.me/526691877077"
@@ -208,9 +226,17 @@ export default function Home() {
       {/* ── PHOTO STRIP ── */}
       {/* Mobile: horizontal scroll. Desktop: 3-column grid with 1px black gaps */}
       <section
-        className="overflow-x-auto md:overflow-x-visible"
+        className="relative overflow-x-auto md:overflow-x-visible"
         style={{ scrollbarWidth: 'none' }}
       >
+        {/* Mobile gradient hint — indicates more photos to the right */}
+        <div
+          className="md:hidden absolute right-0 top-0 bottom-0 z-10 pointer-events-none"
+          style={{
+            width: '48px',
+            background: 'linear-gradient(to right, transparent, #16181E)',
+          }}
+        />
         {/* Mobile wrapper — flex scroll */}
         <div className="flex md:hidden" style={{ gap: '1px', minWidth: 'max-content' }}>
           {GALLERY.map((photo) => (

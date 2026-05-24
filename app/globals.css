@@ -39,6 +39,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Hero fade-in */
+@keyframes heroFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scroll indicator pulse */
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.2; transform: scaleY(1); }
+  50%       { opacity: 0.6; transform: scaleY(1.15); }
+}
+
 /* Stone shimmer animation */
 @keyframes shimmer {
   0% { background-position: -200% center; }
