@@ -3,8 +3,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title ?? 'Daniela Palacio', {
       body: data.body ?? '',
-      icon: '/gallery/daniela-hero.jpg',
-      badge: '/gallery/daniela-hero.jpg',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       tag: data.tag ?? 'dp-admin',
       renotify: true,
       data: { url: data.url ?? '/admin' },
