@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const [clientRes, apptRes] = await Promise.all([
       supabase
         .from('dp_trusted_clients')
-        .select('id, name, notes, email')
+        .select('id, name, notes')
         .eq('phone_normalized', normalized)
         .maybeSingle(),
       supabase
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     ]);
 
     const client = clientRes.data
-      ? { ...clientRes.data, email: clientRes.data.email ?? apptRes.data?.client_email ?? null }
+      ? { ...clientRes.data, email: apptRes.data?.client_email ?? null }
       : null;
 
     return NextResponse.json({ trusted: !!client, client });

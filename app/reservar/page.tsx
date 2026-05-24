@@ -38,7 +38,8 @@ function BookingContent() {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [clientName, setClientName] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
+  const [clientPhone, setClientPhone]   = useState('');
+  const [countryCode, setCountryCode]   = useState('+52');
   const [clientEmail, setClientEmail] = useState('');
   const [notes, setNotes] = useState('');
   const [scheduleList, setScheduleList] = useState(MOCK_SCHEDULE);
@@ -89,10 +90,11 @@ function BookingContent() {
   };
 
   const checkTrustedPhone = async (phone: string) => {
-    if (phone.replace(/\D/g, '').length < 8) { setIsTrusted(false); setTrustedName(null); return; }
+    const full = countryCode + phone;
+    if (full.replace(/\D/g, '').length < 8) { setIsTrusted(false); setTrustedName(null); return; }
     setCheckingPhone(true);
     try {
-      const res = await fetch(`/api/trusted-check?phone=${encodeURIComponent(phone)}`);
+      const res = await fetch(`/api/trusted-check?phone=${encodeURIComponent(full)}`);
       const data = await res.json();
       setIsTrusted(data.trusted);
       setTrustedName(data.trusted ? data.client?.name ?? null : null);
@@ -114,7 +116,7 @@ function BookingContent() {
         body: JSON.stringify({
           service_id: selectedService.id,
           client_name: clientName,
-          client_phone: clientPhone,
+          client_phone: countryCode + clientPhone,
           client_email: clientEmail || null,
           appointment_date: format(selectedDate, 'yyyy-MM-dd'),
           start_time: selectedSlot.start,
@@ -273,9 +275,14 @@ function BookingContent() {
                   WhatsApp *
                 </label>
                 <div className={`flex border transition-colors ${isTrusted ? 'border-[#81807F]/60' : 'border-white/10 focus-within:border-[#81807F]/60'}`}>
-                  <span className="px-3 flex items-center text-[#666] text-sm bg-transparent border-r border-white/10 select-none">
-                    +52
-                  </span>
+                  <input
+                    type="text"
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    maxLength={5}
+                    className="bg-transparent border-r border-white/10 text-[#666] focus:outline-none focus:text-[#A09F9E] text-center"
+                    style={{ width: '52px', fontSize: '14px', padding: '0 8px' }}
+                  />
                   <div className="flex-1 relative">
                     <input
                       type="tel"
@@ -565,7 +572,7 @@ function BookingContent() {
                 <div className="flex-1">
                   <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-2">Cliente</p>
                   <p className="text-[#F0EDE8] text-sm">{clientName}</p>
-                  <p className="text-[#666] text-xs mt-1">+52 {clientPhone}</p>
+                  <p className="text-[#666] text-xs mt-1">{countryCode} {clientPhone}</p>
                   {clientEmail && <p className="text-[#666] text-xs mt-0.5">{clientEmail}</p>}
                 </div>
               </div>
