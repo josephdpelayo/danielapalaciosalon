@@ -52,7 +52,7 @@ function waHref(phone: string, message: string): string {
 function WaButton({ href, label }: { href: string; label: string }) {
   return (
     <a href={href} target="_blank" rel="noopener noreferrer"
-      className="flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase border border-[#25D366]/30 text-[#25D366] px-2.5 py-1.5 hover:bg-[#25D366]/10 transition-colors shrink-0">
+      className="flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase border border-emerald-600/40 text-emerald-700 px-2.5 py-1.5 hover:bg-emerald-50 transition-colors shrink-0">
       <MessageCircle size={9} /> {label}
     </a>
   );
@@ -60,11 +60,11 @@ function WaButton({ href, label }: { href: string; label: string }) {
 
 function StatusBadge({ status }: { status: string }) {
   if (status === 'confirmed')
-    return <span className="text-[9px] tracking-[0.12em] uppercase text-emerald-400 border border-emerald-800 px-1.5 py-0.5">Confirmada</span>;
+    return <span className="text-[9px] tracking-[0.12em] uppercase text-emerald-700 border border-emerald-300 px-1.5 py-0.5">Confirmada</span>;
   if (status === 'cancelled')
-    return <span className="text-[9px] tracking-[0.12em] uppercase text-white/25 border border-white/10 px-1.5 py-0.5">Cancelada</span>;
+    return <span className="text-[9px] tracking-[0.12em] uppercase text-black/30 border border-black/10 px-1.5 py-0.5">Cancelada</span>;
   if (status === 'pending_payment')
-    return <span className="text-[9px] tracking-[0.12em] uppercase text-orange-400 border border-orange-800 px-1.5 py-0.5">Sin pagar</span>;
+    return <span className="text-[9px] tracking-[0.12em] uppercase text-orange-600 border border-orange-300 px-1.5 py-0.5">Sin pagar</span>;
   return <span className="text-[9px] tracking-[0.12em] uppercase text-[#81807F] border border-[#81807F]/40 px-1.5 py-0.5">Pendiente</span>;
 }
 
@@ -134,16 +134,16 @@ function AuthScreen({ onAuth }: { onAuth: (password: string) => void }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 font-[family-name:var(--font-body)]" style={{ background: '#000' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 font-[family-name:var(--font-body)]" style={{ background: '#F7F5F2' }}>
       <div className="w-full max-w-xs">
-        <p className="font-[family-name:var(--font-display)] text-3xl text-white text-center mb-1 font-light">Admin</p>
-        <p className="text-[10px] tracking-[0.4em] uppercase text-[#555] text-center mb-10">Daniela Palacio Hair Room</p>
+        <p className="font-[family-name:var(--font-display)] text-3xl text-[#1C1A19] text-center mb-1 font-light">Admin</p>
+        <p className="text-[10px] tracking-[0.4em] uppercase text-[#6B6560] text-center mb-10">Daniela Palacio Hair Room</p>
         <input
           type="password" value={pass}
           onChange={(e) => { setPass(e.target.value); setError(''); }}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAuth(); }}
           placeholder="Contraseña"
-          className="w-full bg-transparent border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-white/20 mb-3"
+          className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-4 py-3 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-black/25 mb-3"
           style={{ fontSize: '16px' }}
         />
         {error && <p className="text-red-400 text-[11px] tracking-wider text-center mb-3">{error}</p>}
@@ -155,7 +155,7 @@ function AuthScreen({ onAuth }: { onAuth: (password: string) => void }) {
           {loading ? 'Verificando...' : 'Entrar'}
         </button>
         <div className="text-center mt-6">
-          <Link href="/" className="text-[#444] text-xs hover:text-[#666] transition-colors tracking-wider">← Volver al sitio</Link>
+          <Link href="/" className="text-[#9A9590] text-xs hover:text-[#81807F] transition-colors tracking-wider">← Volver al sitio</Link>
         </div>
       </div>
     </div>
@@ -255,34 +255,34 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
     <div className="space-y-10">
 
       {/* ── Stats ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px border border-white/8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px border border-black/8">
         {[
-          { label: 'Hoy',          val: todayAppts.length,                                      color: '#F0EDE8' },
-          { label: 'Sin confirmar', val: needsAction.length,                                    color: needsAction.length > 0 ? '#fb923c' : '#444' },
+          { label: 'Hoy',          val: todayAppts.length,                                      color: '#1C1A19' },
+          { label: 'Sin confirmar', val: needsAction.length,                                    color: needsAction.length > 0 ? '#fb923c' : '#9A9590' },
           { label: 'Total activas', val: appointments.filter((a) => a.status !== 'cancelled').length, color: '#81807F' },
           { label: 'Este mes', val: `$${monthRevenue.toLocaleString('es-MX')}`, color: '#81807F' },
         ].map((s) => (
-          <div key={s.label} className="p-4 text-center" style={{ background: '#0A0A0A' }}>
+          <div key={s.label} className="p-4 text-center" style={{ background: '#FFFFFF' }}>
             <div className="font-[family-name:var(--font-display)] text-3xl font-light mb-1" style={{ color: s.color }}>{s.val}</div>
-            <div className="text-[9px] tracking-[0.2em] uppercase text-[#444]">{s.label}</div>
+            <div className="text-[9px] tracking-[0.2em] uppercase text-[#9A9590]">{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* ── Próximas citas ── */}
       {Object.keys(upcomingByDate).length > 0 && (
-        <div className="border border-white/5">
+        <div className="border border-black/5">
           <button
             onClick={() => setOpenProximas(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/4 transition-colors"
           >
-            <span className="text-[10px] tracking-[0.3em] uppercase text-[#555]">
-              Próximas citas <span className="text-[#333]">· {upcoming.length}</span>
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#6B6560]">
+              Próximas citas <span className="text-[#B0AAA5]">· {upcoming.length}</span>
             </span>
-            <ArrowRight size={12} className={`text-[#333] transition-transform duration-200 ${openProximas ? 'rotate-90' : ''}`} />
+            <ArrowRight size={12} className={`text-[#B0AAA5] transition-transform duration-200 ${openProximas ? 'rotate-90' : ''}`} />
           </button>
           {openProximas && (
-            <div className="px-4 pb-4 space-y-4 border-t border-white/5 pt-4">
+            <div className="px-4 pb-4 space-y-4 border-t border-black/5 pt-4">
               {Object.keys(upcomingByDate).sort().map((date) => {
                 const dt = parseISO(date + 'T12:00:00');
                 const label = isTomorrow(dt) ? 'Mañana' : format(dt, "EEE d MMM", { locale: es });
@@ -290,11 +290,11 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                   <div key={date}>
                     <p className="text-[9px] tracking-[0.2em] uppercase text-[#81807F] mb-1 capitalize">{label} · {format(dt, "d 'de' MMMM", { locale: es })}</p>
                     {upcomingByDate[date].map(apt => (
-                      <div key={apt.id} className="flex items-center justify-between py-2.5 border-b border-white/5"
+                      <div key={apt.id} className="flex items-center justify-between py-2.5 border-b border-black/5"
                         style={{ borderLeft: `2px solid ${serviceColor(apt.dp_services?.name)}50`, paddingLeft: '10px' }}>
                         <div>
-                          <p className="text-[#F0EDE8] text-sm">{apt.client_name}</p>
-                          <p className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
+                          <p className="text-[#1C1A19] text-sm">{apt.client_name}</p>
+                          <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
                         </div>
                         <StatusBadge status={apt.status} />
                       </div>
@@ -309,29 +309,29 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
 
       {/* ── Recordatorios de mañana ── */}
       {tomorrowAppts.length > 0 && (
-        <div className="border border-white/5">
+        <div className="border border-black/5">
           <button
             onClick={() => setOpenRecordatorios(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/4 transition-colors"
           >
             <span className="text-[10px] tracking-[0.3em] uppercase flex items-center gap-2 text-[#81807F]">
-              <Bell size={11} /> Recordatorios de mañana <span className="text-[#555] ml-1">· {tomorrowAppts.length}</span>
+              <Bell size={11} /> Recordatorios de mañana <span className="text-[#6B6560] ml-1">· {tomorrowAppts.length}</span>
             </span>
-            <ArrowRight size={12} className={`text-[#333] transition-transform duration-200 ${openRecordatorios ? 'rotate-90' : ''}`} />
+            <ArrowRight size={12} className={`text-[#B0AAA5] transition-transform duration-200 ${openRecordatorios ? 'rotate-90' : ''}`} />
           </button>
           {openRecordatorios && (
-            <div className="px-4 pb-4 border-t border-white/5 pt-4 space-y-2">
+            <div className="px-4 pb-4 border-t border-black/5 pt-4 space-y-2">
               {tomorrowAppts.map((apt) => (
-                <div key={apt.id} className="flex items-center justify-between gap-3 py-3 border-b border-white/5"
+                <div key={apt.id} className="flex items-center justify-between gap-3 py-3 border-b border-black/5"
                   style={{ borderLeft: `2px solid ${serviceColor(apt.dp_services?.name)}40`, paddingLeft: '12px' }}>
                   <div className="min-w-0">
-                    <p className="text-[#F0EDE8] text-sm">{apt.client_name}</p>
-                    <p className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
+                    <p className="text-[#1C1A19] text-sm">{apt.client_name}</p>
+                    <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
                   </div>
                   <WaButton href={waHref(apt.client_phone, fillTemplate(msgReminder, apt))} label="Recordatorio" />
                 </div>
               ))}
-              <p className="text-[#333] text-[10px] pt-1">El botón abre WhatsApp con el mensaje pre-llenado listo para enviar.</p>
+              <p className="text-[#B0AAA5] text-[10px] pt-1">El botón abre WhatsApp con el mensaje pre-llenado listo para enviar.</p>
             </div>
           )}
         </div>
@@ -351,32 +351,32 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                 : isTomorrow(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Mañana'
                 : format(parseISO(apt.appointment_date + 'T12:00:00'), "EEE d MMM", { locale: es });
               return (
-                <div key={apt.id} className="border border-orange-900/40 p-4"
+                <div key={apt.id} className="border border-orange-200 p-4"
                   style={{ background: 'rgba(251,146,60,0.03)', borderLeft: `3px solid ${color}` }}>
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-white text-sm font-medium">{apt.client_name}</span>
+                        <span className="text-[#1C1A19] text-sm font-medium">{apt.client_name}</span>
                         <StatusBadge status={apt.status} />
                       </div>
-                      <p className="text-[#666] text-xs mb-0.5">{apt.dp_services?.name ?? '—'}</p>
-                      <p className="text-[#555] text-xs">
+                      <p className="text-[#6B6560] text-xs mb-0.5">{apt.dp_services?.name ?? '—'}</p>
+                      <p className="text-[#6B6560] text-xs">
                         {dtStr} · {formatTime(apt.start_time)} – {formatTime(apt.end_time)}
                       </p>
                       <a href={`https://wa.me/52${apt.client_phone.replace(/\D/g, '')}`}
                         target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-[#444] hover:text-[#25D366] transition-colors text-xs mt-1 w-fit">
+                        className="flex items-center gap-1 text-[#9A9590] hover:text-[#25D366] transition-colors text-xs mt-1 w-fit">
                         <Phone size={10} /> {apt.client_phone}
                       </a>
                     </div>
                     <div className="flex flex-wrap gap-2 shrink-0">
                       <WaButton href={waHref(apt.client_phone, fillTemplate(msgConf, apt))} label="Enviar WA" />
                       <button onClick={() => updateStatus(apt.id, 'confirmed')} disabled={updating === apt.id}
-                        className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-emerald-800 text-emerald-400 px-3 py-1.5 hover:bg-emerald-900/20 transition-colors disabled:opacity-40">
+                        className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-emerald-300 text-emerald-700 px-3 py-1.5 hover:bg-emerald-50 transition-colors disabled:opacity-40">
                         <Check size={10} /> Confirmar
                       </button>
                       <button onClick={() => updateStatus(apt.id, 'cancelled')} disabled={updating === apt.id}
-                        className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-red-900/60 text-red-400 px-3 py-1.5 hover:bg-red-950/30 transition-colors disabled:opacity-40">
+                        className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-red-300 text-red-500 px-3 py-1.5 hover:bg-red-50 transition-colors disabled:opacity-40">
                         <X size={10} /> No aceptar
                       </button>
                     </div>
@@ -389,26 +389,26 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
       )}
 
       {/* ── Bitácora ── */}
-      <div className="border border-white/5">
+      <div className="border border-black/5">
         <button
           onClick={() => setOpenBitacora(v => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/4 transition-colors"
         >
-          <span className="text-[10px] tracking-[0.3em] uppercase text-[#555]">Bitácora · últimas reservas</span>
+          <span className="text-[10px] tracking-[0.3em] uppercase text-[#6B6560]">Bitácora · últimas reservas</span>
           <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-            <button onClick={load} disabled={loading} className="text-[#444] hover:text-[#81807F] transition-colors p-0.5">
+            <button onClick={load} disabled={loading} className="text-[#9A9590] hover:text-[#81807F] transition-colors p-0.5">
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
             </button>
-            <ArrowRight size={12} className={`text-[#333] transition-transform duration-200 pointer-events-none ${openBitacora ? 'rotate-90' : ''}`} />
+            <ArrowRight size={12} className={`text-[#B0AAA5] transition-transform duration-200 pointer-events-none ${openBitacora ? 'rotate-90' : ''}`} />
           </div>
         </button>
         {openBitacora && (
-        <div className="px-4 pb-4 border-t border-white/5 pt-4">
+        <div className="px-4 pb-4 border-t border-black/5 pt-4">
         <input
           type="text" value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar clienta..."
-          className="w-full bg-transparent border border-white/8 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/40 placeholder:text-white/20 mb-4"
+          className="w-full bg-transparent border border-black/8 text-[#1C1A19] px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/40 placeholder:text-black/25 mb-4"
           style={{ fontSize: '16px' }}
         />
 
@@ -417,13 +417,13 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
             ? recent.filter((a) => a.client_name.toLowerCase().includes(search.toLowerCase()))
             : recent;
           return filteredRecent.length === 0 ? (
-            <div className="border border-white/5 py-14 text-center">
-              <p className="text-[#444] text-sm">
+            <div className="border border-black/5 py-14 text-center">
+              <p className="text-[#9A9590] text-sm">
                 {search.trim() ? 'Sin resultados para esta búsqueda.' : 'No hay reservas registradas.'}
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-black/5">
               {filteredRecent.map((apt) => {
                 const color = serviceColor(apt.dp_services?.name);
                 const dtStr = isToday(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Hoy'
@@ -435,16 +435,16 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                     style={{ borderLeft: `2px solid ${color}40`, paddingLeft: '12px' }}>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <span className="text-[#F0EDE8] text-sm">{apt.client_name}</span>
+                        <span className="text-[#1C1A19] text-sm">{apt.client_name}</span>
                         <StatusBadge status={apt.status} />
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[#555] text-xs">{apt.dp_services?.name ?? '—'}</span>
-                        <span className="text-[#333] text-xs">·</span>
-                        <span className="text-[#555] text-xs">{dtStr} {formatTime(apt.start_time)}</span>
+                        <span className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'}</span>
+                        <span className="text-[#B0AAA5] text-xs">·</span>
+                        <span className="text-[#6B6560] text-xs">{dtStr} {formatTime(apt.start_time)}</span>
                       </div>
                     </div>
-                    <span className="text-[#333] text-[10px] shrink-0 mt-0.5">{ago}</span>
+                    <span className="text-[#B0AAA5] text-[10px] shrink-0 mt-0.5">{ago}</span>
                   </div>
                 );
               })}
@@ -633,15 +633,15 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
   return (
     <div>
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-px border border-white/8 mb-6">
+      <div className="grid grid-cols-3 gap-px border border-black/8 mb-6">
         {[
           { label: 'Sin pagar',   val: sinPagar,    color: '#fb923c' },
           { label: 'Confirmadas', val: confirmadas, color: '#4ade80' },
           { label: 'Pendientes',  val: pendientes,  color: '#81807F' },
         ].map((s) => (
-          <div key={s.label} className="p-3 text-center" style={{ background: '#0A0A0A' }}>
+          <div key={s.label} className="p-3 text-center" style={{ background: '#FFFFFF' }}>
             <div className="font-[family-name:var(--font-display)] text-2xl font-light mb-0.5" style={{ color: s.color }}>{s.val}</div>
-            <div className="text-[9px] tracking-[0.2em] uppercase text-[#444]">{s.label}</div>
+            <div className="text-[9px] tracking-[0.2em] uppercase text-[#9A9590]">{s.label}</div>
           </div>
         ))}
       </div>
@@ -658,20 +658,20 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
               { label: '1–2',    color: '#facc15' },
               { label: '3–4',    color: '#fb923c' },
               { label: '5+',     color: '#f87171' },
-              { label: 'Bloq.',  color: '#555', strike: true },
+              { label: 'Bloq.',  color: '#9A9590', strike: true },
             ].map((l) => (
               <div key={l.label} className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: l.color, opacity: l.strike ? 0.4 : 1 }} />
-                <span className="text-[9px] tracking-wider uppercase" style={{ color: l.strike ? '#444' : l.color }}>{l.label}</span>
+                <span className="text-[9px] tracking-wider uppercase" style={{ color: l.strike ? '#9A9590' : l.color }}>{l.label}</span>
               </div>
             ))}
-            <button onClick={loadData} disabled={loading} className="ml-auto text-[#444] hover:text-[#81807F] transition-colors">
+            <button onClick={loadData} disabled={loading} className="ml-auto text-[#9A9590] hover:text-[#81807F] transition-colors">
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
 
           {/* DayPicker */}
-          <div className="border border-white/8 overflow-x-auto">
+          <div className="border border-black/8 overflow-x-auto">
             <DayPicker
               mode="single"
               selected={selectedDate}
@@ -683,14 +683,14 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                 poco:     { color: '#facc15' },
                 medio:    { color: '#fb923c' },
                 lleno:    { color: '#f87171' },
-                blocked:  { color: '#555', textDecoration: 'line-through' },
-                selected: { backgroundColor: 'transparent', color: '#F0EDE8', fontWeight: '700', outline: 'none', boxShadow: 'none' },
+                blocked:  { color: '#9A9590', textDecoration: 'line-through' },
+                selected: { backgroundColor: 'transparent', color: '#1C1A19', fontWeight: '700', outline: 'none', boxShadow: 'none' },
                 today:    { color: '#81807F', fontWeight: '600', outline: 'none', boxShadow: 'none' },
               }}
               styles={{
-                day:           { color: '#F0EDE8', borderRadius: '0', minWidth: '44px', minHeight: '44px', fontFamily: 'var(--font-body)' },
-                caption_label: { color: '#F0EDE8', fontFamily: 'var(--font-display)', letterSpacing: '0.08em', fontSize: '0.75rem', fontWeight: '300', textTransform: 'uppercase' },
-                weekday:       { color: '#3a3a3a', textTransform: 'uppercase', fontSize: '0.5rem', letterSpacing: '0.15em', fontWeight: '400' },
+                day:           { color: '#1C1A19', borderRadius: '0', minWidth: '44px', minHeight: '44px', fontFamily: 'var(--font-body)' },
+                caption_label: { color: '#1C1A19', fontFamily: 'var(--font-display)', letterSpacing: '0.08em', fontSize: '0.75rem', fontWeight: '300', textTransform: 'uppercase' },
+                weekday:       { color: '#9A9590', textTransform: 'uppercase', fontSize: '0.5rem', letterSpacing: '0.15em', fontWeight: '400' },
                 root:          { background: 'transparent', padding: '12px' },
                 nav:           { gap: '4px' },
               }}
@@ -710,7 +710,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
-                <span className="text-[9px] uppercase tracking-wider text-[#444]">{s.label}</span>
+                <span className="text-[9px] uppercase tracking-wider text-[#9A9590]">{s.label}</span>
               </div>
             ))}
           </div>
@@ -725,17 +725,17 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
               {/* Day header */}
               <div className="flex items-baseline justify-between mb-5">
                 <div>
-                  <p className="font-[family-name:var(--font-display)] text-2xl font-light text-white capitalize">
+                  <p className="font-[family-name:var(--font-display)] text-2xl font-light text-[#1C1A19] capitalize">
                     {isToday(selectedDate) ? 'Hoy' : isTomorrow(selectedDate) ? 'Mañana'
                       : format(selectedDate, "EEEE", { locale: es })}
                   </p>
-                  <p className="text-[10px] tracking-[0.2em] uppercase text-[#555] capitalize">
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-[#6B6560] capitalize">
                     {format(selectedDate, "d 'de' MMMM yyyy", { locale: es })}
                   </p>
                 </div>
                 <button
                   onClick={() => setSelectedDate(undefined)}
-                  className="text-[9px] tracking-[0.15em] uppercase text-[#444] hover:text-[#888] transition-colors border border-white/8 px-2 py-1"
+                  className="text-[9px] tracking-[0.15em] uppercase text-[#9A9590] hover:text-[#6B6560] transition-colors border border-black/8 px-2 py-1"
                 >
                   Ver todos
                 </button>
@@ -743,12 +743,12 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
 
               {/* Full day timeline */}
               {timeline.length === 0 ? (
-                <div className="border border-white/5 py-10 text-center mb-6">
-                  <CalendarOff size={18} className="text-white/10 mx-auto mb-2" />
-                  <p className="text-[#444] text-sm">Día no laborable</p>
+                <div className="border border-black/5 py-10 text-center mb-6">
+                  <CalendarOff size={18} className="text-black/10 mx-auto mb-2" />
+                  <p className="text-[#9A9590] text-sm">Día no laborable</p>
                 </div>
               ) : (
-                <div className="mb-6 border border-white/5">
+                <div className="mb-6 border border-black/5">
                   {timeline.map((row, i) => {
                     const color = row.appt ? serviceColor(row.appt.dp_services?.name) : null;
 
@@ -758,45 +758,45 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                       return (
                         <div
                           key={i}
-                          className="border-b border-white/5 py-3"
+                          className="border-b border-black/5 py-3"
                           style={{ borderLeft: `3px solid ${color}`, paddingLeft: '12px' }}
                         >
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-[#81807F] text-xs font-medium">{formatTime(row.time)}</span>
-                            <span className="text-[#444] text-xs">→ {formatTime(apt.end_time)}</span>
+                            <span className="text-[#9A9590] text-xs">→ {formatTime(apt.end_time)}</span>
                             <StatusBadge status={apt.status} />
                           </div>
-                          <p className="text-[#F0EDE8] text-sm mb-0.5">{apt.client_name}</p>
+                          <p className="text-[#1C1A19] text-sm mb-0.5">{apt.client_name}</p>
                           <div className="flex items-center gap-1.5 mb-1">
                             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color! }} />
-                            <span className="text-[#666] text-xs">{apt.dp_services?.name ?? '—'}</span>
+                            <span className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'}</span>
                           </div>
                           <div className="flex items-center gap-3 flex-wrap mt-1">
                             <a
                               href={`https://wa.me/52${apt.client_phone.replace(/\D/g, '')}`}
                               target="_blank" rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-[#444] hover:text-[#25D366] transition-colors text-xs"
+                              className="flex items-center gap-1 text-[#9A9590] hover:text-[#25D366] transition-colors text-xs"
                             >
                               <Phone size={10} /> {apt.client_phone}
                             </a>
                             <WaButton href={waHref(apt.client_phone, fillTemplate(msgReminder, apt))} label="Recordatorio WA" />
                           </div>
-                          {apt.notes && <p className="text-[#444] text-[11px] italic mt-1">{apt.notes}</p>}
+                          {apt.notes && <p className="text-[#9A9590] text-[11px] italic mt-1">{apt.notes}</p>}
                           {(apt.status === 'pending' || apt.status === 'pending_payment') && (
                             <div className="flex gap-2 mt-3">
                               <button onClick={() => updateStatus(apt.id, 'confirmed')} disabled={updating === apt.id}
-                                className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-emerald-800 text-emerald-400 px-2.5 py-1.5 hover:bg-emerald-900/20 transition-colors disabled:opacity-40">
+                                className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-emerald-300 text-emerald-700 px-2.5 py-1.5 hover:bg-emerald-50 transition-colors disabled:opacity-40">
                                 <Check size={10} /> Confirmar
                               </button>
                               <button onClick={() => updateStatus(apt.id, 'cancelled')} disabled={updating === apt.id}
-                                className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-red-900/60 text-red-400 px-2.5 py-1.5 hover:bg-red-950/30 transition-colors disabled:opacity-40">
+                                className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-red-300 text-red-500 px-2.5 py-1.5 hover:bg-red-50 transition-colors disabled:opacity-40">
                                 <X size={10} /> No aceptar
                               </button>
                             </div>
                           )}
                           {apt.status === 'confirmed' && (
                             <button onClick={() => updateStatus(apt.id, 'cancelled')} disabled={updating === apt.id}
-                              className="mt-3 flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-white/8 text-[#444] px-2.5 py-1.5 hover:border-red-800 hover:text-red-400 transition-colors disabled:opacity-40">
+                              className="mt-3 flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-black/8 text-[#9A9590] px-2.5 py-1.5 hover:border-red-300 hover:text-red-500 transition-colors disabled:opacity-40">
                               <X size={10} /> Cancelar cita
                             </button>
                           )}
@@ -811,19 +811,19 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                     if (row.block && row.blockIsStart) {
                       const blk = row.block;
                       return (
-                        <div key={i} className="flex items-center justify-between py-2.5 border-b border-white/5"
+                        <div key={i} className="flex items-center justify-between py-2.5 border-b border-black/5"
                           style={{ borderLeft: '3px solid rgba(239,68,68,0.5)', paddingLeft: '12px', background: 'rgba(239,68,68,0.03)' }}>
                           <div>
-                            <span className="text-red-400/80 text-xs">
+                            <span className="text-red-500/80 text-xs">
                               {blk.all_day ? 'Día completo bloqueado' : formatTime(row.time)}
                             </span>
                             {!blk.all_day && blk.end_time && (
-                              <span className="text-[#555] text-xs ml-1">→ {formatTime(blk.end_time)}</span>
+                              <span className="text-[#6B6560] text-xs ml-1">→ {formatTime(blk.end_time)}</span>
                             )}
-                            {blk.reason && <span className="text-[#444] text-xs ml-2">· {blk.reason}</span>}
+                            {blk.reason && <span className="text-[#9A9590] text-xs ml-2">· {blk.reason}</span>}
                           </div>
                           <button onClick={() => handleDeleteBlock(blk.id)} disabled={deleting === blk.id}
-                            className="text-[#333] hover:text-red-400 transition-colors disabled:opacity-40 p-1 ml-3 shrink-0">
+                            className="text-[#B0AAA5] hover:text-red-500 transition-colors disabled:opacity-40 p-1 ml-3 shrink-0">
                             {deleting === blk.id
                               ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
                               : <Trash2 size={12} />}
@@ -837,12 +837,12 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
 
                     /* ── Free slot ── */
                     return (
-                      <div key={i} className="flex items-center gap-3 py-2 border-b border-white/[0.03]"
+                      <div key={i} className="flex items-center gap-3 py-2 border-b border-black/[0.03]"
                         style={{ paddingLeft: '15px' }}>
-                        <span className="text-[#2a2a2a] text-[10px] w-16 shrink-0">{formatTime(row.time)}</span>
+                        <span className="text-[#C0BBB6] text-[10px] w-16 shrink-0">{formatTime(row.time)}</span>
                         <div className="flex items-center gap-1.5">
-                          <span className="w-1 h-1 rounded-full" style={{ background: '#1a3d1a' }} />
-                          <span className="text-[10px] tracking-[0.08em] uppercase" style={{ color: '#1e3d1e' }}>libre</span>
+                          <span className="w-1 h-1 rounded-full" style={{ background: '#a3d9a5' }} />
+                          <span className="text-[10px] tracking-[0.08em] uppercase" style={{ color: '#6aaf6c' }}>libre</span>
                         </div>
                       </div>
                     );
@@ -854,22 +854,22 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
               {!showBlockForm ? (
                 <button
                   onClick={() => setShowBlockForm(true)}
-                  className="flex items-center gap-2 text-[9px] tracking-[0.15em] uppercase border border-white/8 text-[#555] px-3 py-2 hover:border-red-900 hover:text-red-400 transition-colors"
+                  className="flex items-center gap-2 text-[9px] tracking-[0.15em] uppercase border border-black/8 text-[#6B6560] px-3 py-2 hover:border-red-300 hover:text-red-500 transition-colors"
                 >
                   <CalendarOff size={12} /> Bloquear horas de este día
                 </button>
               ) : (
-                <div className="border border-white/8 p-4 mt-2">
+                <div className="border border-black/8 p-4 mt-2">
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-[10px] tracking-[0.2em] uppercase text-[#555]">Bloquear horario</p>
-                    <button onClick={() => { setShowBlockForm(false); setBlockReason(''); }} className="text-[#444] hover:text-white transition-colors">
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-[#6B6560]">Bloquear horario</p>
+                    <button onClick={() => { setShowBlockForm(false); setBlockReason(''); }} className="text-[#9A9590] hover:text-[#1C1A19] transition-colors">
                       <X size={14} />
                     </button>
                   </div>
                   <div className="flex gap-2 mb-4">
                     {[{ v: true, l: 'Día completo' }, { v: false, l: 'Rango de horas' }].map(({ v, l }) => (
                       <button key={l} onClick={() => setAllDay(v)}
-                        className={`flex-1 py-2 text-[9px] tracking-[0.12em] uppercase border transition-colors ${allDay === v ? 'border-[#81807F]/50 text-[#81807F]' : 'border-white/8 text-[#555] hover:border-white/20'}`}>
+                        className={`flex-1 py-2 text-[9px] tracking-[0.12em] uppercase border transition-colors ${allDay === v ? 'border-[#81807F]/50 text-[#81807F]' : 'border-black/8 text-[#6B6560] hover:border-black/20'}`}>
                         {l}
                       </button>
                     ))}
@@ -878,19 +878,19 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                     <div className="grid grid-cols-2 gap-2 mb-4">
                       {[{ label: 'Desde', val: blockStart, set: setBlockStart }, { label: 'Hasta', val: blockEnd, set: setBlockEnd }].map(({ label, val, set }) => (
                         <div key={label}>
-                          <label className="block text-[9px] tracking-[0.15em] uppercase text-[#555] mb-1.5">{label}</label>
+                          <label className="block text-[9px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">{label}</label>
                           <input type="time" value={val} onChange={(e) => set(e.target.value)}
-                            className="w-full bg-transparent border border-white/10 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
+                            className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
                         </div>
                       ))}
                     </div>
                   )}
                   <input type="text" value={blockReason} onChange={(e) => setBlockReason(e.target.value)}
                     placeholder="Motivo (opcional)"
-                    className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 text-sm focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15 mb-4" style={{ fontSize: '16px' }} />
+                    className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 text-sm focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25 mb-4" style={{ fontSize: '16px' }} />
                   <button onClick={handleBlock} disabled={saving}
-                    className="w-full flex items-center justify-center gap-2 border border-red-900 text-red-400 py-3 text-[10px] tracking-[0.15em] uppercase hover:bg-red-900/15 transition-colors disabled:opacity-40">
-                    {saving ? <div className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <CalendarOff size={12} />}
+                    className="w-full flex items-center justify-center gap-2 border border-red-300 text-red-500 py-3 text-[10px] tracking-[0.15em] uppercase hover:bg-red-50 transition-colors disabled:opacity-40">
+                    {saving ? <div className="w-3.5 h-3.5 border border-red-500 border-t-transparent rounded-full animate-spin" /> : <CalendarOff size={12} />}
                     {saving ? 'Bloqueando...' : 'Confirmar bloqueo'}
                   </button>
                 </div>
@@ -899,15 +899,15 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
           ) : (
             /* ── NO DAY SELECTED: UPCOMING LIST ── */
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-5">Próximas citas</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#6B6560] mb-5">Próximas citas</p>
               {loading ? (
                 <div className="flex items-center justify-center py-20">
                   <div className="w-4 h-4 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : Object.keys(upcomingByDate).length === 0 ? (
-                <div className="border border-white/5 py-16 text-center">
-                  <p className="text-[#444] text-sm">No hay citas próximas.</p>
-                  <p className="text-[#333] text-xs mt-1">Selecciona un día en el calendario para ver o gestionar.</p>
+                <div className="border border-black/5 py-16 text-center">
+                  <p className="text-[#9A9590] text-sm">No hay citas próximas.</p>
+                  <p className="text-[#B0AAA5] text-xs mt-1">Selecciona un día en el calendario para ver o gestionar.</p>
                 </div>
               ) : (
                 <div>
@@ -917,13 +917,13 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                         onClick={() => setSelectedDate(parseISO(date + 'T12:00:00'))}
                         className="flex items-baseline gap-2 mb-3 group w-full text-left"
                       >
-                        <span className="font-[family-name:var(--font-display)] text-xl font-light text-white group-hover:text-[#81807F] transition-colors capitalize">
+                        <span className="font-[family-name:var(--font-display)] text-xl font-light text-[#1C1A19] group-hover:text-[#81807F] transition-colors capitalize">
                           {dayLabel(date)}
                         </span>
-                        <span className="text-[10px] tracking-[0.15em] uppercase text-[#444] capitalize">
+                        <span className="text-[10px] tracking-[0.15em] uppercase text-[#9A9590] capitalize">
                           {format(parseISO(date + 'T12:00:00'), "d 'de' MMMM", { locale: es })}
                         </span>
-                        <span className="ml-auto text-[9px] text-[#333]">
+                        <span className="ml-auto text-[9px] text-[#B0AAA5]">
                           {upcomingByDate[date].length} cita{upcomingByDate[date].length !== 1 ? 's' : ''}
                         </span>
                       </button>
@@ -933,15 +933,15 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                           return (
                             <div
                               key={apt.id}
-                              className="border-b border-white/5 py-3 cursor-pointer hover:bg-white/[0.01] transition-colors"
+                              className="border-b border-black/5 py-3 cursor-pointer hover:bg-black/[0.01] transition-colors"
                               style={{ borderLeft: `3px solid ${color}`, paddingLeft: '12px' }}
                               onClick={() => setSelectedDate(parseISO(date + 'T12:00:00'))}
                             >
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2 min-w-0">
-                                  <span className="text-white text-xs font-medium shrink-0">{formatTime(apt.start_time)}</span>
-                                  <span className="text-[#F0EDE8] text-sm truncate">{apt.client_name}</span>
-                                  <span className="text-[#555] text-xs hidden sm:inline truncate">{apt.dp_services?.name}</span>
+                                  <span className="text-[#1C1A19] text-xs font-medium shrink-0">{formatTime(apt.start_time)}</span>
+                                  <span className="text-[#1C1A19] text-sm truncate">{apt.client_name}</span>
+                                  <span className="text-[#6B6560] text-xs hidden sm:inline truncate">{apt.dp_services?.name}</span>
                                 </div>
                                 <StatusBadge status={apt.status} />
                               </div>
@@ -989,51 +989,51 @@ function ServiceForm({ form, setForm, onSave, onCancel, saving, id }: ServiceFor
   const act = parseInt(form.active_minutes)   || 0;
   const gap = Math.max(0, dur - act);
   return (
-    <div className="border border-white/10 p-4 mt-1 mb-2">
+    <div className="border border-black/10 p-4 mt-1 mb-2">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <div className="sm:col-span-2">
-          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Nombre *</label>
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Nombre *</label>
           <input type="text" value={form.name} onChange={field('name')} placeholder="Ej: Mechas / Balayage"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Descripción <span className="normal-case tracking-normal text-[#333]">— opcional</span></label>
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Descripción <span className="normal-case tracking-normal text-[#B0AAA5]">— opcional</span></label>
           <input type="text" value={form.description} onChange={field('description')} placeholder="Breve descripción para la clienta"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
         </div>
         <div>
-          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Precio total (MXN) *</label>
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Precio total (MXN) *</label>
           <input type="number" value={form.price} onChange={field('price')} placeholder="1400"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
         </div>
         <div>
-          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Anticipo (MXN)</label>
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Anticipo (MXN)</label>
           <input type="number" value={form.deposit_amount} onChange={field('deposit_amount')} placeholder="200"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
         </div>
         <div>
-          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Duración total (min) *</label>
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Duración total (min) *</label>
           <input type="number" value={form.duration_minutes} onChange={field('duration_minutes')} placeholder="240"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
         </div>
         <div>
-          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Tiempo contigo (min) *</label>
+          <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Tiempo contigo (min) *</label>
           <input type="number" value={form.active_minutes} onChange={field('active_minutes')} placeholder="120"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
         </div>
       </div>
       {dur > 0 && act > 0 && (
-        <div className="mb-4 p-3 border border-white/5" style={{ background: '#0a0a0a' }}>
+        <div className="mb-4 p-3 border border-black/5" style={{ background: '#F3F1EE' }}>
           <div className="flex h-1.5 mb-2 overflow-hidden">
             <div style={{ width: `${Math.min(100, (act / dur) * 100)}%`, background: '#81807F' }} />
-            {gap > 0 && <div style={{ width: `${(gap / dur) * 100}%`, background: '#1e1e1e', borderLeft: '1px solid #333' }} />}
+            {gap > 0 && <div style={{ width: `${(gap / dur) * 100}%`, background: '#D8D4CF', borderLeft: '1px solid #C0BBB6' }} />}
           </div>
           <div className="flex justify-between text-[9px] tracking-[0.12em] uppercase">
             <span style={{ color: '#81807F' }}>{formatDuration(act)} contigo</span>
-            {gap > 0 && <span style={{ color: '#333' }}>{formatDuration(gap)} procesando</span>}
+            {gap > 0 && <span style={{ color: '#B0AAA5' }}>{formatDuration(gap)} procesando</span>}
           </div>
           {gap > 0 && (
-            <p className="text-[10px] mt-1.5" style={{ color: '#444' }}>
+            <p className="text-[10px] mt-1.5" style={{ color: '#6B6560' }}>
               Puedes recibir otra cita {formatDuration(act)} después del inicio de esta
             </p>
           )}
@@ -1046,7 +1046,7 @@ function ServiceForm({ form, setForm, onSave, onCancel, saving, id }: ServiceFor
           {saving ? 'Guardando...' : id ? 'Actualizar' : 'Crear servicio'}
         </button>
         <button onClick={onCancel}
-          className="px-4 py-2.5 text-[10px] tracking-[0.2em] uppercase text-[#555] border border-white/8 hover:text-white transition-colors">
+          className="px-4 py-2.5 text-[10px] tracking-[0.2em] uppercase text-[#6B6560] border border-black/8 hover:text-[#1C1A19] transition-colors">
           Cancelar
         </button>
       </div>
@@ -1118,7 +1118,7 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <p className="text-[#555] text-sm leading-relaxed">
+        <p className="text-[#6B6560] text-sm leading-relaxed">
           Gestiona los servicios, precios y tiempos. El <span style={{ color: '#81807F' }}>tiempo contigo</span> define cuándo puede iniciar la siguiente cita.
         </p>
         {!showAdd && (
@@ -1151,54 +1151,54 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
             const isEditing = editingId === svc.id;
             const activePct = Math.min(100, (svc.active_minutes / svc.duration_minutes) * 100);
             return (
-              <div key={svc.id} className={`${i === 0 ? 'border-t border-white/5' : ''}`}>
-                <div className="border-b border-white/5 py-4">
+              <div key={svc.id} className={`${i === 0 ? 'border-t border-black/5' : ''}`}>
+                <div className="border-b border-black/5 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-3 flex-wrap mb-1">
-                        <span className="font-[family-name:var(--font-display)] text-white text-base">{svc.name}</span>
+                        <span className="font-[family-name:var(--font-display)] text-[#1C1A19] text-base">{svc.name}</span>
                         <span className="text-[#81807F] text-sm font-light">${svc.price.toLocaleString('es-MX')}</span>
-                        <span className="text-[#333] text-xs">anticipo ${svc.deposit_amount}</span>
+                        <span className="text-[#B0AAA5] text-xs">anticipo ${svc.deposit_amount}</span>
                       </div>
-                      {svc.description && <p className="text-[#555] text-xs mb-2">{svc.description}</p>}
+                      {svc.description && <p className="text-[#6B6560] text-xs mb-2">{svc.description}</p>}
                       {/* Time bar */}
                       <div className="flex items-center gap-2 mb-1">
                         <div className="flex h-1 w-20 overflow-hidden flex-shrink-0">
                           <div style={{ width: `${activePct}%`, background: '#81807F55' }} />
-                          {gap > 0 && <div style={{ width: `${100 - activePct}%`, background: '#1a1a1a' }} />}
+                          {gap > 0 && <div style={{ width: `${100 - activePct}%`, background: '#D8D4CF' }} />}
                         </div>
-                        <span className="text-[10px] text-[#555]">
+                        <span className="text-[10px] text-[#6B6560]">
                           {formatDuration(svc.duration_minutes)} total
                           {gap > 0 && (
-                            <span className="text-[#333]"> · {formatDuration(svc.active_minutes)} contigo · {formatDuration(gap)} procesando</span>
+                            <span className="text-[#B0AAA5]"> · {formatDuration(svc.active_minutes)} contigo · {formatDuration(gap)} procesando</span>
                           )}
                         </span>
                       </div>
                       {gap > 0 && (
-                        <p className="text-[9px] tracking-[0.05em] uppercase" style={{ color: '#2a2a2a' }}>
+                        <p className="text-[9px] tracking-[0.05em] uppercase" style={{ color: '#C0BBB6' }}>
                           Siguiente cita posible {formatDuration(svc.active_minutes)} después del inicio
                         </p>
                       )}
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
                       <button onClick={() => isEditing ? cancel() : startEdit(svc)}
-                        className="p-2 text-[#444] hover:text-[#81807F] transition-colors">
+                        className="p-2 text-[#9A9590] hover:text-[#81807F] transition-colors">
                         <Pencil size={13} />
                       </button>
                       {confirmDeleteId === svc.id ? (
                         <div className="flex items-center gap-1">
                           <button onClick={() => handleDelete(svc.id)} disabled={deleting === svc.id}
-                            className="text-[9px] tracking-wider uppercase border border-red-800 text-red-400 px-2 py-1 hover:bg-red-900/20 transition-colors">
+                            className="text-[9px] tracking-wider uppercase border border-red-300 text-red-500 px-2 py-1 hover:bg-red-50 transition-colors">
                             ¿Segura?
                           </button>
                           <button onClick={() => setConfirmDeleteId(null)}
-                            className="text-[9px] tracking-wider uppercase border border-white/8 text-[#444] px-2 py-1 hover:text-white transition-colors">
+                            className="text-[9px] tracking-wider uppercase border border-black/8 text-[#9A9590] px-2 py-1 hover:text-[#1C1A19] transition-colors">
                             No
                           </button>
                         </div>
                       ) : (
                         <button onClick={() => handleDelete(svc.id)} disabled={deleting === svc.id}
-                          className="p-2 text-[#2a2a2a] hover:text-red-400 transition-colors disabled:opacity-40">
+                          className="p-2 text-[#C0BBB6] hover:text-red-500 transition-colors disabled:opacity-40">
                           {deleting === svc.id ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={13} />}
                         </button>
                       )}
@@ -1397,17 +1397,17 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
   return (
     <div className="space-y-6">
       {/* Filter + actions */}
-      <div className="flex items-center gap-0 border-b border-white/8 flex-wrap">
+      <div className="flex items-center gap-0 border-b border-black/8 flex-wrap">
         {(['todos', 'nuevos', 'frecuentes'] as ClientFilter[]).map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`px-4 py-3 text-[9px] tracking-[0.18em] uppercase border-b-2 transition-colors capitalize ${
-              filter === f ? 'border-[#81807F] text-[#81807F]' : 'border-transparent text-[#444] hover:text-[#777]'
+              filter === f ? 'border-[#1C1A19] text-[#1C1A19]' : 'border-transparent text-[#9A9590] hover:text-[#6B6560]'
             }`}>
             {f} <span className="ml-1 opacity-50">({counts[f]})</span>
           </button>
         ))}
         <div className="ml-auto flex items-center gap-2 pb-1">
-          <button onClick={load} disabled={loading} className="text-[#444] hover:text-[#81807F] transition-colors p-1">
+          <button onClick={load} disabled={loading} className="text-[#9A9590] hover:text-[#81807F] transition-colors p-1">
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
           </button>
           <button onClick={() => setShowForm(v => !v)}
@@ -1422,43 +1422,43 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         type="text" value={clientSearch}
         onChange={e => setClientSearch(e.target.value)}
         placeholder="Buscar por nombre o teléfono..."
-        className="w-full bg-transparent border border-white/8 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/40 placeholder:text-white/20"
+        className="w-full bg-transparent border border-black/8 text-[#1C1A19] px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/40 placeholder:text-black/25"
         style={{ fontSize: '16px' }}
       />
 
       {/* Add form */}
       {showForm && (
-        <div className="border border-white/10 p-4">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-4">Nueva clienta frecuente</p>
+        <div className="border border-black/10 p-4">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-[#6B6560] mb-4">Nueva clienta frecuente</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <div>
-              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Nombre</label>
+              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-2">Nombre</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nombre completo"
-                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/60 placeholder:text-black/25" style={{ fontSize: '16px' }} />
             </div>
             <div>
-              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">WhatsApp — 10 dígitos</label>
-              <div className="flex border border-white/10 focus-within:border-[#81807F]/60 transition-colors">
+              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-2">WhatsApp — 10 dígitos</label>
+              <div className="flex border border-black/10 focus-within:border-[#81807F]/60 transition-colors">
                 <input type="text" value={countryCode} onChange={e => setCountryCode(e.target.value)}
-                  className="w-14 bg-transparent text-[#888] px-2 py-2.5 text-center focus:outline-none border-r border-white/10 shrink-0" style={{ fontSize: '16px' }} />
+                  className="w-14 bg-transparent text-[#9A9590] px-2 py-2.5 text-center focus:outline-none border-r border-black/10 shrink-0" style={{ fontSize: '16px' }} />
                 <input type="tel" inputMode="numeric" value={phone}
                   onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   placeholder="669 123 4567"
-                  className="flex-1 bg-transparent text-white px-3 py-2.5 focus:outline-none placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                  className="flex-1 bg-transparent text-[#1C1A19] px-3 py-2.5 focus:outline-none placeholder:text-black/25" style={{ fontSize: '16px' }} />
                 {phone.length > 0 && (
-                  <span className={`flex items-center pr-3 text-[10px] shrink-0 ${phone.length === 10 ? 'text-emerald-500' : 'text-[#444]'}`}>{phone.length}/10</span>
+                  <span className={`flex items-center pr-3 text-[10px] shrink-0 ${phone.length === 10 ? 'text-emerald-600' : 'text-[#9A9590]'}`}>{phone.length}/10</span>
                 )}
               </div>
             </div>
             <div>
-              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Correo (opcional)</label>
+              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-2">Correo (opcional)</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="cliente@correo.com"
-                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/60 placeholder:text-black/25" style={{ fontSize: '16px' }} />
             </div>
             <div>
-              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Notas (opcional)</label>
+              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-2">Notas (opcional)</label>
               <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Prefiere tinte oscuro..."
-                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/60 placeholder:text-black/25" style={{ fontSize: '16px' }} />
             </div>
           </div>
           <div className="flex gap-2">
@@ -1467,7 +1467,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
               {formSaving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <UserPlus size={12} />}
               Guardar
             </button>
-            <button onClick={() => setShowForm(false)} className="px-4 py-2.5 text-[10px] tracking-[0.15em] uppercase text-[#444] border border-white/8 hover:border-white/20 transition-colors">Cancelar</button>
+            <button onClick={() => setShowForm(false)} className="px-4 py-2.5 text-[10px] tracking-[0.15em] uppercase text-[#9A9590] border border-black/8 hover:border-black/20 transition-colors">Cancelar</button>
           </div>
         </div>
       )}
@@ -1478,38 +1478,38 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
           <div className="w-4 h-4 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : displayed.length === 0 ? (
-        <div className="border border-white/5 py-14 text-center">
-          <p className="text-[#444] text-sm">
+        <div className="border border-black/5 py-14 text-center">
+          <p className="text-[#9A9590] text-sm">
             {clientSearch.trim() ? 'Sin resultados.' : filter === 'frecuentes' ? 'No hay clientas frecuentes registradas.'
               : filter === 'nuevos' ? 'Todas las clientas ya son frecuentes.'
               : 'No hay clientas registradas.'}
           </p>
         </div>
       ) : (
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-black/5">
           {displayed.map(c => (
             <div key={c.phone_normalized}>
               <div className="flex items-center justify-between py-3.5 gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   {c.trusted_id
                     ? <Star size={11} className="text-[#81807F] shrink-0" />
-                    : <span className="w-2.5 h-2.5 rounded-full border border-white/10 shrink-0" />
+                    : <span className="w-2.5 h-2.5 rounded-full border border-black/10 shrink-0" />
                   }
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-white text-sm">{c.name}</p>
+                      <p className="text-[#1C1A19] text-sm">{c.name}</p>
                       {c.appt_count > 0 && (
-                        <span className="text-[9px] tracking-wider text-[#333]">{c.appt_count} visita{c.appt_count !== 1 ? 's' : ''}</span>
+                        <span className="text-[9px] tracking-wider text-[#B0AAA5]">{c.appt_count} visita{c.appt_count !== 1 ? 's' : ''}</span>
                       )}
                     </div>
-                    <p className="text-[#555] text-xs mt-0.5 truncate">{c.phone}{c.email ? <span className="text-[#333]"> · {c.email}</span> : null}</p>
-                    {c.notes && <p className="text-[#333] text-[10px] mt-0.5 italic">{c.notes}</p>}
+                    <p className="text-[#6B6560] text-xs mt-0.5 truncate">{c.phone}{c.email ? <span className="text-[#B0AAA5]"> · {c.email}</span> : null}</p>
+                    {c.notes && <p className="text-[#B0AAA5] text-[10px] mt-0.5 italic">{c.notes}</p>}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {c.trusted_id && (
                     <button onClick={() => editingId === c.trusted_id ? setEditingId(null) : startEdit(trustedClients.find(t => t.id === c.trusted_id)!)}
-                      className="text-[#333] hover:text-[#81807F] transition-colors p-1.5">
+                      className="text-[#B0AAA5] hover:text-[#81807F] transition-colors p-1.5">
                       <Pencil size={12} />
                     </button>
                   )}
@@ -1521,13 +1521,13 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                         Frecuente
                       </button>
                       <button onClick={() => handleDeleteByPhone(c.phone_normalized, c.name)} disabled={deletingPhone === c.phone_normalized}
-                        className="text-[#333] hover:text-red-400 transition-colors disabled:opacity-40 p-1.5">
+                        className="text-[#B0AAA5] hover:text-red-500 transition-colors disabled:opacity-40 p-1.5">
                         {deletingPhone === c.phone_normalized ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={12} />}
                       </button>
                     </div>
                   ) : (
                     <button onClick={() => demote(c.trusted_id!)} disabled={deleting === c.trusted_id}
-                      className="text-[#333] hover:text-red-400 transition-colors disabled:opacity-40 p-1.5">
+                      className="text-[#B0AAA5] hover:text-red-500 transition-colors disabled:opacity-40 p-1.5">
                       {deleting === c.trusted_id ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={13} />}
                     </button>
                   )}
@@ -1535,27 +1535,27 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
               </div>
               {/* Inline edit form for trusted client */}
               {editingId === c.trusted_id && (
-                <div className="border border-white/10 p-4 mb-2" style={{ background: '#080808' }}>
+                <div className="border border-black/10 p-4 mb-2" style={{ background: '#F3F1EE' }}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                     <div>
-                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Nombre</label>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Nombre</label>
                       <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
-                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
                     </div>
                     <div>
-                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Teléfono</label>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Teléfono</label>
                       <input type="text" value={editPhone} onChange={e => setEditPhone(e.target.value)}
-                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
                     </div>
                     <div>
-                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Correo (opcional)</label>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Correo (opcional)</label>
                       <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)}
-                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
                     </div>
                     <div>
-                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Notas (opcional)</label>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Notas (opcional)</label>
                       <input type="text" value={editNotes} onChange={e => setEditNotes(e.target.value)}
-                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -1565,7 +1565,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                       Guardar
                     </button>
                     <button onClick={() => setEditingId(null)}
-                      className="px-3 py-2 text-[10px] tracking-[0.15em] uppercase text-[#444] border border-white/8 hover:border-white/20 transition-colors">Cancelar</button>
+                      className="px-3 py-2 text-[10px] tracking-[0.15em] uppercase text-[#9A9590] border border-black/8 hover:border-black/20 transition-colors">Cancelar</button>
                   </div>
                 </div>
               )}
@@ -1601,7 +1601,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-      className="flex items-center gap-1.5 text-[9px] tracking-[0.12em] uppercase border border-white/10 text-[#555] px-2.5 py-1.5 hover:border-[#81807F]/40 hover:text-[#81807F] transition-colors"
+      className="flex items-center gap-1.5 text-[9px] tracking-[0.12em] uppercase border border-black/10 text-[#6B6560] px-2.5 py-1.5 hover:border-[#81807F]/40 hover:text-[#81807F] transition-colors"
     >
       {copied ? <CheckIcon size={10} className="text-emerald-400" /> : <Copy size={10} />}
       {copied ? 'Copiado' : 'Copiar'}
@@ -1611,9 +1611,9 @@ function CopyButton({ text }: { text: string }) {
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="border-b border-white/5 pb-4 mb-5">
-      <p className="text-[10px] tracking-[0.3em] uppercase text-[#555]">{title}</p>
-      {subtitle && <p className="text-[#333] text-xs mt-1">{subtitle}</p>}
+    <div className="border-b border-black/5 pb-4 mb-5">
+      <p className="text-[10px] tracking-[0.3em] uppercase text-[#6B6560]">{title}</p>
+      {subtitle && <p className="text-[#B0AAA5] text-xs mt-1">{subtitle}</p>}
     </div>
   );
 }
@@ -1669,7 +1669,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
     });
   };
 
-  const inputCls = "w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15 text-sm";
+  const inputCls = "w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25 text-sm";
   const SaveBtn = ({ section }: { section: string }) => (
     <button
       onClick={() => {
@@ -1705,7 +1705,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
             { key: 'instagram',   label: 'Instagram (sin @)',     placeholder: 'danielapalaciosalon' },
           ].map(({ key, label, placeholder }) => (
             <div key={key}>
-              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">{label}</label>
+              <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">{label}</label>
               <input
                 type="text" value={identity[key] ?? ''} placeholder={placeholder}
                 onChange={e => setIdentity(p => ({ ...p, [key]: e.target.value }))}
@@ -1714,7 +1714,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
             </div>
           ))}
           <div className="sm:col-span-2">
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Descripción corta</label>
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Descripción corta</label>
             <input
               type="text" value={identity.description ?? ''} placeholder="Breve texto que aparece bajo el nombre"
               onChange={e => setIdentity(p => ({ ...p, description: e.target.value }))}
@@ -1733,51 +1733,51 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
             const day = schedule.find(d => d.day_of_week === dow) ?? { day_of_week: dow, is_active: false, start_time: '10:00', end_time: '19:00', break_start: null, break_end: null };
             const hasBreak = !!(day.break_start && day.break_end);
             return (
-              <div key={dow} className={`py-3 border-b border-white/5 ${!day.is_active ? 'opacity-50' : ''}`}>
+              <div key={dow} className={`py-3 border-b border-black/5 ${!day.is_active ? 'opacity-50' : ''}`}>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => updateDay(dow, { is_active: !day.is_active })}
-                    className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${day.is_active ? 'bg-[#81807F]' : 'bg-white/10'}`}
+                    className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${day.is_active ? 'bg-[#81807F]' : 'bg-black/10'}`}
                   >
                     <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${day.is_active ? 'left-4' : 'left-0.5'}`} />
                   </button>
-                  <span className="text-sm w-20 shrink-0 text-[#F0EDE8]">{DAYS_ES[dow]}</span>
+                  <span className="text-sm w-20 shrink-0 text-[#1C1A19]">{DAYS_ES[dow]}</span>
                   {day.is_active ? (
                     <div className="flex items-center gap-1 flex-1 min-w-0 flex-wrap">
                       <input type="time" value={day.start_time}
                         onChange={e => updateDay(dow, { start_time: e.target.value })}
-                        className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
+                        className="bg-transparent border border-black/10 text-[#1C1A19] px-2 py-1.5 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
                         style={{ fontSize: '16px' }}
                       />
-                      <span className="text-[#444] text-xs">—</span>
+                      <span className="text-[#9A9590] text-xs">—</span>
                       <input type="time" value={day.end_time}
                         onChange={e => updateDay(dow, { end_time: e.target.value })}
-                        className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
+                        className="bg-transparent border border-black/10 text-[#1C1A19] px-2 py-1.5 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
                         style={{ fontSize: '16px' }}
                       />
                       <button
                         onClick={() => updateDay(dow, hasBreak ? { break_start: null, break_end: null } : { break_start: '14:00', break_end: '16:00' })}
-                        className={`text-[9px] tracking-[0.12em] uppercase px-2 py-1.5 border transition-colors shrink-0 ${hasBreak ? 'border-[#81807F]/40 text-[#81807F]' : 'border-white/10 text-[#444] hover:border-white/25 hover:text-[#888]'}`}
+                        className={`text-[9px] tracking-[0.12em] uppercase px-2 py-1.5 border transition-colors shrink-0 ${hasBreak ? 'border-[#81807F]/40 text-[#81807F]' : 'border-black/10 text-[#9A9590] hover:border-black/25 hover:text-[#6B6560]'}`}
                       >
                         {hasBreak ? 'Descanso ✓' : '+ Descanso'}
                       </button>
                     </div>
                   ) : (
-                    <span className="text-[#333] text-xs">Cerrado</span>
+                    <span className="text-[#B0AAA5] text-xs">Cerrado</span>
                   )}
                 </div>
                 {day.is_active && hasBreak && (
                   <div className="flex items-center gap-1 mt-2 ml-[116px] flex-wrap">
-                    <span className="text-[#555] text-[10px] tracking-[0.1em] uppercase shrink-0">Cerrado</span>
+                    <span className="text-[#6B6560] text-[10px] tracking-[0.1em] uppercase shrink-0">Cerrado</span>
                     <input type="time" value={day.break_start ?? '14:00'}
                       onChange={e => updateDay(dow, { break_start: e.target.value })}
-                      className="bg-transparent border border-white/10 text-[#888] px-2 py-1 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
+                      className="bg-transparent border border-black/10 text-[#9A9590] px-2 py-1 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
                       style={{ fontSize: '16px' }}
                     />
-                    <span className="text-[#444] text-xs">—</span>
+                    <span className="text-[#9A9590] text-xs">—</span>
                     <input type="time" value={day.break_end ?? '16:00'}
                       onChange={e => updateDay(dow, { break_end: e.target.value })}
-                      className="bg-transparent border border-white/10 text-[#888] px-2 py-1 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
+                      className="bg-transparent border border-black/10 text-[#9A9590] px-2 py-1 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
                       style={{ fontSize: '16px' }}
                     />
                   </div>
@@ -1786,7 +1786,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
             );
           })}
         </div>
-        <p className="text-[#333] text-xs mt-3">Los cambios de horario se guardan al instante.</p>
+        <p className="text-[#B0AAA5] text-xs mt-3">Los cambios de horario se guardan al instante.</p>
       </section>
 
       {/* ── Reservaciones ── */}
@@ -1794,18 +1794,18 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
         <SectionHeader title="Ventana de reservaciones" subtitle="Controla cuándo pueden reservar las clientas" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Días de anticipación máxima</label>
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Días de anticipación máxima</label>
             <input type="number" min="7" max="365" value={booking.advance_days ?? '60'}
               onChange={e => setBooking(p => ({ ...p, advance_days: e.target.value }))}
               className={inputCls} style={{ fontSize: '16px' }} />
-            <p className="text-[#333] text-[10px] mt-1">Las clientas podrán ver hasta este número de días adelante</p>
+            <p className="text-[#B0AAA5] text-[10px] mt-1">Las clientas podrán ver hasta este número de días adelante</p>
           </div>
           <div>
-            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Aviso mínimo (horas)</label>
+            <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Aviso mínimo (horas)</label>
             <input type="number" min="0" max="72" value={booking.min_notice_hours ?? '2'}
               onChange={e => setBooking(p => ({ ...p, min_notice_hours: e.target.value }))}
               className={inputCls} style={{ fontSize: '16px' }} />
-            <p className="text-[#333] text-[10px] mt-1">No se puede reservar con menos de X horas de anticipación</p>
+            <p className="text-[#B0AAA5] text-[10px] mt-1">No se puede reservar con menos de X horas de anticipación</p>
           </div>
         </div>
         <SaveBtn section="booking" />
@@ -1827,24 +1827,24 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
           ].map(({ key, label, hint }) => (
             <div key={key}>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[10px] tracking-[0.15em] uppercase text-[#555]">{label}</label>
+                <label className="text-[10px] tracking-[0.15em] uppercase text-[#6B6560]">{label}</label>
                 <CopyButton text={messages[key] ?? ''} />
               </div>
               <textarea
                 rows={key === 'msg_reminder_24h' ? 6 : 4} value={messages[key] ?? ''}
                 onChange={e => setMessages(p => ({ ...p, [key]: e.target.value }))}
-                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15 text-sm resize-none"
+                className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25 text-sm resize-none"
                 style={{ fontSize: '16px' }}
               />
-              <p className="text-[#333] text-[10px] mt-1">{hint}</p>
+              <p className="text-[#B0AAA5] text-[10px] mt-1">{hint}</p>
             </div>
           ))}
         </div>
-        <div className="p-3 border border-white/5 mb-4" style={{ background: '#0a0a0a' }}>
-          <p className="text-[10px] tracking-[0.15em] uppercase text-[#444] mb-2">Variables disponibles</p>
+        <div className="p-3 border border-black/5 mb-4" style={{ background: '#F3F1EE' }}>
+          <p className="text-[10px] tracking-[0.15em] uppercase text-[#9A9590] mb-2">Variables disponibles</p>
           <div className="flex flex-wrap gap-2">
             {['{nombre}', '{servicio}', '{fecha}', '{hora}'].map(v => (
-              <span key={v} className="text-[11px] font-mono px-2 py-0.5 border border-white/10 text-[#81807F]">{v}</span>
+              <span key={v} className="text-[11px] font-mono px-2 py-0.5 border border-black/10 text-[#81807F]">{v}</span>
             ))}
           </div>
         </div>
@@ -1912,9 +1912,9 @@ export default function AdminPage() {
   }} />;
 
   return (
-    <div className="min-h-screen font-[family-name:var(--font-body)]" style={{ background: '#000' }}>
-      <div className="border-b border-white/8 px-5 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 text-[#555] hover:text-[#81807F] transition-colors">
+    <div className="min-h-screen font-[family-name:var(--font-body)]" style={{ background: '#F7F5F2' }}>
+      <div className="border-b border-black/8 px-5 py-4 flex items-center justify-between" style={{ background: '#FFFFFF' }}>
+        <Link href="/" className="flex items-center gap-2 text-[#9A9590] hover:text-[#81807F] transition-colors">
           <ArrowLeft size={15} />
           <span className="hidden sm:inline text-xs tracking-wider uppercase">Sitio</span>
         </Link>
@@ -1923,13 +1923,13 @@ export default function AdminPage() {
           <button
             onClick={() => registerPush(adminSecret).then(setPushEnabled).catch(() => {})}
             title={pushEnabled ? 'Notificaciones activas' : 'Activar notificaciones'}
-            className={`transition-colors p-1 ${pushEnabled ? 'text-[#81807F]' : 'text-[#333] hover:text-[#777]'}`}
+            className={`transition-colors p-1 ${pushEnabled ? 'text-[#81807F]' : 'text-[#C0BBB6] hover:text-[#81807F]'}`}
           >
             <Bell size={15} />
           </button>
           <button
             onClick={() => { sessionStorage.removeItem('dp_admin_secret'); setAuthed(false); setAdminSecret(''); }}
-            className="text-[#444] hover:text-red-400 transition-colors text-[9px] tracking-[0.15em] uppercase border border-white/8 px-2.5 py-1.5 hover:border-red-900"
+            className="text-[#9A9590] hover:text-red-600 transition-colors text-[9px] tracking-[0.15em] uppercase border border-black/10 px-2.5 py-1.5 hover:border-red-300"
           >
             Salir
           </button>
@@ -1937,7 +1937,7 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-white/8 flex overflow-x-auto scrollbar-none">
+      <div className="border-b border-black/8 flex overflow-x-auto scrollbar-none" style={{ background: '#FFFFFF' }}>
         {([
           { key: 'inicio',     label: 'Inicio',     icon: <LayoutDashboard size={12} /> },
           { key: 'agenda',     label: 'Agenda',     icon: <Calendar size={12} /> },
@@ -1946,7 +1946,7 @@ export default function AdminPage() {
         ] as { key: Tab; label: string; icon: React.ReactNode }[]).map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-3.5 text-[9px] tracking-[0.18em] uppercase border-b-2 transition-colors ${
-              tab === t.key ? 'border-[#81807F] text-[#81807F]' : 'border-transparent text-[#444] hover:text-[#777]'
+              tab === t.key ? 'border-[#1C1A19] text-[#1C1A19]' : 'border-transparent text-[#9A9590] hover:text-[#6B6560]'
             }`}>
             {t.icon}{t.label}
           </button>
