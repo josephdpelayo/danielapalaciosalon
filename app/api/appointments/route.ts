@@ -49,15 +49,16 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Notify admin (fire-and-forget)
-    import('@/lib/push').then(({ sendAdminPush }) =>
-      sendAdminPush({
+    // Notify admin — await before returning so Vercel doesn't kill the function first
+    try {
+      const { sendAdminPush } = await import('@/lib/push');
+      await sendAdminPush({
         title: '📅 Nueva reserva',
         body: `${client_name} · ${appointment_date} a las ${start_time.slice(0, 5)}`,
         url: '/admin',
         tag: 'new-booking',
-      })
-    ).catch(() => {});
+      });
+    } catch {}
 
     return NextResponse.json(data);
   }
