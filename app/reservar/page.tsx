@@ -17,14 +17,14 @@ const STEPS_LIST: Step[] = ['info', 'service', 'date', 'time', 'confirm'];
 
 function svcDotColor(name: string): string {
   const n = name.toLowerCase();
-  if (n.includes('corte') && !n.includes('tinte')) return '#60a5fa';
-  if (n.includes('color') && !n.includes('tinte')) return '#c084fc';
-  if (n.includes('mecha') || n.includes('balayage')) return '#fbbf24';
-  if (n.includes('retoque')) return '#fb923c';
-  if (n.includes('antifrizz') || n.includes('brazilian') || n.includes('brasi')) return '#2dd4bf';
-  if (n.includes('tinte')) return '#f472b6';
-  if (n.includes('peinado')) return '#86efac';
-  return '#C9A84C';
+  if (n.includes('corte') && !n.includes('tinte')) return '#81807F';
+  if (n.includes('color') && !n.includes('tinte')) return '#A09F9E';
+  if (n.includes('mecha') || n.includes('balayage')) return '#605856';
+  if (n.includes('retoque')) return '#81807F';
+  if (n.includes('antifrizz') || n.includes('brazilian') || n.includes('brasi')) return '#504C4C';
+  if (n.includes('tinte')) return '#A09F9E';
+  if (n.includes('peinado')) return '#81807F';
+  return '#81807F';
 }
 
 function BookingContent() {
@@ -192,11 +192,11 @@ function BookingContent() {
 
       {/* Header */}
       <div className="border-b border-white/8 px-5 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 text-[#666] hover:text-[#C9A84C] transition-colors text-sm">
+        <Link href="/" className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-sm">
           <ArrowLeft size={15} />
           <span className="hidden sm:inline tracking-wider">Volver</span>
         </Link>
-        <div className="font-[family-name:var(--font-display)] text-xs tracking-[0.28em] uppercase text-[#C9A84C]">
+        <div className="font-[family-name:var(--font-display)] text-xs tracking-[0.28em] uppercase text-[#81807F]">
           Daniela Palacio
         </div>
         <div className="w-10 sm:w-20" />
@@ -207,7 +207,7 @@ function BookingContent() {
         <div className="relative flex items-center mb-3">
           <div className="absolute left-0 right-0 h-px bg-white/8" />
           <div
-            className="absolute left-0 h-px bg-[#C9A84C] transition-all duration-500"
+            className="absolute left-0 h-px bg-[#81807F] transition-all duration-500"
             style={{ width: stepIndex === 0 ? '0%' : `${(stepIndex / (STEPS_LIST.length - 1)) * 100}%` }}
           />
           <div className="relative w-full flex justify-between">
@@ -217,9 +217,9 @@ function BookingContent() {
               return (
                 <div key={s} className={`${isCurrent ? 'w-3 h-3' : 'w-2 h-2'} rounded-full border transition-all duration-300 shrink-0`}
                   style={{
-                    background: isPast || isCurrent ? '#C9A84C' : 'transparent',
-                    borderColor: isPast || isCurrent ? '#C9A84C' : 'rgba(255,255,255,0.2)',
-                    boxShadow: isCurrent ? '0 0 0 3px rgba(201,168,76,0.15)' : 'none',
+                    background: isPast || isCurrent ? '#81807F' : 'transparent',
+                    borderColor: isPast || isCurrent ? '#81807F' : 'rgba(255,255,255,0.2)',
+                    boxShadow: isCurrent ? '0 0 0 3px rgba(129,128,127,0.15)' : 'none',
                   }}
                 />
               );
@@ -228,7 +228,7 @@ function BookingContent() {
         </div>
         {/* Current step label + counter */}
         <div className="flex items-center justify-between">
-          <span className="text-[10px] tracking-[0.2em] uppercase text-[#C9A84C]">
+          <span className="text-[10px] tracking-[0.2em] uppercase text-[#81807F]">
             {stepLabels[step]}
           </span>
           <span className="text-[10px] text-white/20 tracking-wider">
@@ -263,7 +263,7 @@ function BookingContent() {
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   placeholder="Tu nombre"
-                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-3.5 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/20" style={{ fontSize: '16px' }}
+                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-3.5 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-white/20" style={{ fontSize: '16px' }}
                 />
               </div>
 
@@ -272,7 +272,7 @@ function BookingContent() {
                 <label className="block text-[10px] tracking-[0.15em] uppercase text-[#666] mb-3">
                   WhatsApp *
                 </label>
-                <div className={`flex border transition-colors ${isTrusted ? 'border-[#C9A84C]/60' : 'border-white/10 focus-within:border-[#C9A84C]/60'}`}>
+                <div className={`flex border transition-colors ${isTrusted ? 'border-[#81807F]/60' : 'border-white/10 focus-within:border-[#81807F]/60'}`}>
                   <span className="px-3 flex items-center text-[#666] text-sm bg-transparent border-r border-white/10 select-none">
                     +52
                   </span>
@@ -288,13 +288,13 @@ function BookingContent() {
                       style={{ fontSize: '16px' }}
                     />
                     {checkingPhone && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
                     )}
                   </div>
                 </div>
                 {isTrusted && (
                   <div className="mt-2">
-                    <div className="w-5 h-5 rounded-full bg-[#C9A84C] flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-full bg-[#81807F] flex items-center justify-center">
                       <Check size={11} className="text-black" strokeWidth={2.5} />
                     </div>
                   </div>
@@ -311,7 +311,7 @@ function BookingContent() {
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
                   placeholder="tu@correo.com"
-                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-3.5 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/20" style={{ fontSize: '16px' }}
+                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-3.5 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-white/20" style={{ fontSize: '16px' }}
                 />
               </div>
 
@@ -325,7 +325,7 @@ function BookingContent() {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Longitud de cabello, alergias, referencias de color..."
                   rows={3}
-                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-3.5 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/20 resize-none"
+                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-3.5 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-white/20 resize-none"
                   style={{ fontSize: '16px' }}
                 />
               </div>
@@ -334,7 +334,7 @@ function BookingContent() {
                 <button
                   disabled={!clientName.trim() || !clientPhone.trim()}
                   onClick={() => setStep('service')}
-                  className="w-full flex items-center justify-center gap-3 bg-[#C9A84C] text-black py-4 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-3 bg-[#F0EDE8] text-[#16181E] py-4 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Continuar <ArrowRight size={13} />
                 </button>
@@ -349,7 +349,7 @@ function BookingContent() {
             <div className="mb-10">
               <button
                 onClick={() => setStep('info')}
-                className="flex items-center gap-2 text-[#666] hover:text-[#C9A84C] transition-colors text-xs tracking-wider mb-6"
+                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-6"
               >
                 <ArrowLeft size={13} /> Atrás
               </button>
@@ -378,14 +378,14 @@ function BookingContent() {
                         <span className="text-[#F0EDE8] text-sm font-medium group-hover:text-white transition-colors">
                           {svc.name}
                         </span>
-                        <span className="text-[10px] text-[#C9A84C] tracking-[0.15em] uppercase">
+                        <span className="text-[10px] text-[#81807F] tracking-[0.15em] uppercase">
                           {formatPrice(svc.price)}
                         </span>
                       </div>
                       <p className="text-[#666] text-xs leading-relaxed">{svc.description}</p>
                       <p className="text-[#444] text-[10px] mt-2 tracking-[0.1em] uppercase">{formatDuration(svc.duration_minutes)}</p>
                     </div>
-                    <ArrowRight size={14} className="text-[#333] group-hover:text-[#C9A84C] transition-colors mt-1 shrink-0" />
+                    <ArrowRight size={14} className="text-[#333] group-hover:text-[#81807F] transition-colors mt-1 shrink-0" />
                   </div>
                 </button>
               ))}
@@ -399,7 +399,7 @@ function BookingContent() {
             <div className="mb-10">
               <button
                 onClick={() => setStep('service')}
-                className="flex items-center gap-2 text-[#666] hover:text-[#C9A84C] transition-colors text-xs tracking-wider mb-6"
+                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-6"
               >
                 <ArrowLeft size={13} /> Atrás
               </button>
@@ -412,7 +412,7 @@ function BookingContent() {
                 </p>
                 <button
                   onClick={() => setStep('service')}
-                  className="text-[10px] text-[#C9A84C] border border-white/10 px-2 py-1 hover:border-[#C9A84C]/40 transition-colors tracking-wider uppercase"
+                  className="text-[10px] text-[#81807F] border border-white/10 px-2 py-1 hover:border-[#81807F]/40 transition-colors tracking-wider uppercase"
                 >
                   Cambiar
                 </button>
@@ -430,7 +430,7 @@ function BookingContent() {
                 endMonth={addDays(startOfToday(), 60)}
                 modifiersStyles={{
                   selected: { backgroundColor: 'transparent', color: '#F0EDE8', fontWeight: '700', outline: 'none', boxShadow: 'none' },
-                  today: { color: '#C9A84C', fontWeight: '600' },
+                  today: { color: '#81807F', fontWeight: '600' },
                 }}
                 styles={{
                   day: { color: '#F0EDE8', borderRadius: '0', minWidth: '40px', minHeight: '40px' },
@@ -446,7 +446,7 @@ function BookingContent() {
               <div className="mt-8">
                 <button
                   onClick={() => setStep('time')}
-                  className="w-full flex items-center justify-center gap-3 bg-[#C9A84C] text-black py-4 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors"
+                  className="w-full flex items-center justify-center gap-3 bg-[#F0EDE8] text-[#16181E] py-4 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors"
                 >
                   Ver horarios <ArrowRight size={13} />
                 </button>
@@ -461,7 +461,7 @@ function BookingContent() {
             <div className="mb-10">
               <button
                 onClick={() => setStep('date')}
-                className="flex items-center gap-2 text-[#666] hover:text-[#C9A84C] transition-colors text-xs tracking-wider mb-6"
+                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-6"
               >
                 <ArrowLeft size={13} /> Atrás
               </button>
@@ -475,14 +475,14 @@ function BookingContent() {
 
             {loadingSlots ? (
               <div className="flex items-center justify-center py-24">
-                <div className="w-5 h-5 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : slots.length === 0 ? (
               <div className="text-center py-16 border border-white/8">
                 <p className="text-[#666] text-sm mb-4">No hay horarios disponibles para este día.</p>
                 <button
                   onClick={() => setStep('date')}
-                  className="text-[#C9A84C] text-xs tracking-widest uppercase border-b border-[#C9A84C]/40 pb-px hover:border-[#C9A84C] transition-colors"
+                  className="text-[#81807F] text-xs tracking-widest uppercase border-b border-[#81807F]/40 pb-px hover:border-[#81807F] transition-colors"
                 >
                   Elegir otra fecha
                 </button>
@@ -499,8 +499,8 @@ function BookingContent() {
                         !slot.available
                           ? 'border-white/5 text-white/15 cursor-not-allowed line-through'
                           : selectedSlot?.start === slot.start
-                          ? 'border-[#C9A84C] bg-[#C9A84C] text-black font-semibold'
-                          : 'border-white/15 text-[#F0EDE8] hover:border-[#C9A84C]/50 hover:text-[#C9A84C]'
+                          ? 'border-[#81807F] bg-[#F0EDE8] text-[#16181E] font-semibold'
+                          : 'border-white/15 text-[#F0EDE8] hover:border-[#81807F]/50 hover:text-[#81807F]'
                       }`}
                     >
                       {formatTime(slot.start)}
@@ -521,7 +521,7 @@ function BookingContent() {
             <div className="mb-10">
               <button
                 onClick={() => setStep('time')}
-                className="flex items-center gap-2 text-[#666] hover:text-[#C9A84C] transition-colors text-xs tracking-wider mb-6"
+                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-6"
               >
                 <ArrowLeft size={13} /> Atrás
               </button>
@@ -537,7 +537,7 @@ function BookingContent() {
             <div className="divide-y divide-white/8 mb-12">
 
               <div className="py-5 flex items-start gap-4">
-                <Scissors size={14} className="text-[#C9A84C] mt-0.5 shrink-0" />
+                <Scissors size={14} className="text-[#81807F] mt-0.5 shrink-0" />
                 <div className="flex-1">
                   <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-2">Servicio</p>
                   <p className="text-[#F0EDE8] text-sm">{selectedService.name}</p>
@@ -548,7 +548,7 @@ function BookingContent() {
               </div>
 
               <div className="py-5 flex items-start gap-4">
-                <Calendar size={14} className="text-[#C9A84C] mt-0.5 shrink-0" />
+                <Calendar size={14} className="text-[#81807F] mt-0.5 shrink-0" />
                 <div className="flex-1">
                   <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-2">Fecha y hora</p>
                   <p className="text-[#F0EDE8] text-sm capitalize">
@@ -561,7 +561,7 @@ function BookingContent() {
               </div>
 
               <div className="py-5 flex items-start gap-4">
-                <User size={14} className="text-[#C9A84C] mt-0.5 shrink-0" />
+                <User size={14} className="text-[#81807F] mt-0.5 shrink-0" />
                 <div className="flex-1">
                   <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-2">Cliente</p>
                   <p className="text-[#F0EDE8] text-sm">{clientName}</p>
@@ -573,9 +573,9 @@ function BookingContent() {
               {/* Trusted VIP block or deposit */}
               {isTrusted ? (
                 <div className="py-5 flex items-start gap-4">
-                  <Check size={14} className="text-[#C9A84C] mt-0.5 shrink-0" />
+                  <Check size={14} className="text-[#81807F] mt-0.5 shrink-0" />
                   <div className="flex-1">
-                    <p className="text-[10px] tracking-[0.15em] uppercase text-[#C9A84C] mb-2">Clienta frecuente ✦</p>
+                    <p className="text-[10px] tracking-[0.15em] uppercase text-[#81807F] mb-2">Clienta frecuente ✦</p>
                     <p className="text-[#F0EDE8] text-sm">Sin anticipo requerido</p>
                     <p className="text-[#666] text-xs mt-1">Tu cita se confirma de inmediato</p>
                   </div>
@@ -583,14 +583,14 @@ function BookingContent() {
               ) : (
                 <div className="py-5 flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <CreditCard size={14} className="text-[#C9A84C] mt-0.5 shrink-0" />
+                    <CreditCard size={14} className="text-[#81807F] mt-0.5 shrink-0" />
                     <div>
                       <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-2">Anticipo a pagar</p>
                       <p className="text-[#F0EDE8] text-sm">Se descuenta del total el día de tu cita</p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-[#C9A84C] text-2xl font-light">${selectedService.deposit_amount}</p>
+                    <p className="text-[#81807F] text-2xl font-light">${selectedService.deposit_amount}</p>
                     <p className="text-[#666] text-[10px] tracking-wider uppercase mt-0.5">MXN</p>
                   </div>
                 </div>
@@ -619,15 +619,15 @@ function BookingContent() {
               disabled={submitting}
               className="w-full flex items-center justify-center gap-3 py-4 text-[11px] tracking-[0.25em] uppercase font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
-                background: isTrusted ? '#C9A84C' : '#009EE3',
-                color: isTrusted ? '#000' : '#fff',
+                background: isTrusted ? '#F0EDE8' : '#009EE3',
+                color: isTrusted ? '#16181E' : '#fff',
               }}
             >
               {submitting ? (
                 <>
                   <div
                     className="w-4 h-4 border border-t-transparent rounded-full animate-spin"
-                    style={{ borderColor: isTrusted ? '#000' : '#fff', borderTopColor: 'transparent' }}
+                    style={{ borderColor: isTrusted ? '#16181E' : '#fff', borderTopColor: 'transparent' }}
                   />
                   Confirmando...
                 </>

@@ -56,8 +56,8 @@ function ConfirmarContent() {
             style={{
               width: 40, height: 40,
               borderRadius: '50%',
-              border: '1.5px solid rgba(201,168,76,0.3)',
-              borderTopColor: '#C9A84C',
+              border: '1.5px solid rgba(129,128,127,0.3)',
+              borderTopColor: '#81807F',
               animation: 'spin 0.8s linear infinite',
             }}
           />
@@ -71,13 +71,13 @@ function ConfirmarContent() {
             <svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle
                 cx="48" cy="48" r="46"
-                stroke="#C9A84C" strokeWidth="1.5"
+                stroke="#81807F" strokeWidth="1.5"
                 strokeDasharray="289" strokeDashoffset="289"
                 style={{ animation: 'draw-circle 0.9s cubic-bezier(0.4,0,0.2,1) 0.1s forwards' }}
               />
               <polyline
                 points="30,50 43,63 66,36"
-                stroke="#C9A84C" strokeWidth="1.5"
+                stroke="#81807F" strokeWidth="1.5"
                 strokeLinecap="round" strokeLinejoin="round"
                 fill="none" strokeDasharray="56"
                 style={{ strokeDashoffset: 56, animation: 'draw-check 0.45s ease-out 0.8s forwards' }}
@@ -98,7 +98,7 @@ function ConfirmarContent() {
               style={{ opacity: 0, animation: 'fade-up 0.6s ease-out 1.1s forwards' }}
             >
               {apt.service && (
-                <p className="text-[#C9A84C] text-xs tracking-[0.2em] uppercase">{apt.service}</p>
+                <p className="text-[#81807F] text-xs tracking-[0.2em] uppercase">{apt.service}</p>
               )}
               {apt.date && (
                 <p className="text-[#555555] text-xs tracking-wider">
@@ -121,7 +121,7 @@ function ConfirmarContent() {
           >
             <Link
               href="/"
-              className="block w-full py-3 text-[11px] tracking-[0.2em] uppercase text-center transition-colors hover:text-[#C9A84C]"
+              className="block w-full py-3 text-[11px] tracking-[0.2em] uppercase text-center transition-colors hover:text-[#81807F]"
               style={{ border: '1px solid rgba(255,255,255,0.1)', color: '#555555' }}
             >
               Ir al inicio
@@ -147,7 +147,7 @@ function ConfirmarContent() {
             target="_blank"
             rel="noopener noreferrer"
             className="text-[11px] tracking-[0.2em] uppercase transition-opacity hover:opacity-70"
-            style={{ color: '#C9A84C' }}
+            style={{ color: '#81807F' }}
           >
             Contactar por WhatsApp →
           </a>

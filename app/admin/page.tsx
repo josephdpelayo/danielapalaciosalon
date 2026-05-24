@@ -30,7 +30,7 @@ function serviceColor(name: string | undefined): string {
   if (n.includes('antifrizz') || n.includes('brazi')) return '#2dd4bf';
   if (n.includes('peinado'))                           return '#86efac';
   if (n.includes('corte'))                             return '#60a5fa';
-  return '#C9A84C';
+  return '#81807F';
 }
 
 function fillTemplate(template: string, apt: Appointment): string {
@@ -65,7 +65,7 @@ function StatusBadge({ status }: { status: string }) {
     return <span className="text-[9px] tracking-[0.12em] uppercase text-white/25 border border-white/10 px-1.5 py-0.5">Cancelada</span>;
   if (status === 'pending_payment')
     return <span className="text-[9px] tracking-[0.12em] uppercase text-orange-400 border border-orange-800 px-1.5 py-0.5">Sin pagar</span>;
-  return <span className="text-[9px] tracking-[0.12em] uppercase text-[#C9A84C] border border-[#C9A84C]/40 px-1.5 py-0.5">Pendiente</span>;
+  return <span className="text-[9px] tracking-[0.12em] uppercase text-[#81807F] border border-[#81807F]/40 px-1.5 py-0.5">Pendiente</span>;
 }
 
 // ── Day timeline ─────────────────────────────────────────────────
@@ -143,14 +143,14 @@ function AuthScreen({ onAuth }: { onAuth: (password: string) => void }) {
           onChange={(e) => { setPass(e.target.value); setError(''); }}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAuth(); }}
           placeholder="Contraseña"
-          className="w-full bg-transparent border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-[#C9A84C]/60 transition-colors placeholder:text-white/20 mb-3"
+          className="w-full bg-transparent border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-white/20 mb-3"
           style={{ fontSize: '16px' }}
         />
         {error && <p className="text-red-400 text-[11px] tracking-wider text-center mb-3">{error}</p>}
         <button
           onClick={handleAuth}
           disabled={loading}
-          className="w-full bg-[#C9A84C] text-black py-3.5 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-60"
+          className="w-full bg-[#F0EDE8] text-[#16181E] py-3.5 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-60"
         >
           {loading ? 'Verificando...' : 'Entrar'}
         </button>
@@ -247,7 +247,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
 
   if (loading) return (
     <div className="flex items-center justify-center py-24">
-      <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+      <div className="w-4 h-4 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -259,8 +259,8 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
         {[
           { label: 'Hoy',          val: todayAppts.length,                                      color: '#F0EDE8' },
           { label: 'Sin confirmar', val: needsAction.length,                                    color: needsAction.length > 0 ? '#fb923c' : '#444' },
-          { label: 'Total activas', val: appointments.filter((a) => a.status !== 'cancelled').length, color: '#C9A84C' },
-          { label: 'Este mes', val: `$${monthRevenue.toLocaleString('es-MX')}`, color: '#C9A84C' },
+          { label: 'Total activas', val: appointments.filter((a) => a.status !== 'cancelled').length, color: '#81807F' },
+          { label: 'Este mes', val: `$${monthRevenue.toLocaleString('es-MX')}`, color: '#81807F' },
         ].map((s) => (
           <div key={s.label} className="p-4 text-center" style={{ background: '#0A0A0A' }}>
             <div className="font-[family-name:var(--font-display)] text-3xl font-light mb-1" style={{ color: s.color }}>{s.val}</div>
@@ -288,7 +288,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                 const label = isTomorrow(dt) ? 'Mañana' : format(dt, "EEE d MMM", { locale: es });
                 return (
                   <div key={date}>
-                    <p className="text-[9px] tracking-[0.2em] uppercase text-[#C9A84C] mb-1 capitalize">{label} · {format(dt, "d 'de' MMMM", { locale: es })}</p>
+                    <p className="text-[9px] tracking-[0.2em] uppercase text-[#81807F] mb-1 capitalize">{label} · {format(dt, "d 'de' MMMM", { locale: es })}</p>
                     {upcomingByDate[date].map(apt => (
                       <div key={apt.id} className="flex items-center justify-between py-2.5 border-b border-white/5"
                         style={{ borderLeft: `2px solid ${serviceColor(apt.dp_services?.name)}50`, paddingLeft: '10px' }}>
@@ -314,7 +314,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
             onClick={() => setOpenRecordatorios(v => !v)}
             className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
           >
-            <span className="text-[10px] tracking-[0.3em] uppercase flex items-center gap-2 text-[#C9A84C]">
+            <span className="text-[10px] tracking-[0.3em] uppercase flex items-center gap-2 text-[#81807F]">
               <Bell size={11} /> Recordatorios de mañana <span className="text-[#555] ml-1">· {tomorrowAppts.length}</span>
             </span>
             <ArrowRight size={12} className={`text-[#333] transition-transform duration-200 ${openRecordatorios ? 'rotate-90' : ''}`} />
@@ -396,7 +396,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
         >
           <span className="text-[10px] tracking-[0.3em] uppercase text-[#555]">Bitácora · últimas reservas</span>
           <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-            <button onClick={load} disabled={loading} className="text-[#444] hover:text-[#C9A84C] transition-colors p-0.5">
+            <button onClick={load} disabled={loading} className="text-[#444] hover:text-[#81807F] transition-colors p-0.5">
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
             </button>
             <ArrowRight size={12} className={`text-[#333] transition-transform duration-200 pointer-events-none ${openBitacora ? 'rotate-90' : ''}`} />
@@ -408,7 +408,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
           type="text" value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar clienta..."
-          className="w-full bg-transparent border border-white/8 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]/40 placeholder:text-white/20 mb-4"
+          className="w-full bg-transparent border border-white/8 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/40 placeholder:text-white/20 mb-4"
           style={{ fontSize: '16px' }}
         />
 
@@ -637,7 +637,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
         {[
           { label: 'Sin pagar',   val: sinPagar,    color: '#fb923c' },
           { label: 'Confirmadas', val: confirmadas, color: '#4ade80' },
-          { label: 'Pendientes',  val: pendientes,  color: '#C9A84C' },
+          { label: 'Pendientes',  val: pendientes,  color: '#81807F' },
         ].map((s) => (
           <div key={s.label} className="p-3 text-center" style={{ background: '#0A0A0A' }}>
             <div className="font-[family-name:var(--font-display)] text-2xl font-light mb-0.5" style={{ color: s.color }}>{s.val}</div>
@@ -665,7 +665,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                 <span className="text-[9px] tracking-wider uppercase" style={{ color: l.strike ? '#444' : l.color }}>{l.label}</span>
               </div>
             ))}
-            <button onClick={loadData} disabled={loading} className="ml-auto text-[#444] hover:text-[#C9A84C] transition-colors">
+            <button onClick={loadData} disabled={loading} className="ml-auto text-[#444] hover:text-[#81807F] transition-colors">
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
@@ -685,7 +685,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                 lleno:    { color: '#f87171' },
                 blocked:  { color: '#555', textDecoration: 'line-through' },
                 selected: { backgroundColor: 'transparent', color: '#F0EDE8', fontWeight: '700', outline: 'none', boxShadow: 'none' },
-                today:    { color: '#C9A84C', fontWeight: '600', outline: 'none', boxShadow: 'none' },
+                today:    { color: '#81807F', fontWeight: '600', outline: 'none', boxShadow: 'none' },
               }}
               styles={{
                 day:           { color: '#F0EDE8', borderRadius: '0', minWidth: '44px', minHeight: '44px', fontFamily: 'var(--font-body)' },
@@ -762,7 +762,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                           style={{ borderLeft: `3px solid ${color}`, paddingLeft: '12px' }}
                         >
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[#C9A84C] text-xs font-medium">{formatTime(row.time)}</span>
+                            <span className="text-[#81807F] text-xs font-medium">{formatTime(row.time)}</span>
                             <span className="text-[#444] text-xs">→ {formatTime(apt.end_time)}</span>
                             <StatusBadge status={apt.status} />
                           </div>
@@ -869,7 +869,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                   <div className="flex gap-2 mb-4">
                     {[{ v: true, l: 'Día completo' }, { v: false, l: 'Rango de horas' }].map(({ v, l }) => (
                       <button key={l} onClick={() => setAllDay(v)}
-                        className={`flex-1 py-2 text-[9px] tracking-[0.12em] uppercase border transition-colors ${allDay === v ? 'border-[#C9A84C]/50 text-[#C9A84C]' : 'border-white/8 text-[#555] hover:border-white/20'}`}>
+                        className={`flex-1 py-2 text-[9px] tracking-[0.12em] uppercase border transition-colors ${allDay === v ? 'border-[#81807F]/50 text-[#81807F]' : 'border-white/8 text-[#555] hover:border-white/20'}`}>
                         {l}
                       </button>
                     ))}
@@ -880,14 +880,14 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                         <div key={label}>
                           <label className="block text-[9px] tracking-[0.15em] uppercase text-[#555] mb-1.5">{label}</label>
                           <input type="time" value={val} onChange={(e) => set(e.target.value)}
-                            className="w-full bg-transparent border border-white/10 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]/50" style={{ fontSize: '16px' }} />
+                            className="w-full bg-transparent border border-white/10 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
                         </div>
                       ))}
                     </div>
                   )}
                   <input type="text" value={blockReason} onChange={(e) => setBlockReason(e.target.value)}
                     placeholder="Motivo (opcional)"
-                    className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15 mb-4" style={{ fontSize: '16px' }} />
+                    className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 text-sm focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15 mb-4" style={{ fontSize: '16px' }} />
                   <button onClick={handleBlock} disabled={saving}
                     className="w-full flex items-center justify-center gap-2 border border-red-900 text-red-400 py-3 text-[10px] tracking-[0.15em] uppercase hover:bg-red-900/15 transition-colors disabled:opacity-40">
                     {saving ? <div className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <CalendarOff size={12} />}
@@ -902,7 +902,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
               <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-5">Próximas citas</p>
               {loading ? (
                 <div className="flex items-center justify-center py-20">
-                  <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : Object.keys(upcomingByDate).length === 0 ? (
                 <div className="border border-white/5 py-16 text-center">
@@ -917,7 +917,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                         onClick={() => setSelectedDate(parseISO(date + 'T12:00:00'))}
                         className="flex items-baseline gap-2 mb-3 group w-full text-left"
                       >
-                        <span className="font-[family-name:var(--font-display)] text-xl font-light text-white group-hover:text-[#C9A84C] transition-colors capitalize">
+                        <span className="font-[family-name:var(--font-display)] text-xl font-light text-white group-hover:text-[#81807F] transition-colors capitalize">
                           {dayLabel(date)}
                         </span>
                         <span className="text-[10px] tracking-[0.15em] uppercase text-[#444] capitalize">
@@ -994,42 +994,42 @@ function ServiceForm({ form, setForm, onSave, onCancel, saving, id }: ServiceFor
         <div className="sm:col-span-2">
           <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Nombre *</label>
           <input type="text" value={form.name} onChange={field('name')} placeholder="Ej: Mechas / Balayage"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
         </div>
         <div className="sm:col-span-2">
           <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Descripción <span className="normal-case tracking-normal text-[#333]">— opcional</span></label>
           <input type="text" value={form.description} onChange={field('description')} placeholder="Breve descripción para la clienta"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
         </div>
         <div>
           <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Precio total (MXN) *</label>
           <input type="number" value={form.price} onChange={field('price')} placeholder="1400"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
         </div>
         <div>
           <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Anticipo (MXN)</label>
           <input type="number" value={form.deposit_amount} onChange={field('deposit_amount')} placeholder="200"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
         </div>
         <div>
           <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Duración total (min) *</label>
           <input type="number" value={form.duration_minutes} onChange={field('duration_minutes')} placeholder="240"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
         </div>
         <div>
           <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Tiempo contigo (min) *</label>
           <input type="number" value={form.active_minutes} onChange={field('active_minutes')} placeholder="120"
-            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+            className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
         </div>
       </div>
       {dur > 0 && act > 0 && (
         <div className="mb-4 p-3 border border-white/5" style={{ background: '#0a0a0a' }}>
           <div className="flex h-1.5 mb-2 overflow-hidden">
-            <div style={{ width: `${Math.min(100, (act / dur) * 100)}%`, background: '#C9A84C' }} />
+            <div style={{ width: `${Math.min(100, (act / dur) * 100)}%`, background: '#81807F' }} />
             {gap > 0 && <div style={{ width: `${(gap / dur) * 100}%`, background: '#1e1e1e', borderLeft: '1px solid #333' }} />}
           </div>
           <div className="flex justify-between text-[9px] tracking-[0.12em] uppercase">
-            <span style={{ color: '#C9A84C' }}>{formatDuration(act)} contigo</span>
+            <span style={{ color: '#81807F' }}>{formatDuration(act)} contigo</span>
             {gap > 0 && <span style={{ color: '#333' }}>{formatDuration(gap)} procesando</span>}
           </div>
           {gap > 0 && (
@@ -1041,7 +1041,7 @@ function ServiceForm({ form, setForm, onSave, onCancel, saving, id }: ServiceFor
       )}
       <div className="flex gap-2">
         <button onClick={() => onSave(id)} disabled={saving}
-          className="flex items-center gap-2 bg-[#C9A84C] text-black px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-40">
+          className="flex items-center gap-2 bg-[#F0EDE8] text-[#16181E] px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-40">
           {saving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={12} />}
           {saving ? 'Guardando...' : id ? 'Actualizar' : 'Crear servicio'}
         </button>
@@ -1119,11 +1119,11 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
     <div>
       <div className="flex items-center justify-between mb-6">
         <p className="text-[#555] text-sm leading-relaxed">
-          Gestiona los servicios, precios y tiempos. El <span style={{ color: '#C9A84C' }}>tiempo contigo</span> define cuándo puede iniciar la siguiente cita.
+          Gestiona los servicios, precios y tiempos. El <span style={{ color: '#81807F' }}>tiempo contigo</span> define cuándo puede iniciar la siguiente cita.
         </p>
         {!showAdd && (
           <button onClick={() => { setShowAdd(true); setEditingId(null); setForm(EMPTY_FORM); }}
-            className="ml-4 flex items-center gap-2 shrink-0 text-[10px] tracking-[0.2em] uppercase border border-[#C9A84C]/40 text-[#C9A84C] px-4 py-2.5 hover:bg-[#C9A84C]/5 transition-colors">
+            className="ml-4 flex items-center gap-2 shrink-0 text-[10px] tracking-[0.2em] uppercase border border-[#81807F]/40 text-[#81807F] px-4 py-2.5 hover:bg-[#81807F]/5 transition-colors">
             <Plus size={12} /> Agregar
           </button>
         )}
@@ -1142,7 +1142,7 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <div>
@@ -1157,14 +1157,14 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-3 flex-wrap mb-1">
                         <span className="font-[family-name:var(--font-display)] text-white text-base">{svc.name}</span>
-                        <span className="text-[#C9A84C] text-sm font-light">${svc.price.toLocaleString('es-MX')}</span>
+                        <span className="text-[#81807F] text-sm font-light">${svc.price.toLocaleString('es-MX')}</span>
                         <span className="text-[#333] text-xs">anticipo ${svc.deposit_amount}</span>
                       </div>
                       {svc.description && <p className="text-[#555] text-xs mb-2">{svc.description}</p>}
                       {/* Time bar */}
                       <div className="flex items-center gap-2 mb-1">
                         <div className="flex h-1 w-20 overflow-hidden flex-shrink-0">
-                          <div style={{ width: `${activePct}%`, background: '#C9A84C55' }} />
+                          <div style={{ width: `${activePct}%`, background: '#81807F55' }} />
                           {gap > 0 && <div style={{ width: `${100 - activePct}%`, background: '#1a1a1a' }} />}
                         </div>
                         <span className="text-[10px] text-[#555]">
@@ -1182,7 +1182,7 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
                       <button onClick={() => isEditing ? cancel() : startEdit(svc)}
-                        className="p-2 text-[#444] hover:text-[#C9A84C] transition-colors">
+                        className="p-2 text-[#444] hover:text-[#81807F] transition-colors">
                         <Pencil size={13} />
                       </button>
                       {confirmDeleteId === svc.id ? (
@@ -1401,17 +1401,17 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         {(['todos', 'nuevos', 'frecuentes'] as ClientFilter[]).map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`px-4 py-3 text-[9px] tracking-[0.18em] uppercase border-b-2 transition-colors capitalize ${
-              filter === f ? 'border-[#C9A84C] text-[#C9A84C]' : 'border-transparent text-[#444] hover:text-[#777]'
+              filter === f ? 'border-[#81807F] text-[#81807F]' : 'border-transparent text-[#444] hover:text-[#777]'
             }`}>
             {f} <span className="ml-1 opacity-50">({counts[f]})</span>
           </button>
         ))}
         <div className="ml-auto flex items-center gap-2 pb-1">
-          <button onClick={load} disabled={loading} className="text-[#444] hover:text-[#C9A84C] transition-colors p-1">
+          <button onClick={load} disabled={loading} className="text-[#444] hover:text-[#81807F] transition-colors p-1">
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
           </button>
           <button onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-1.5 text-[9px] tracking-[0.15em] uppercase border border-[#C9A84C]/30 text-[#C9A84C] px-3 py-1.5 hover:bg-[#C9A84C]/10 transition-colors">
+            className="flex items-center gap-1.5 text-[9px] tracking-[0.15em] uppercase border border-[#81807F]/30 text-[#81807F] px-3 py-1.5 hover:bg-[#81807F]/10 transition-colors">
             <UserPlus size={11} /> Agregar
           </button>
         </div>
@@ -1422,7 +1422,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         type="text" value={clientSearch}
         onChange={e => setClientSearch(e.target.value)}
         placeholder="Buscar por nombre o teléfono..."
-        className="w-full bg-transparent border border-white/8 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]/40 placeholder:text-white/20"
+        className="w-full bg-transparent border border-white/8 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/40 placeholder:text-white/20"
         style={{ fontSize: '16px' }}
       />
 
@@ -1434,11 +1434,11 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
             <div>
               <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Nombre</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nombre completo"
-                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
             </div>
             <div>
               <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">WhatsApp — 10 dígitos</label>
-              <div className="flex border border-white/10 focus-within:border-[#C9A84C]/60 transition-colors">
+              <div className="flex border border-white/10 focus-within:border-[#81807F]/60 transition-colors">
                 <input type="text" value={countryCode} onChange={e => setCountryCode(e.target.value)}
                   className="w-14 bg-transparent text-[#888] px-2 py-2.5 text-center focus:outline-none border-r border-white/10 shrink-0" style={{ fontSize: '16px' }} />
                 <input type="tel" inputMode="numeric" value={phone}
@@ -1453,17 +1453,17 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
             <div>
               <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Correo (opcional)</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="cliente@correo.com"
-                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
             </div>
             <div>
               <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">Notas (opcional)</label>
               <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Prefiere tinte oscuro..."
-                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/60 placeholder:text-white/15" style={{ fontSize: '16px' }} />
             </div>
           </div>
           <div className="flex gap-2">
             <button onClick={handleAdd} disabled={formSaving || !name.trim() || phone.length !== 10}
-              className="flex items-center gap-2 bg-[#C9A84C] text-black px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-30">
+              className="flex items-center gap-2 bg-[#F0EDE8] text-[#16181E] px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-30">
               {formSaving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <UserPlus size={12} />}
               Guardar
             </button>
@@ -1475,7 +1475,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
       {/* List */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : displayed.length === 0 ? (
         <div className="border border-white/5 py-14 text-center">
@@ -1492,7 +1492,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
               <div className="flex items-center justify-between py-3.5 gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   {c.trusted_id
-                    ? <Star size={11} className="text-[#C9A84C] shrink-0" />
+                    ? <Star size={11} className="text-[#81807F] shrink-0" />
                     : <span className="w-2.5 h-2.5 rounded-full border border-white/10 shrink-0" />
                   }
                   <div className="min-w-0">
@@ -1509,15 +1509,15 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                 <div className="flex items-center gap-1 shrink-0">
                   {c.trusted_id && (
                     <button onClick={() => editingId === c.trusted_id ? setEditingId(null) : startEdit(trustedClients.find(t => t.id === c.trusted_id)!)}
-                      className="text-[#333] hover:text-[#C9A84C] transition-colors p-1.5">
+                      className="text-[#333] hover:text-[#81807F] transition-colors p-1.5">
                       <Pencil size={12} />
                     </button>
                   )}
                   {!c.trusted_id ? (
                     <div className="flex items-center gap-1">
                       <button onClick={() => promote(c)} disabled={promoting === c.phone_normalized}
-                        className="flex items-center gap-1 text-[9px] tracking-[0.1em] uppercase border border-[#C9A84C]/25 text-[#C9A84C]/60 px-2.5 py-1.5 hover:bg-[#C9A84C]/10 hover:text-[#C9A84C] transition-colors disabled:opacity-40">
-                        {promoting === c.phone_normalized ? <div className="w-3 h-3 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" /> : <Star size={9} />}
+                        className="flex items-center gap-1 text-[9px] tracking-[0.1em] uppercase border border-[#81807F]/25 text-[#81807F]/60 px-2.5 py-1.5 hover:bg-[#81807F]/10 hover:text-[#81807F] transition-colors disabled:opacity-40">
+                        {promoting === c.phone_normalized ? <div className="w-3 h-3 border border-[#81807F] border-t-transparent rounded-full animate-spin" /> : <Star size={9} />}
                         Frecuente
                       </button>
                       <button onClick={() => handleDeleteByPhone(c.phone_normalized, c.name)} disabled={deletingPhone === c.phone_normalized}
@@ -1540,27 +1540,27 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                     <div>
                       <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Nombre</label>
                       <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
-                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
                     </div>
                     <div>
                       <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Teléfono</label>
                       <input type="text" value={editPhone} onChange={e => setEditPhone(e.target.value)}
-                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
                     </div>
                     <div>
                       <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Correo (opcional)</label>
                       <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)}
-                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
                     </div>
                     <div>
                       <label className="block text-[10px] tracking-[0.15em] uppercase text-[#555] mb-1.5">Notas (opcional)</label>
                       <input type="text" value={editNotes} onChange={e => setEditNotes(e.target.value)}
-                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-white/10 text-white px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15" style={{ fontSize: '16px' }} />
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <button onClick={handleEdit} disabled={editSaving || !editName.trim() || !editPhone.trim()}
-                      className="flex items-center gap-2 bg-[#C9A84C] text-black px-4 py-2 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-30">
+                      className="flex items-center gap-2 bg-[#F0EDE8] text-[#16181E] px-4 py-2 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-30">
                       {editSaving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={11} />}
                       Guardar
                     </button>
@@ -1601,7 +1601,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-      className="flex items-center gap-1.5 text-[9px] tracking-[0.12em] uppercase border border-white/10 text-[#555] px-2.5 py-1.5 hover:border-[#C9A84C]/40 hover:text-[#C9A84C] transition-colors"
+      className="flex items-center gap-1.5 text-[9px] tracking-[0.12em] uppercase border border-white/10 text-[#555] px-2.5 py-1.5 hover:border-[#81807F]/40 hover:text-[#81807F] transition-colors"
     >
       {copied ? <CheckIcon size={10} className="text-emerald-400" /> : <Copy size={10} />}
       {copied ? 'Copiado' : 'Copiar'}
@@ -1669,7 +1669,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
     });
   };
 
-  const inputCls = "w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15 text-sm";
+  const inputCls = "w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15 text-sm";
   const SaveBtn = ({ section }: { section: string }) => (
     <button
       onClick={() => {
@@ -1678,7 +1678,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
         if (section === 'messages') saveSection('messages', messages);
       }}
       disabled={savingSection === section}
-      className="flex items-center gap-2 bg-[#C9A84C] text-black px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#dbb85e] transition-colors disabled:opacity-40"
+      className="flex items-center gap-2 bg-[#F0EDE8] text-[#16181E] px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-40"
     >
       {savingSection === section ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={12} />}
       {savingSection === section ? 'Guardando…' : 'Guardar'}
@@ -1687,7 +1687,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
 
   if (loading) return (
     <div className="flex items-center justify-center py-24">
-      <div className="w-4 h-4 border border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+      <div className="w-4 h-4 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -1737,7 +1737,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => updateDay(dow, { is_active: !day.is_active })}
-                    className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${day.is_active ? 'bg-[#C9A84C]' : 'bg-white/10'}`}
+                    className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${day.is_active ? 'bg-[#81807F]' : 'bg-white/10'}`}
                   >
                     <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${day.is_active ? 'left-4' : 'left-0.5'}`} />
                   </button>
@@ -1746,18 +1746,18 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
                     <div className="flex items-center gap-1 flex-1 min-w-0 flex-wrap">
                       <input type="time" value={day.start_time}
                         onChange={e => updateDay(dow, { start_time: e.target.value })}
-                        className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#C9A84C]/50 flex-1 min-w-[96px]"
+                        className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
                         style={{ fontSize: '16px' }}
                       />
                       <span className="text-[#444] text-xs">—</span>
                       <input type="time" value={day.end_time}
                         onChange={e => updateDay(dow, { end_time: e.target.value })}
-                        className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#C9A84C]/50 flex-1 min-w-[96px]"
+                        className="bg-transparent border border-white/10 text-white px-2 py-1.5 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
                         style={{ fontSize: '16px' }}
                       />
                       <button
                         onClick={() => updateDay(dow, hasBreak ? { break_start: null, break_end: null } : { break_start: '14:00', break_end: '16:00' })}
-                        className={`text-[9px] tracking-[0.12em] uppercase px-2 py-1.5 border transition-colors shrink-0 ${hasBreak ? 'border-[#C9A84C]/40 text-[#C9A84C]' : 'border-white/10 text-[#444] hover:border-white/25 hover:text-[#888]'}`}
+                        className={`text-[9px] tracking-[0.12em] uppercase px-2 py-1.5 border transition-colors shrink-0 ${hasBreak ? 'border-[#81807F]/40 text-[#81807F]' : 'border-white/10 text-[#444] hover:border-white/25 hover:text-[#888]'}`}
                       >
                         {hasBreak ? 'Descanso ✓' : '+ Descanso'}
                       </button>
@@ -1771,13 +1771,13 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
                     <span className="text-[#555] text-[10px] tracking-[0.1em] uppercase shrink-0">Cerrado</span>
                     <input type="time" value={day.break_start ?? '14:00'}
                       onChange={e => updateDay(dow, { break_start: e.target.value })}
-                      className="bg-transparent border border-white/10 text-[#888] px-2 py-1 text-sm focus:outline-none focus:border-[#C9A84C]/50 flex-1 min-w-[96px]"
+                      className="bg-transparent border border-white/10 text-[#888] px-2 py-1 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
                       style={{ fontSize: '16px' }}
                     />
                     <span className="text-[#444] text-xs">—</span>
                     <input type="time" value={day.break_end ?? '16:00'}
                       onChange={e => updateDay(dow, { break_end: e.target.value })}
-                      className="bg-transparent border border-white/10 text-[#888] px-2 py-1 text-sm focus:outline-none focus:border-[#C9A84C]/50 flex-1 min-w-[96px]"
+                      className="bg-transparent border border-white/10 text-[#888] px-2 py-1 text-sm focus:outline-none focus:border-[#81807F]/50 flex-1 min-w-[96px]"
                       style={{ fontSize: '16px' }}
                     />
                   </div>
@@ -1833,7 +1833,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
               <textarea
                 rows={key === 'msg_reminder_24h' ? 6 : 4} value={messages[key] ?? ''}
                 onChange={e => setMessages(p => ({ ...p, [key]: e.target.value }))}
-                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#C9A84C]/50 placeholder:text-white/15 text-sm resize-none"
+                className="w-full bg-transparent border border-white/10 text-white px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-white/15 text-sm resize-none"
                 style={{ fontSize: '16px' }}
               />
               <p className="text-[#333] text-[10px] mt-1">{hint}</p>
@@ -1844,7 +1844,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
           <p className="text-[10px] tracking-[0.15em] uppercase text-[#444] mb-2">Variables disponibles</p>
           <div className="flex flex-wrap gap-2">
             {['{nombre}', '{servicio}', '{fecha}', '{hora}'].map(v => (
-              <span key={v} className="text-[11px] font-mono px-2 py-0.5 border border-white/10 text-[#C9A84C]">{v}</span>
+              <span key={v} className="text-[11px] font-mono px-2 py-0.5 border border-white/10 text-[#81807F]">{v}</span>
             ))}
           </div>
         </div>
@@ -1914,16 +1914,16 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen font-[family-name:var(--font-body)]" style={{ background: '#000' }}>
       <div className="border-b border-white/8 px-5 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 text-[#555] hover:text-[#C9A84C] transition-colors">
+        <Link href="/" className="flex items-center gap-2 text-[#555] hover:text-[#81807F] transition-colors">
           <ArrowLeft size={15} />
           <span className="hidden sm:inline text-xs tracking-wider uppercase">Sitio</span>
         </Link>
-        <span className="font-[family-name:var(--font-display)] text-xs tracking-[0.3em] uppercase text-[#C9A84C]">Admin</span>
+        <span className="font-[family-name:var(--font-display)] text-xs tracking-[0.3em] uppercase text-[#81807F]">Admin</span>
         <div className="flex items-center gap-3">
           <button
             onClick={() => registerPush(adminSecret).then(setPushEnabled).catch(() => {})}
             title={pushEnabled ? 'Notificaciones activas' : 'Activar notificaciones'}
-            className={`transition-colors p-1 ${pushEnabled ? 'text-[#C9A84C]' : 'text-[#333] hover:text-[#777]'}`}
+            className={`transition-colors p-1 ${pushEnabled ? 'text-[#81807F]' : 'text-[#333] hover:text-[#777]'}`}
           >
             <Bell size={15} />
           </button>
@@ -1946,7 +1946,7 @@ export default function AdminPage() {
         ] as { key: Tab; label: string; icon: React.ReactNode }[]).map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-3.5 text-[9px] tracking-[0.18em] uppercase border-b-2 transition-colors ${
-              tab === t.key ? 'border-[#C9A84C] text-[#C9A84C]' : 'border-transparent text-[#444] hover:text-[#777]'
+              tab === t.key ? 'border-[#81807F] text-[#81807F]' : 'border-transparent text-[#444] hover:text-[#777]'
             }`}>
             {t.icon}{t.label}
           </button>

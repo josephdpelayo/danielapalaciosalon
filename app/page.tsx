@@ -10,22 +10,22 @@ import type { Service } from '@/lib/types';
 
 const GALLERY = [
   {
-    src:    '/gallery/dp-galeria-1.svg',
-    alt:    'Estilo y color de cabello',
-    pos:    'center center',
-    filter: 'brightness(0.88) contrast(1.08) saturate(0.9)',
+    src:    '/gallery/dp-balayage.jpg',
+    alt:    'Balayage — resultado final',
+    pos:    'center top',
+    filter: 'brightness(0.96) contrast(1.04) saturate(0.9)',
   },
   {
-    src:    '/gallery/dp-galeria-2.svg',
-    alt:    'Tratamiento capilar premium',
+    src:    '/gallery/dp-texture.jpg',
+    alt:    'Textura y color natural',
     pos:    'center center',
-    filter: 'brightness(0.82) contrast(1.1) saturate(0.85)',
+    filter: 'brightness(0.93) contrast(1.06) saturate(0.88)',
   },
   {
-    src:    '/gallery/dp-galeria-3.svg',
-    alt:    'Resultado final en salón',
-    pos:    'center center',
-    filter: 'brightness(0.85) contrast(1.08) saturate(0.88)',
+    src:    '/gallery/dp-wash.jpg',
+    alt:    'Tratamiento capilar en salón',
+    pos:    'center 30%',
+    filter: 'brightness(0.88) contrast(1.1)',
   },
 ];
 
@@ -52,23 +52,42 @@ export default function Home() {
   }, []);
 
   return (
-    <main style={{ background: '#000000', color: '#F0EDE8' }} className="overflow-x-hidden">
+    <main
+      style={{ background: '#16181E', color: '#F0EDE8', fontFamily: 'var(--font-body)' }}
+      className="overflow-x-hidden"
+    >
 
       {/* ── NAV ── */}
       <nav
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 py-4 md:px-16 md:py-5"
-        style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(8px)' }}
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-16"
+        style={{
+          paddingTop: '20px',
+          paddingBottom: '20px',
+          background: 'rgba(16,18,20,0.93)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderBottom: '1px solid rgba(255,255,255,0.04)',
+        }}
       >
-        <span
-          className="font-[family-name:var(--font-display)] text-xs tracking-[0.3em] uppercase"
-          style={{ color: '#F0EDE8' }}
-        >
-          Daniela Palacio
-        </span>
+        <Image
+          src="/logos/logo-largo.png"
+          alt="Daniela Palacio"
+          width={180}
+          height={34}
+          style={{ filter: 'brightness(0) invert(1)', opacity: 0.85, width: '180px', height: 'auto' }}
+          priority
+        />
         <Link
           href="/reservar"
-          className="text-[11px] tracking-[0.25em] uppercase transition-opacity hover:opacity-60"
-          style={{ color: '#C9A84C' }}
+          style={{
+            color: '#F0EDE8',
+            fontSize: '10px',
+            letterSpacing: '0.35em',
+            textTransform: 'uppercase',
+            fontWeight: 300,
+            transition: 'opacity 0.2s',
+          }}
+          className="hover:opacity-50"
         >
           Reservar
         </Link>
@@ -76,74 +95,155 @@ export default function Home() {
 
       {/* ── HERO ── */}
       <section
-        className="min-h-screen relative flex flex-col justify-end px-5 pb-16 md:px-16 md:pb-28"
+        className="min-h-screen relative flex flex-col items-center justify-center text-center"
         style={{ paddingTop: '80px' }}
       >
-        {/* Background — Daniela editorial portrait */}
+        {/* Background photo */}
         <div className="absolute inset-0 z-0">
           <Image
             src="/gallery/daniela-hero.jpg"
-            alt="Daniela Palacio"
+            alt="Daniela Palacio Hair Room"
             fill
             priority
             className="object-cover"
-            style={{ objectPosition: 'center 18%', filter: 'brightness(0.42) contrast(1.12) saturate(0.85)' }}
+            style={{
+              objectPosition: 'center 18%',
+              filter: 'brightness(0.58) contrast(1.1) saturate(0.75)',
+            }}
           />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #000 32%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0.52) 100%)' }} />
+          {/* Gradient overlay */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(to bottom, rgba(16,18,20,0.55) 0%, rgba(16,18,20,0.1) 40%, rgba(16,18,20,0.82) 100%)',
+            }}
+          />
         </div>
-        <div className="relative z-10">
-        <p
-          className="text-[10px] tracking-[0.45em] uppercase mb-10"
-          style={{ color: '#555555' }}
-        >
-          Hair Room — Mazatlán, Sin.
-        </p>
 
-        <h1
-          className="font-[family-name:var(--font-display)] leading-none tracking-tight mb-10"
-          style={{ fontSize: 'clamp(72px, 14vw, 180px)', fontWeight: 300 }}
-        >
-          <span className="block">DANIELA</span>
-          <span className="block" style={{ color: '#C9A84C' }}>PALACIO</span>
-        </h1>
+        {/* Hero content — centered */}
+        <div className="relative z-10 flex flex-col items-center">
+          {/* Location line above logo */}
+          <p
+            style={{
+              fontSize: '9px',
+              letterSpacing: '0.55em',
+              textTransform: 'uppercase',
+              color: '#585858',
+              marginBottom: '36px',
+            }}
+          >
+            Mazatlán, Sinaloa
+          </p>
 
-        <p
-          className="text-[13px] tracking-wide mb-12 max-w-xs"
-          style={{ color: '#888888', lineHeight: 1.7 }}
-        >
-          Especialistas en color, cortes y tratamientos capilares de alta calidad.
-        </p>
+          {/* Logo full */}
+          <div style={{ marginBottom: '32px' }}>
+            <Image
+              src="/logos/logo-full.png"
+              alt="Daniela Palacio Hair Room"
+              width={440}
+              height={360}
+              priority
+              style={{
+                filter: 'brightness(0) invert(1)',
+                opacity: 0.95,
+                width: 'min(440px, 75vw)',
+                height: 'auto',
+              }}
+            />
+          </div>
 
-        <Link
-          href="/reservar"
-          className="inline-flex items-center justify-center gap-2 text-[11px] tracking-[0.25em] uppercase transition-all hover:opacity-90 active:scale-[0.98]"
+          {/* Tagline below logo */}
+          <p
+            style={{
+              fontSize: '10px',
+              letterSpacing: '0.4em',
+              textTransform: 'uppercase',
+              color: '#585858',
+              marginBottom: '48px',
+            }}
+          >
+            cuidado que transforma
+          </p>
+
+          {/* CTA */}
+          <Link
+            href="/reservar"
+            style={{
+              fontSize: '10px',
+              letterSpacing: '0.35em',
+              textTransform: 'uppercase',
+              color: '#F0EDE8',
+              fontWeight: 300,
+              borderBottom: '1px solid rgba(240,237,232,0.25)',
+              paddingBottom: '2px',
+              transition: 'opacity 0.2s',
+            }}
+            className="hover:opacity-50"
+          >
+            Reservar cita
+          </Link>
+
+        </div>
+
+        {/* WhatsApp — esquina inferior derecha del hero */}
+        <a
+          href="https://wa.me/526691877077"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-6 right-6 hover:opacity-70 transition-opacity duration-200"
           style={{
-            background: '#C9A84C',
-            color: '#000000',
-            padding: '14px 32px',
-            fontWeight: 500,
+            fontSize: '9px',
+            letterSpacing: '0.3em',
+            textTransform: 'uppercase',
+            color: 'rgba(240,237,232,0.35)',
+            fontWeight: 300,
+            zIndex: 10,
           }}
         >
-          Reservar cita →
-        </Link>
-        </div>
+          WA →
+        </a>
       </section>
 
       {/* ── PHOTO STRIP ── */}
-      <section className="overflow-x-auto scrollbar-none">
-        <div className="flex gap-px min-w-max md:grid md:grid-cols-3 md:min-w-0">
+      {/* Mobile: horizontal scroll. Desktop: 3-column grid with 1px black gaps */}
+      <section
+        className="overflow-x-auto md:overflow-x-visible"
+        style={{ scrollbarWidth: 'none' }}
+      >
+        {/* Mobile wrapper — flex scroll */}
+        <div className="flex md:hidden" style={{ gap: '1px', minWidth: 'max-content' }}>
           {GALLERY.map((photo) => (
             <div
               key={photo.src}
               className="relative shrink-0 overflow-hidden"
-              style={{ width: '78vw', maxWidth: '420px', aspectRatio: '2/3' }}
+              style={{ width: '80vw', maxWidth: '440px', aspectRatio: '3/4' }}
             >
               <Image
                 src={photo.src}
                 alt={photo.alt}
                 fill
                 unoptimized
-                className="object-cover transition-transform duration-700 hover:scale-[1.04]"
+                className="object-cover transition-transform duration-700 hover:scale-[1.03]"
+                style={{ objectPosition: photo.pos, filter: photo.filter }}
+              />
+            </div>
+          ))}
+        </div>
+        {/* Desktop wrapper — CSS grid */}
+        <div className="hidden md:grid md:grid-cols-3" style={{ gap: '1px', background: '#16181E' }}>
+          {GALLERY.map((photo) => (
+            <div
+              key={photo.src}
+              className="relative overflow-hidden"
+              style={{ aspectRatio: '4/5', width: '100%' }}
+            >
+              <Image
+                src={photo.src}
+                alt={photo.alt}
+                fill
+                unoptimized
+                className="object-cover transition-transform duration-700 hover:scale-[1.03]"
                 style={{ objectPosition: photo.pos, filter: photo.filter }}
               />
             </div>
@@ -151,21 +251,52 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Mobile scroll hint — only visible on small screens */}
-      <p className="md:hidden text-center text-[10px] tracking-[0.25em] uppercase py-3" style={{ color: '#2a2a2a' }}>
-        ← desliza →
-      </p>
+      {/* ── BRAND STATEMENT ── */}
+      <section
+        className="px-6 md:px-16"
+        style={{ paddingTop: '56px', paddingBottom: '28px' }}
+      >
+        <p
+          style={{
+            fontSize: '9px',
+            letterSpacing: '0.5em',
+            textTransform: 'uppercase',
+            color: '#686560',
+            marginBottom: '28px',
+          }}
+        >
+          El estudio
+        </p>
+        <p
+          style={{
+            fontSize: '13px',
+            lineHeight: 2,
+            color: '#606060',
+            maxWidth: '400px',
+            fontWeight: 300,
+          }}
+        >
+          Hola, ¡hermosa! Nuestra prioridad es la salud de tu cabello.
+          Cada servicio combina técnica profesional con productos y
+          procesos que lo protegen, nutren y realzan.
+        </p>
+      </section>
 
       {/* ── SERVICES ── */}
       <section
         id="servicios"
-        className="px-5 md:px-16"
-        style={{ paddingTop: '96px', paddingBottom: '96px' }}
+        className="px-6 md:px-16"
+        style={{ paddingBottom: '56px' }}
       >
         <div className="max-w-3xl">
           <p
-            className="text-[10px] tracking-[0.45em] uppercase mb-16"
-            style={{ color: '#555555' }}
+            style={{
+              fontSize: '9px',
+              letterSpacing: '0.5em',
+              textTransform: 'uppercase',
+              color: '#686560',
+              marginBottom: '48px',
+            }}
           >
             Servicios
           </p>
@@ -178,14 +309,19 @@ export default function Home() {
               return acc;
             }, {} as Record<string, Service[]>);
             const categoryOrder = ['Basic', 'Hair color', 'Tratamientos capilares', ''];
-            const sortedCategories = categoryOrder.filter(c => serviceGroups[c]?.length);
+            const sortedCategories = categoryOrder.filter((c) => serviceGroups[c]?.length);
 
             return sortedCategories.map((cat) => (
-              <div key={cat} className="mb-10 last:mb-0">
+              <div key={cat} style={{ marginBottom: '40px' }}>
                 {cat && (
                   <p
-                    className="text-[10px] tracking-[0.35em] uppercase mb-4"
-                    style={{ color: '#C9A84C' }}
+                    style={{
+                      fontSize: '9px',
+                      letterSpacing: '0.4em',
+                      textTransform: 'uppercase',
+                      color: '#686560',
+                      marginBottom: '16px',
+                    }}
                   >
                     {cat}
                   </p>
@@ -205,37 +341,48 @@ export default function Home() {
                         key={service.id}
                         href={href}
                         {...linkProps}
-                        className="group flex items-baseline justify-between py-5 transition-colors"
+                        className="group flex items-baseline justify-between"
                         style={{
-                          borderTop: i === 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                          borderBottom: '1px solid rgba(255,255,255,0.06)',
+                          paddingTop: '20px',
+                          paddingBottom: '20px',
+                          borderTop: i === 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                          borderBottom: '1px solid rgba(255,255,255,0.05)',
+                          transition: 'opacity 0.2s',
                         }}
                       >
                         <div>
                           <span
-                            className="font-[family-name:var(--font-display)] text-lg md:text-xl transition-colors group-hover:text-[#C9A84C]"
-                            style={{ color: '#F0EDE8' }}
+                            className="font-[family-name:var(--font-display)] group-hover:opacity-50 transition-opacity duration-300"
+                            style={{
+                              fontSize: 'clamp(16px, 2vw, 18px)',
+                              color: '#F0EDE8',
+                              fontWeight: 300,
+                            }}
                           >
                             {service.name}
                           </span>
                           <span
-                            className="block text-[11px] tracking-wide mt-0.5"
-                            style={{ color: '#555555' }}
+                            className="block mt-1"
+                            style={{ fontSize: '10px', color: '#686560' }}
                           >
                             {formatDuration(service.duration_minutes)}
                           </span>
                         </div>
                         <div className="flex items-center gap-3 ml-8 shrink-0">
                           <span
-                            className="text-sm font-light tabular-nums"
-                            style={{ color: '#F0EDE8' }}
+                            style={{
+                              fontSize: '13px',
+                              fontWeight: 300,
+                              color: '#81807F',
+                            }}
                           >
                             {service.price === null
-                              ? 'Sujeto a cotización'
+                              ? 'Consultar'
                               : `desde ${formatPrice(service.price)}`}
                           </span>
                           <span
-                            className="text-[#C9A84C] opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 text-xs"
+                            className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-[0.35] group-hover:translate-x-0"
+                            style={{ color: '#81807F', fontSize: '13px' }}
                           >
                             →
                           </span>
@@ -250,41 +397,71 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
+      {/* ── X DIVIDER ── */}
+      <div
+        className="flex justify-center"
+        style={{ paddingTop: '32px', paddingBottom: '32px' }}
+      >
+        <Image
+          src="/logos/symbol-x.png"
+          alt=""
+          width={36}
+          height={36}
+          style={{ filter: 'brightness(0) invert(1)', opacity: 0.14, width: '36px', height: '36px' }}
+        />
+      </div>
+
+      {/* ── PROCESS ── */}
       <section
-        className="px-5 md:px-16"
-        style={{ paddingTop: '56px', paddingBottom: '56px' }}
+        className="px-6 md:px-16"
+        style={{ paddingBottom: '48px' }}
       >
         <p
-          className="text-[10px] tracking-[0.45em] uppercase mb-8"
-          style={{ color: '#555555' }}
+          style={{
+            fontSize: '9px',
+            letterSpacing: '0.5em',
+            textTransform: 'uppercase',
+            color: '#686560',
+            marginBottom: '40px',
+          }}
         >
           Proceso
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8 max-w-5xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12 max-w-5xl">
           {STEPS.map((step) => (
-            <div key={step.n} className="flex gap-4 items-start">
-              <span
-                className="font-[family-name:var(--font-display)] leading-none shrink-0 mt-0.5"
-                style={{ fontSize: '32px', color: '#2a2a2a', fontWeight: 300 }}
+            <div key={step.n}>
+              <p
+                style={{
+                  fontSize: '11px',
+                  letterSpacing: '0.2em',
+                  color: '#505050',
+                  fontWeight: 300,
+                  marginBottom: '14px',
+                }}
               >
                 {step.n}
-              </span>
-              <div>
-                <h3
-                  className="font-[family-name:var(--font-display)] text-base mb-1"
-                  style={{ color: '#F0EDE8', fontWeight: 400 }}
-                >
-                  {step.title}
-                </h3>
-                <p
-                  className="text-[12px] leading-relaxed"
-                  style={{ color: '#555555' }}
-                >
-                  {step.desc}
-                </p>
-              </div>
+              </p>
+              <h3
+                className="font-[family-name:var(--font-display)]"
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 300,
+                  color: '#F0EDE8',
+                  marginBottom: '12px',
+                }}
+              >
+                {step.title}
+              </h3>
+              <p
+                style={{
+                  fontSize: '11px',
+                  lineHeight: 1.9,
+                  color: '#686560',
+                }}
+              >
+                {step.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -292,13 +469,18 @@ export default function Home() {
 
       {/* ── HOURS ── */}
       <section
-        className="px-5 md:px-16"
-        style={{ paddingTop: '40px', paddingBottom: '40px' }}
+        className="px-6 md:px-16"
+        style={{ paddingBottom: '40px' }}
       >
-        <div className="max-w-sm">
+        <div style={{ maxWidth: '360px' }}>
           <p
-            className="text-[10px] tracking-[0.45em] uppercase mb-5"
-            style={{ color: '#555555' }}
+            style={{
+              fontSize: '9px',
+              letterSpacing: '0.5em',
+              textTransform: 'uppercase',
+              color: '#686560',
+              marginBottom: '28px',
+            }}
           >
             Horarios
           </p>
@@ -307,21 +489,25 @@ export default function Home() {
             {HOURS.map((h, i) => (
               <div
                 key={h.days}
-                className="flex items-baseline justify-between py-2"
+                className="flex items-baseline justify-between"
                 style={{
-                  borderTop: i === 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                  borderBottom: '1px solid rgba(255,255,255,0.06)',
+                  paddingTop: '10px',
+                  paddingBottom: '10px',
+                  borderTop: i === 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                  borderBottom: '1px solid rgba(255,255,255,0.05)',
                 }}
               >
-                <span
-                  className="text-[13px] tracking-wide"
-                  style={{ color: '#555555' }}
-                >
+                <span style={{ fontSize: '12px', fontWeight: 300, color: '#686560' }}>
                   {h.days}
                 </span>
                 <span
-                  className="text-[13px] font-light ml-8 shrink-0"
-                  style={{ color: h.time === 'Cerrado' ? '#333333' : '#F0EDE8' }}
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 300,
+                    marginLeft: '32px',
+                    flexShrink: 0,
+                    color: h.time === 'Cerrado' ? '#505050' : '#81807F',
+                  }}
                 >
                   {h.time}
                 </span>
@@ -333,54 +519,77 @@ export default function Home() {
 
       {/* ── INSTAGRAM CTA ── */}
       <section
-        className="px-5 md:px-16"
-        style={{ paddingTop: '32px', paddingBottom: '48px' }}
+        className="px-6 md:px-16"
+        style={{ paddingBottom: '40px' }}
       >
         <a
           href="https://instagram.com/danielapalaciosalon"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 transition-opacity hover:opacity-60"
-          style={{ color: '#F0EDE8' }}
+          className="inline-flex items-center gap-3 hover:opacity-[0.35] transition-opacity duration-200"
+          style={{ color: '#686560' }}
         >
-          <InstagramIcon size={14} />
+          <InstagramIcon size={12} />
           <span
-            className="text-[13px] tracking-[0.1em]"
-            style={{ borderBottom: '1px solid rgba(240,237,232,0.3)', paddingBottom: '2px' }}
+            style={{
+              fontSize: '11px',
+              letterSpacing: '0.12em',
+              color: '#686560',
+            }}
           >
-            @danielapalaciosalon →
+            @danielapalaciosalon
           </span>
         </a>
       </section>
 
       {/* ── FOOTER ── */}
       <footer
-        className="px-5 md:px-16 py-8 flex items-center justify-between gap-4 flex-wrap"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+        className="px-6 md:px-16 flex items-end justify-between gap-6 flex-wrap"
+        style={{
+          paddingTop: '40px',
+          paddingBottom: '40px',
+          borderTop: '1px solid rgba(255,255,255,0.04)',
+        }}
       >
-        <div className="flex flex-col gap-1">
-          <p
-            className="text-[11px] tracking-[0.2em]"
-            style={{ color: '#333333' }}
-          >
-            © 2025 Daniela Palacio Hair Room
-          </p>
-          <p
-            className="text-[11px] tracking-[0.15em]"
-            style={{ color: '#2a2a2a' }}
-          >
+        <div className="flex flex-col gap-3">
+          <Image
+            src="/logos/logo-largo.png"
+            alt="Daniela Palacio"
+            width={140}
+            height={26}
+            style={{ filter: 'brightness(0) invert(1)', opacity: 0.35, width: '140px', height: 'auto' }}
+          />
+          <p style={{ fontSize: '10px', color: '#505050', letterSpacing: '0.1em' }}>
             Plaza A2, piso 3, local 3D — Mazatlán, Sin.
           </p>
+          <p style={{ fontSize: '10px', color: '#505050', letterSpacing: '0.1em' }}>
+            © 2025 Daniela Palacio Hair Room
+          </p>
         </div>
-        <a
-          href="https://wa.me/526691877077"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[11px] tracking-[0.2em] transition-opacity hover:opacity-60"
-          style={{ color: '#C9A84C' }}
-        >
-          WhatsApp →
-        </a>
+
+        <div className="flex flex-col items-end gap-3">
+          <Image
+            src="/logos/symbol-x.png"
+            alt=""
+            width={28}
+            height={28}
+            style={{ filter: 'brightness(0) invert(1)', opacity: 0.18, width: '28px', height: '28px' }}
+          />
+          <a
+            href="https://wa.me/526691877077"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:opacity-50 transition-opacity duration-200"
+            style={{
+              fontSize: '10px',
+              letterSpacing: '0.25em',
+              color: '#686560',
+              textTransform: 'uppercase',
+            }}
+          >
+            WhatsApp →
+          </a>
+        </div>
       </footer>
 
     </main>

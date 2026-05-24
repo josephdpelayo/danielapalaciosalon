@@ -43,11 +43,11 @@ function CanceladoContent() {
           href="https://wa.me/526699445566"
           target="_blank"
           rel="noopener noreferrer"
-          className="border border-[#2A2620] text-[#7A7168] px-6 py-3 text-xs tracking-[0.2em] uppercase hover:border-[#C9A84C] hover:text-[#C9A84C] transition-colors"
+          className="border border-[#2A2620] text-[#7A7168] px-6 py-3 text-xs tracking-[0.2em] uppercase hover:border-[#81807F] hover:text-[#81807F] transition-colors"
         >
           Contactar por WhatsApp
         </a>
-        <Link href="/reservar" className="bg-[#C9A84C] text-[#0D0D0D] px-6 py-3 text-xs tracking-[0.2em] uppercase font-semibold hover:bg-[#E8C97A] transition-colors">
+        <Link href="/reservar" className="bg-[#F0EDE8] text-[#16181E] px-6 py-3 text-xs tracking-[0.2em] uppercase font-semibold hover:bg-[#A09F9E] transition-colors">
           Intentar de nuevo
         </Link>
       </div>

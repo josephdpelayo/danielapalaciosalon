@@ -53,14 +53,14 @@ function ExitoContent() {
         >
           <circle
             cx="48" cy="48" r="46"
-            stroke="#C9A84C" strokeWidth="1.5"
+            stroke="#81807F" strokeWidth="1.5"
             strokeDasharray="289"
             strokeDashoffset="289"
             style={{ animation: 'draw-circle 0.9s cubic-bezier(0.4,0,0.2,1) 0.15s forwards' }}
           />
           <polyline
             points="30,50 43,63 66,36"
-            stroke="#C9A84C"
+            stroke="#81807F"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -83,7 +83,7 @@ function ExitoContent() {
       {(service || date || time) && (
         <div className="mb-6 space-y-1" style={{ opacity: 0, animation: 'fade-up 0.6s ease-out 1.2s forwards' }}>
           {service && (
-            <p className="text-[#C9A84C] text-xs tracking-[0.2em] uppercase">
+            <p className="text-[#81807F] text-xs tracking-[0.2em] uppercase">
               {service}
             </p>
           )}
@@ -103,7 +103,7 @@ function ExitoContent() {
 
       {/* WA confirmation note */}
       {!isTrusted && (
-        <p className="text-[#C9A84C]/70 text-[11px] tracking-[0.12em] uppercase max-w-xs leading-relaxed mb-2"
+        <p className="text-[#81807F]/70 text-[11px] tracking-[0.12em] uppercase max-w-xs leading-relaxed mb-2"
           style={{ opacity: 0, animation: 'fade-up 0.6s ease-out 1.38s forwards' }}>
           Daniela te confirmará tu cita por WhatsApp en breve.
         </p>
@@ -123,7 +123,7 @@ function ExitoContent() {
         style={{ opacity: 0, animation: 'fade-up 0.6s ease-out 1.58s forwards' }}>
         <Link
           href="/"
-          className="block w-full py-3 text-[11px] tracking-[0.2em] uppercase text-center transition-colors hover:text-[#C9A84C]"
+          className="block w-full py-3 text-[11px] tracking-[0.2em] uppercase text-center transition-colors hover:text-[#81807F]"
           style={{ border: '1px solid rgba(255,255,255,0.1)', color: '#555555' }}
         >
           Volver al inicio
@@ -133,7 +133,7 @@ function ExitoContent() {
       {/* Recommendations */}
       <div className="w-full max-w-xs text-left mb-8"
         style={{ opacity: 0, animation: 'fade-up 0.6s ease-out 1.65s forwards' }}>
-        <p className="text-[#C9A84C] text-[10px] tracking-[0.2em] uppercase mb-4">
+        <p className="text-[#81807F] text-[10px] tracking-[0.2em] uppercase mb-4">
           Recomendaciones para tu cita
         </p>
         <ul className="space-y-3">
@@ -144,7 +144,7 @@ function ExitoContent() {
             'Si tienes alguna alergia o condición especial, coméntalo al llegar.',
           ].map((rec) => (
             <li key={rec} className="flex items-start gap-2 text-[#555555] text-[12px] leading-relaxed">
-              <span className="mt-[3px] shrink-0 text-[#C9A84C]/50" aria-hidden="true">—</span>
+              <span className="mt-[3px] shrink-0 text-[#81807F]/50" aria-hidden="true">—</span>
               {rec}
             </li>
           ))}
@@ -157,7 +157,7 @@ function ExitoContent() {
         <Link
           href="/#faq"
           className="block w-full py-3 text-[11px] tracking-[0.2em] uppercase text-center transition-colors hover:text-[#F0EDE8]"
-          style={{ border: '1px solid rgba(201,168,76,0.25)', color: '#C9A84C' }}
+          style={{ border: '1px solid rgba(129,128,127,0.25)', color: '#81807F' }}
         >
           Preguntas frecuentes
         </Link>
@@ -169,7 +169,7 @@ function ExitoContent() {
         <p className="text-[#555555] text-[12px] leading-relaxed mb-1">
           ¿Tienes dudas? Escríbenos con confianza en horario de atención:
         </p>
-        <p className="text-[#C9A84C]/70 text-[11px] tracking-[0.08em] mb-5">
+        <p className="text-[#81807F]/70 text-[11px] tracking-[0.08em] mb-5">
           Lun–Vie 10am–7pm&nbsp;&nbsp;|&nbsp;&nbsp;Sáb 10am–3pm
         </p>
         <a

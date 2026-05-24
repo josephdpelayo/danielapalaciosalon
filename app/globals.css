@@ -5,9 +5,9 @@
   --color-surface: #161616;
   --color-surface-2: #1E1E1E;
   --color-border: #2A2620;
-  --color-gold: #C9A84C;
-  --color-gold-light: #E8C97A;
-  --color-gold-dim: #8A7035;
+  --color-stone: #81807F;
+  --color-stone-light: #A09F9E;
+  --color-stone-dim: #504C4C;
   --color-cream: #F5F0E8;
   --color-muted: #7A7168;
   --color-font-display: var(--font-display);
@@ -39,14 +39,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Gold shimmer animation */
+/* Stone shimmer animation */
 @keyframes shimmer {
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
 }
 
-.gold-text {
-  background: linear-gradient(90deg, #C9A84C 0%, #E8C97A 40%, #C9A84C 60%, #8A7035 100%);
+.stone-text {
+  background: linear-gradient(90deg, #81807F 0%, #A09F9E 40%, #81807F 60%, #504C4C 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -69,9 +69,9 @@ body::before {
 
 /* Use CSS custom properties for accent colors */
 .rdp-root {
-  --rdp-accent-color: #C9A84C;
+  --rdp-accent-color: #81807F;
   --rdp-accent-background-color: transparent;
-  --rdp-today-color: #C9A84C;
+  --rdp-today-color: #81807F;
   --rdp-selected-border: 1.5px solid #F0EDE8;
   /* Keep button circular as v10 default, we override border-radius below */
   --rdp-day_button-border-radius: 50%;
@@ -79,7 +79,7 @@ body::before {
 
 /* Legacy v8/v9 root class fallback */
 .rdp {
-  --rdp-accent-color: #C9A84C;
+  --rdp-accent-color: #81807F;
   --rdp-background-color: transparent;
   margin: 0;
 }
@@ -97,13 +97,13 @@ body::before {
 
 /* Nav arrows — gold chevron */
 .rdp-chevron {
-  fill: #C9A84C !important;
+  fill: #81807F !important;
 }
 .rdp-button_previous,
 .rdp-button_next,
 .rdp-nav_button,
 .rdp-nav button {
-  color: #C9A84C !important;
+  color: #81807F !important;
   border: none !important;
   background: transparent !important;
 }
@@ -127,7 +127,7 @@ body::before {
 
 /* Non-selected, non-disabled day hover — subtle gold tint on the button */
 .rdp-day:not(.rdp-selected):not(.rdp-disabled) .rdp-day_button:hover {
-  background: rgba(201,168,76,0.08) !important;
+  background: rgba(129,128,127,0.08) !important;
   border-color: transparent !important;
 }
 
@@ -165,7 +165,7 @@ body::before {
 /* ── Today — gold text, no blue circle/border ────────────────────*/
 .rdp-today:not(.rdp-selected) .rdp-day_button,
 .rdp-day_today:not(.rdp-day_selected) {
-  color: #C9A84C !important;
+  color: #81807F !important;
   font-weight: 600 !important;
   background: transparent !important;
   border-color: transparent !important;
