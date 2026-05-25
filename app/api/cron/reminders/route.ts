@@ -3,10 +3,19 @@ import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { makeConfirmToken } from '@/app/api/confirm/route';
 
-export async function GET(req: NextRequest) {
-  // Protect with CRON_SECRET (set in env vars)
+function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get('x-cron-secret') !== secret) {
+  if (!secret) return false;
+  // Vercel standard: Authorization: Bearer <secret>
+  const auth = req.headers.get('authorization');
+  if (auth === `Bearer ${secret}`) return true;
+  // Manual calls: x-cron-secret header
+  if (req.headers.get('x-cron-secret') === secret) return true;
+  return false;
+}
+
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
@@ -73,6 +82,19 @@ Te recuerdo que mañana tienes cita en *Daniela Palacio Hair Room*:
       wa_link:      waLink,
     };
   });
+
+  // Send push notification to admin so Daniela knows to send reminders
+  if (reminders.length > 0) {
+    try {
+      const { sendAdminPush } = await import('@/lib/push');
+      await sendAdminPush({
+        title: `🔔 ${reminders.length} cita${reminders.length > 1 ? 's' : ''} mañana`,
+        body: `Envía los recordatorios de WhatsApp desde el panel admin.`,
+        url: '/admin',
+        tag: 'daily-reminders',
+      });
+    } catch { /* push is optional */ }
+  }
 
   return NextResponse.json({
     date:      tomorrow,
