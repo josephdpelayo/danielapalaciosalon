@@ -87,6 +87,7 @@ export default function Home() {
         {/* Anchor links — desktop only */}
         <div className="hidden md:flex items-center gap-8">
           {[
+            { href: '#daniela',   label: 'Daniela'   },
             { href: '#servicios', label: 'Servicios' },
             { href: '#resenas',   label: 'Reseñas'   },
             { href: '#horarios',  label: 'Horarios'  },
@@ -331,6 +332,49 @@ export default function Home() {
           Cada servicio combina técnica profesional con productos y
           procesos que lo protegen, nutren y realzan.
         </p>
+      </section>
+
+      {/* ── MEET DANIELA ── */}
+      <section
+        id="daniela"
+        className="px-6 md:px-16"
+        style={{ paddingTop: '56px', paddingBottom: '64px' }}
+      >
+        <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '40px' }}>
+          La estilista
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-start max-w-4xl">
+          {/* Photo */}
+          <div style={{ position: 'relative', aspectRatio: '3/4', overflow: 'hidden' }}>
+            <Image
+              src="/gallery/daniela-portrait.png"
+              alt="Daniela Palacio — estilista"
+              fill
+              className="object-cover object-top"
+              style={{ filter: 'brightness(0.96) contrast(1.04) saturate(0.92)' }}
+            />
+          </div>
+
+          {/* Text */}
+          <div className="flex flex-col justify-center" style={{ paddingTop: '8px' }}>
+            <h2
+              className="font-[family-name:var(--font-display)]"
+              style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 300, color: '#F0EDE8', lineHeight: 1.15, marginBottom: '8px' }}
+            >
+              Daniela Palacio
+            </h2>
+            <p style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#686560', marginBottom: '32px' }}>
+              Estilista de cabello · Mazatlán, Sin.
+            </p>
+            <p style={{ fontSize: '13px', lineHeight: 2, color: '#606060', fontWeight: 300, marginBottom: '20px' }}>
+              Soy Daniela, estilista especializada en color y cuidado capilar con base en Mazatlán, Sinaloa. Cada técnica que aplico parte de un principio: el cabello saludable es el mejor punto de partida para cualquier transformación.
+            </p>
+            <p style={{ fontSize: '13px', lineHeight: 2, color: '#606060', fontWeight: 300 }}>
+              Me especializo en color — balayage, mechas y tratamientos — con un enfoque personalizado en cada clienta. Porque no hay dos cabellos iguales, y el resultado que buscas merece atención real.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* ── SERVICES ── */}
