@@ -501,19 +501,42 @@ function BookingContent() {
         {/* ─── STEP 4: TIME ─── */}
         {step === 'time' && selectedService && selectedDate && (
           <div>
-            <div className="mb-10">
+            <div className="mb-8">
               <button
                 onClick={() => setStep('date')}
                 className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-6"
               >
                 <ArrowLeft size={13} /> Atrás
               </button>
-              <h2 className="font-[family-name:var(--font-display)] text-4xl font-light text-[#F0EDE8] leading-tight mb-3">
+              <h2 className="font-[family-name:var(--font-display)] text-4xl font-light text-[#F0EDE8] leading-tight mb-5">
                 Elige un horario
               </h2>
-              <p className="text-[#666] text-xs tracking-[0.1em] uppercase capitalize">
-                {format(selectedDate, "EEEE d 'de' MMMM", { locale: es })}
-              </p>
+              {/* Day navigation */}
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    const prev = addDays(selectedDate, -1);
+                    if (!isBefore(prev, startOfToday())) { setSelectedDate(prev); setSelectedSlot(null); }
+                  }}
+                  disabled={isBefore(addDays(selectedDate, -1), startOfToday())}
+                  className="text-[#666] hover:text-[#F0EDE8] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ArrowLeft size={14} />
+                </button>
+                <p className="text-[#81807F] text-xs tracking-[0.12em] uppercase capitalize flex-1 text-center">
+                  {format(selectedDate, "EEEE d 'de' MMMM", { locale: es })}
+                </p>
+                <button
+                  onClick={() => {
+                    const next = addDays(selectedDate, 1);
+                    if (!isBefore(addDays(startOfToday(), 60), next)) { setSelectedDate(next); setSelectedSlot(null); }
+                  }}
+                  disabled={!isBefore(addDays(selectedDate, 1), addDays(startOfToday(), 61))}
+                  className="text-[#666] hover:text-[#F0EDE8] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ArrowRight size={14} />
+                </button>
+              </div>
             </div>
 
             {loadingSlots ? (
@@ -561,14 +584,14 @@ function BookingContent() {
         {/* ─── STEP 5: CONFIRM ─── */}
         {step === 'confirm' && selectedService && selectedDate && selectedSlot && (
           <div>
-            <div className="mb-10">
+            <div className="mb-5">
               <button
                 onClick={() => setStep('time')}
-                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-6"
+                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-4"
               >
                 <ArrowLeft size={13} /> Atrás
               </button>
-              <h2 className="font-[family-name:var(--font-display)] text-4xl font-light text-[#F0EDE8] leading-tight mb-3">
+              <h2 className="font-[family-name:var(--font-display)] text-3xl font-light text-[#F0EDE8] leading-tight mb-1">
                 Confirmar cita
               </h2>
               <p className="text-[#666] text-xs tracking-[0.1em] uppercase">
@@ -577,79 +600,72 @@ function BookingContent() {
             </div>
 
             {/* Summary — hairline divided rows, no card boxes */}
-            <div className="divide-y divide-white/8 mb-12">
+            <div className="divide-y divide-white/8 mb-5">
 
-              <div className="py-5 flex items-start gap-4">
-                <Scissors size={14} className="text-[#81807F] mt-0.5 shrink-0" />
+              <div className="py-3 flex items-start gap-4">
+                <Scissors size={13} className="text-[#81807F] mt-0.5 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-2">Servicio</p>
+                  <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-1">Servicio</p>
                   <p className="text-[#F0EDE8] text-sm">{selectedService.name}</p>
-                  <p className="text-[#666] text-xs mt-1">
+                  <p className="text-[#666] text-xs mt-0.5">
                     {formatDuration(selectedService.duration_minutes)} · Total {formatPrice(selectedService.price)}
                   </p>
                 </div>
               </div>
 
-              <div className="py-5 flex items-start gap-4">
-                <Calendar size={14} className="text-[#81807F] mt-0.5 shrink-0" />
+              <div className="py-3 flex items-start gap-4">
+                <Calendar size={13} className="text-[#81807F] mt-0.5 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-2">Fecha y hora</p>
+                  <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-1">Fecha y hora</p>
                   <p className="text-[#F0EDE8] text-sm capitalize">
                     {format(selectedDate, "EEEE d 'de' MMMM", { locale: es })}
                   </p>
-                  <p className="text-[#666] text-xs mt-1">
+                  <p className="text-[#666] text-xs mt-0.5">
                     {formatTime(selectedSlot.start)} — {formatTime(selectedSlot.end)}
                   </p>
                 </div>
               </div>
 
-              <div className="py-5 flex items-start gap-4">
-                <User size={14} className="text-[#81807F] mt-0.5 shrink-0" />
+              <div className="py-3 flex items-start gap-4">
+                <User size={13} className="text-[#81807F] mt-0.5 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-2">Cliente</p>
+                  <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-1">Cliente</p>
                   <p className="text-[#F0EDE8] text-sm">{clientName}</p>
-                  <p className="text-[#666] text-xs mt-1">{countryCode} {clientPhone}</p>
+                  <p className="text-[#666] text-xs mt-0.5">{countryCode} {clientPhone}</p>
                   {clientEmail && <p className="text-[#666] text-xs mt-0.5">{clientEmail}</p>}
                 </div>
               </div>
 
               {/* Trusted VIP block or deposit */}
               {isTrusted ? (
-                <div className="py-5 flex items-start gap-4">
-                  <Check size={14} className="text-[#81807F] mt-0.5 shrink-0" />
+                <div className="py-3 flex items-start gap-4">
+                  <Check size={13} className="text-[#81807F] mt-0.5 shrink-0" />
                   <div className="flex-1">
-                    <p className="text-[10px] tracking-[0.15em] uppercase text-[#81807F] mb-2">Clienta frecuente ✦</p>
+                    <p className="text-[10px] tracking-[0.15em] uppercase text-[#81807F] mb-1">Clienta frecuente ✦</p>
                     <p className="text-[#F0EDE8] text-sm">Sin anticipo requerido</p>
-                    <p className="text-[#666] text-xs mt-1">Tu cita se confirma de inmediato</p>
+                    <p className="text-[#666] text-xs mt-0.5">Tu cita se confirma de inmediato</p>
                   </div>
                 </div>
               ) : (
-                <div className="py-5 flex items-start justify-between gap-4">
+                <div className="py-3 flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <CreditCard size={14} className="text-[#81807F] mt-0.5 shrink-0" />
+                    <CreditCard size={13} className="text-[#81807F] mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-2">Anticipo a pagar</p>
+                      <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-1">Anticipo a pagar</p>
                       <p className="text-[#F0EDE8] text-sm">Se descuenta del total el día de tu cita</p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-[#81807F] text-2xl font-light">${selectedService.deposit_amount}</p>
+                    <p className="text-[#81807F] text-xl font-light">${selectedService.deposit_amount}</p>
                     <p className="text-[#666] text-[10px] tracking-wider uppercase mt-0.5">MXN</p>
                   </div>
                 </div>
               )}
             </div>
 
-            {!isTrusted && (
-              <p className="text-[#444] text-[10px] tracking-[0.1em] uppercase text-center mb-4 leading-relaxed">
-                El anticipo confirma tu cita automáticamente.<br />
-                Se descuenta del total el día de tu visita.
-              </p>
-            )}
-
-            <div className="border border-white/6 px-4 py-3 mb-8 text-center">
-              <p className="text-[#81807F] text-[9px] tracking-[0.2em] uppercase mb-1">Política de cancelación</p>
-              <p className="text-[#555] text-[11px] leading-relaxed">
+            <div className="border border-white/6 px-4 py-2.5 mb-4 text-center">
+              <p className="text-[#81807F] text-[9px] tracking-[0.2em] uppercase mb-0.5">Política de cancelación</p>
+              <p className="text-[#555] text-[11px] leading-snug">
                 El anticipo <span className="text-[#81807F]">no es reembolsable</span> si cancelas con menos de 24 h de anticipación.
               </p>
             </div>
