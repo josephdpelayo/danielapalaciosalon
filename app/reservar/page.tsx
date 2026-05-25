@@ -100,7 +100,7 @@ function BookingContent() {
         const noAvailability = fetchedSlots.length === 0 || fetchedSlots.every((s: TimeSlot) => !s.available);
         if (noAvailability) {
           setLoadingNext(true);
-          fetch(`/api/next-available?service_id=${selectedService.id}&after=${format(selectedDate, 'yyyy-MM-dd')}`)
+          fetch(`/api/next-available?service_id=${selectedService.id}&after=${format(selectedDate, 'yyyy-MM-dd')}&duration=${selectedService.duration_minutes}&active_minutes=${selectedService.active_minutes}`)
             .then((r) => r.json())
             .then((d) => setNextAvailable(d.date ?? null))
             .finally(() => setLoadingNext(false));
@@ -564,66 +564,63 @@ function BookingContent() {
                 <div className="w-5 h-5 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : slots.length === 0 || slots.every(s => !s.available) ? (
-              <div className="border border-white/8 px-5 py-8 text-center">
-                <p className="text-[#666] text-sm mb-5">No hay disponibilidad para este día.</p>
+              <div className="border border-white/8 px-5 py-6 space-y-3">
+                <p className="text-[#666] text-sm text-center">No hay disponibilidad para este día.</p>
 
                 {/* Siguiente fecha disponible */}
                 {loadingNext ? (
-                  <p className="text-[#444] text-xs tracking-wider mb-5">Buscando próxima fecha disponible…</p>
+                  <p className="text-[#444] text-xs tracking-wider text-center">Buscando próxima fecha…</p>
                 ) : nextAvailable ? (
                   <button
                     onClick={() => { setSelectedDate(parseISO(nextAvailable)); setSelectedSlot(null); }}
-                    className="w-full flex flex-col items-center gap-1 border border-[#81807F]/40 text-[#81807F] py-3 px-4 hover:border-[#81807F] transition-colors mb-4"
+                    className="w-full flex flex-col items-center gap-0.5 border border-[#81807F]/40 text-[#81807F] py-3 px-4 hover:border-[#81807F] transition-colors"
                   >
                     <span className="text-[10px] tracking-[0.2em] uppercase text-[#666]">Próxima fecha disponible</span>
                     <span className="text-sm capitalize">{format(parseISO(nextAvailable), "EEEE d 'de' MMMM", { locale: es })} →</span>
                   </button>
                 ) : (
-                  <p className="text-[#444] text-xs tracking-wider mb-5">Sin disponibilidad en los próximos 60 días.</p>
+                  <p className="text-[#444] text-xs tracking-wider text-center">Sin disponibilidad en los próximos 60 días.</p>
                 )}
 
-                {/* Lista de espera */}
-                {!waitlistDone && !showWaitlist && (
-                  <button
-                    onClick={() => setShowWaitlist(true)}
-                    className="text-[#666] text-xs tracking-wider underline underline-offset-4 hover:text-[#81807F] transition-colors"
-                  >
-                    Avisarme cuando haya disponibilidad
-                  </button>
-                )}
-
-                {showWaitlist && !waitlistDone && (
-                  <div className="mt-5 text-left border-t border-white/8 pt-5">
-                    <p className="text-[10px] tracking-[0.2em] uppercase text-[#666] mb-3">Lista de espera</p>
-                    <p className="text-[#444] text-xs mb-4">Te avisaremos por WhatsApp cuando se libere un lugar para <span className="text-[#81807F]">{selectedService?.name}</span>.</p>
+                {/* Lista de espera — siempre visible */}
+                {!waitlistDone ? (
+                  !showWaitlist ? (
                     <button
-                      disabled={waitlistSubmitting}
-                      onClick={async () => {
-                        setWaitlistSubmitting(true);
-                        try {
-                          await fetch('/api/waitlist', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              service_id: selectedService?.id,
-                              preferred_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
-                              client_name: clientName.trim() || 'Sin nombre',
-                              client_phone: countryCode + clientPhone,
-                              client_email: clientEmail || null,
-                            }),
-                          });
-                          setWaitlistDone(true);
-                        } finally { setWaitlistSubmitting(false); }
-                      }}
-                      className="w-full flex items-center justify-center gap-2 bg-[#F0EDE8] text-[#16181E] py-3 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-40"
+                      onClick={() => setShowWaitlist(true)}
+                      className="w-full border border-white/10 py-3 text-[#666] text-xs tracking-[0.15em] uppercase hover:border-white/20 hover:text-[#81807F] transition-colors"
                     >
-                      {waitlistSubmitting ? 'Guardando…' : 'Confirmar — avisarme'}
+                      Avisarme cuando haya disponibilidad
                     </button>
-                  </div>
-                )}
-
-                {waitlistDone && (
-                  <div className="mt-4 flex items-center justify-center gap-2 text-[#81807F] text-xs tracking-wider">
+                  ) : (
+                    <div className="border-t border-white/8 pt-4">
+                      <p className="text-[#444] text-xs mb-3 text-center">Te avisaremos por WhatsApp cuando se libere un lugar para <span className="text-[#81807F]">{selectedService?.name}</span>.</p>
+                      <button
+                        disabled={waitlistSubmitting}
+                        onClick={async () => {
+                          setWaitlistSubmitting(true);
+                          try {
+                            await fetch('/api/waitlist', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                service_id: selectedService?.id,
+                                preferred_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
+                                client_name: clientName.trim() || 'Sin nombre',
+                                client_phone: countryCode + clientPhone,
+                                client_email: clientEmail || null,
+                              }),
+                            });
+                            setWaitlistDone(true);
+                          } finally { setWaitlistSubmitting(false); }
+                        }}
+                        className="w-full flex items-center justify-center gap-2 bg-[#F0EDE8] text-[#16181E] py-3 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-40"
+                      >
+                        {waitlistSubmitting ? 'Guardando…' : 'Confirmar — avisarme'}
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  <div className="flex items-center justify-center gap-2 text-[#81807F] text-xs tracking-wider py-1">
                     <Check size={13} /> Te avisaremos por WhatsApp cuando haya disponibilidad
                   </div>
                 )}
