@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { DayPicker } from 'react-day-picker';
 import { es } from 'date-fns/locale';
-import { format, addDays, isBefore, startOfToday, getDay } from 'date-fns';
+import { format, addDays, isBefore, startOfToday, getDay, parseISO } from 'date-fns';
 import { ArrowLeft, ArrowRight, Check, Scissors, Calendar, User, CreditCard } from 'lucide-react';
 import { MOCK_SERVICES, MOCK_SCHEDULE } from '@/lib/mock-data';
 import { Service, TimeSlot } from '@/lib/types';
@@ -51,6 +51,11 @@ function BookingContent() {
   const [selectedCategory, setSelectedCategory] = useState<string>(
     MOCK_SERVICES.find(s => s.category)?.category ?? ''
   );
+  const [nextAvailable, setNextAvailable] = useState<string | null>(null);
+  const [loadingNext, setLoadingNext] = useState(false);
+  const [showWaitlist, setShowWaitlist] = useState(false);
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const [waitlistDone, setWaitlistDone] = useState(false);
 
   useEffect(() => {
     fetch('/api/services')
@@ -84,9 +89,22 @@ function BookingContent() {
     const daySchedule = scheduleList.find((s) => s.day_of_week === dow);
     if (!daySchedule || !daySchedule.is_active) { setSlots([]); setLoadingSlots(false); return; }
 
+    setNextAvailable(null);
+    setShowWaitlist(false);
+    setWaitlistDone(false);
     fetch(`/api/available-slots?date=${format(selectedDate, 'yyyy-MM-dd')}&service_id=${selectedService.id}&duration=${selectedService.duration_minutes}&active_minutes=${selectedService.active_minutes}`)
       .then((r) => r.json())
-      .then((data) => { setSlots(data.slots || []); })
+      .then((data) => {
+        const fetchedSlots = data.slots || [];
+        setSlots(fetchedSlots);
+        if (fetchedSlots.length === 0) {
+          setLoadingNext(true);
+          fetch(`/api/next-available?service_id=${selectedService.id}&after=${format(selectedDate, 'yyyy-MM-dd')}`)
+            .then((r) => r.json())
+            .then((d) => setNextAvailable(d.date ?? null))
+            .finally(() => setLoadingNext(false));
+        }
+      })
       .catch(() => { setSlots([]); setLoadingSlots(false); })
       .finally(() => setLoadingSlots(false));
   }, [selectedDate, selectedService]);
@@ -545,14 +563,68 @@ function BookingContent() {
                 <div className="w-5 h-5 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : slots.length === 0 ? (
-              <div className="text-center py-16 border border-white/8">
-                <p className="text-[#666] text-sm mb-4">No hay horarios disponibles para este día.</p>
-                <button
-                  onClick={() => setStep('date')}
-                  className="text-[#81807F] text-xs tracking-widest uppercase border-b border-[#81807F]/40 pb-px hover:border-[#81807F] transition-colors"
-                >
-                  Elegir otra fecha
-                </button>
+              <div className="border border-white/8 px-5 py-8 text-center">
+                <p className="text-[#666] text-sm mb-5">No hay disponibilidad para este día.</p>
+
+                {/* Siguiente fecha disponible */}
+                {loadingNext ? (
+                  <p className="text-[#444] text-xs tracking-wider mb-5">Buscando próxima fecha disponible…</p>
+                ) : nextAvailable ? (
+                  <button
+                    onClick={() => { setSelectedDate(parseISO(nextAvailable)); setSelectedSlot(null); }}
+                    className="w-full flex items-center justify-center gap-2 border border-[#81807F]/40 text-[#81807F] py-3 text-xs tracking-[0.15em] uppercase hover:border-[#81807F] transition-colors mb-4"
+                  >
+                    Ver disponibilidad el {format(parseISO(nextAvailable), "EEEE d 'de' MMMM", { locale: es })} →
+                  </button>
+                ) : (
+                  <p className="text-[#444] text-xs tracking-wider mb-5">Sin disponibilidad en los próximos 60 días.</p>
+                )}
+
+                {/* Lista de espera */}
+                {!waitlistDone && !showWaitlist && (
+                  <button
+                    onClick={() => setShowWaitlist(true)}
+                    className="text-[#666] text-xs tracking-wider underline underline-offset-4 hover:text-[#81807F] transition-colors"
+                  >
+                    Avisarme cuando haya disponibilidad
+                  </button>
+                )}
+
+                {showWaitlist && !waitlistDone && (
+                  <div className="mt-5 text-left border-t border-white/8 pt-5">
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-[#666] mb-3">Lista de espera</p>
+                    <p className="text-[#444] text-xs mb-4">Te avisaremos por WhatsApp cuando se libere un lugar para <span className="text-[#81807F]">{selectedService?.name}</span>.</p>
+                    <button
+                      disabled={waitlistSubmitting}
+                      onClick={async () => {
+                        setWaitlistSubmitting(true);
+                        try {
+                          await fetch('/api/waitlist', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              service_id: selectedService?.id,
+                              preferred_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
+                              client_name: clientName.trim() || 'Sin nombre',
+                              client_phone: countryCode + clientPhone,
+                              client_email: clientEmail || null,
+                            }),
+                          });
+                          setWaitlistDone(true);
+                        } finally { setWaitlistSubmitting(false); }
+                      }}
+                      className="w-full flex items-center justify-center gap-2 bg-[#F0EDE8] text-[#16181E] py-3 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-40"
+                    >
+                      {waitlistSubmitting ? 'Guardando…' : 'Confirmar — avisarme'}
+                    </button>
+                  </div>
+                )}
+
+                {waitlistDone && (
+                  <div className="mt-4 flex items-center justify-center gap-2 text-[#81807F] text-xs tracking-wider">
+                    <Check size={13} /> Te avisaremos por WhatsApp cuando haya disponibilidad
+                  </div>
+                )}
               </div>
             ) : (
               <>

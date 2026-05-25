@@ -20,6 +20,7 @@ import { MOCK_SCHEDULE } from '@/lib/mock-data';
 import 'react-day-picker/dist/style.css';
 
 type Tab = 'inicio' | 'agenda' | 'clientes' | 'staff' | 'config';
+type WaitlistEntry = { id: string; client_name: string; client_phone: string; client_email?: string; preferred_date?: string; dp_services?: { name: string } | null; created_at: string; };
 
 function serviceColor(name: string | undefined): string {
   if (!name) return '#888';
@@ -174,17 +175,22 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   const [openProximas, setOpenProximas]       = useState(true);
   const [openRecordatorios, setOpenRecordatorios] = useState(true);
   const [openBitacora, setOpenBitacora]       = useState(true);
+  const [waitlist, setWaitlist]               = useState<WaitlistEntry[]>([]);
+  const [updatingWaitlist, setUpdatingWaitlist] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [apptRes, settingsRes] = await Promise.all([
+      const [apptRes, settingsRes, waitlistRes] = await Promise.all([
         fetch('/api/appointments', { headers: { 'x-admin-secret': adminSecret } }),
         fetch('/api/settings', { headers: { 'x-admin-secret': adminSecret } }),
+        fetch('/api/waitlist?status=waiting', { headers: { 'x-admin-secret': adminSecret } }),
       ]);
       const apptData     = await apptRes.json();
       const settingsData = await settingsRes.json();
+      const waitlistData = await waitlistRes.json();
       setAppointments(apptData.appointments ?? []);
+      setWaitlist(waitlistData.entries ?? []);
       const s = { ...DEFAULT_SETTINGS, ...settingsData.settings };
       setMsgConf(s.msg_confirmation);
       setMsgReminder(s.msg_reminder_24h);
@@ -476,6 +482,57 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
         </div>
         )}
       </div>
+
+      {/* Lista de espera */}
+      {waitlist.length > 0 && (
+        <div className="border border-black/8 bg-white overflow-hidden">
+          <div className="px-4 py-3 border-b border-black/5 flex items-center justify-between">
+            <p className="text-[9px] tracking-[0.25em] uppercase text-[#9A9590]">Lista de espera</p>
+            <span className="text-[10px] bg-[#F0EDE8] text-[#81807F] px-2 py-0.5">{waitlist.length}</span>
+          </div>
+          <div className="divide-y divide-black/5">
+            {waitlist.map((entry) => (
+              <div key={entry.id} className="px-4 py-3 flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-[#1C1A19]">{entry.client_name}</p>
+                  <p className="text-xs text-[#9A9590] mt-0.5">{entry.client_phone}</p>
+                  {entry.dp_services?.name && <p className="text-xs text-[#6B6560] mt-0.5">{entry.dp_services.name}</p>}
+                  {entry.preferred_date && (
+                    <p className="text-[10px] text-[#B0AAA5] mt-0.5">Prefiere: {format(parseISO(entry.preferred_date), "d MMM", { locale: es })}</p>
+                  )}
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <a
+                    href={`https://wa.me/${entry.client_phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${entry.client_name}, te contactamos de Daniela Palacio Hair Room porque se liberó un lugar. ¿Te gustaría agendar tu cita?`)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    onClick={async () => {
+                      if (updatingWaitlist) return;
+                      setUpdatingWaitlist(entry.id);
+                      await fetch('/api/waitlist', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret }, body: JSON.stringify({ id: entry.id, status: 'notified' }) });
+                      setWaitlist((p) => p.filter((e) => e.id !== entry.id));
+                      setUpdatingWaitlist(null);
+                    }}
+                    className="flex items-center gap-1 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 px-2 py-1 text-[10px] tracking-wider uppercase hover:bg-[#25D366]/20 transition-colors"
+                  >
+                    <MessageCircle size={10} /> WA
+                  </a>
+                  <button
+                    onClick={async () => {
+                      setUpdatingWaitlist(entry.id);
+                      await fetch('/api/waitlist', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret }, body: JSON.stringify({ id: entry.id, status: 'cancelled' }) });
+                      setWaitlist((p) => p.filter((e) => e.id !== entry.id));
+                      setUpdatingWaitlist(null);
+                    }}
+                    className="text-[#B0AAA5] hover:text-red-400 transition-colors p-1"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   );
@@ -1982,7 +2039,7 @@ async function registerPush(secret: string): Promise<boolean> {
 interface SvcRow { id: string; name: string; category?: string; }
 
 function StaffCard({
-  member, services, expanded, onToggle, onSave, saving,
+  member, services, expanded, onToggle, onSave, saving, adminSecret,
 }: {
   member: StaffWithDetails;
   services: SvcRow[];
@@ -1990,11 +2047,46 @@ function StaffCard({
   onToggle: () => void;
   onSave: (patch: Partial<StaffWithDetails & { is_active: boolean }>) => void;
   saving: boolean;
+  adminSecret: string;
 }) {
   const [localName, setLocalName]         = useState(member.name);
   const [localSvcs, setLocalSvcs]         = useState<string[]>(member.service_ids);
   const [localSched, setLocalSched]       = useState<ScheduleDay[]>(member.schedule as ScheduleDay[]);
   const [dirty, setDirty]                 = useState(false);
+  const [absences, setAbsences]           = useState<string[]>([]);
+  const [newAbsenceDate, setNewAbsenceDate] = useState('');
+  const [addingAbsence, setAddingAbsence] = useState(false);
+
+  useEffect(() => {
+    if (!expanded) return;
+    fetch(`/api/staff-absences?staff_id=${member.id}`, { headers: { 'x-admin-secret': adminSecret } })
+      .then((r) => r.json())
+      .then((d) => setAbsences((d.absences ?? []).map((a: { absence_date: string }) => a.absence_date)))
+      .catch(() => {});
+  }, [expanded, member.id, adminSecret]);
+
+  const addAbsence = async () => {
+    if (!newAbsenceDate || addingAbsence) return;
+    setAddingAbsence(true);
+    try {
+      const res = await fetch('/api/staff-absences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ staff_id: member.id, absence_date: newAbsenceDate }),
+      });
+      const data = await res.json();
+      if (data.absence) { setAbsences((p) => [...p, newAbsenceDate].sort()); setNewAbsenceDate(''); }
+    } finally { setAddingAbsence(false); }
+  };
+
+  const removeAbsence = async (dateStr: string) => {
+    await fetch('/api/staff-absences', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+      body: JSON.stringify({ staff_id: member.id, absence_date: dateStr }),
+    });
+    setAbsences((p) => p.filter((d) => d !== dateStr));
+  };
 
   useEffect(() => {
     setLocalName(member.name);
@@ -2112,6 +2204,37 @@ function StaffCard({
             </div>
           </div>
 
+          {/* Ausencias */}
+          <div>
+            <label className="text-[9px] tracking-[0.25em] uppercase text-[#9A9590] block mb-3">Días de ausencia</label>
+            {absences.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {absences.map((d) => (
+                  <div key={d} className="flex items-center gap-1.5 border border-black/10 px-2 py-1 text-xs text-[#1C1A19]">
+                    {format(parseISO(d), "d MMM yyyy", { locale: es })}
+                    <button onClick={() => removeAbsence(d)} className="text-[#9A9590] hover:text-red-400 transition-colors"><X size={11} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={newAbsenceDate}
+                min={format(new Date(), 'yyyy-MM-dd')}
+                onChange={(e) => setNewAbsenceDate(e.target.value)}
+                className="border border-black/10 px-2 py-1.5 text-xs text-[#1C1A19] focus:outline-none focus:border-[#81807F]/50"
+              />
+              <button
+                onClick={addAbsence}
+                disabled={!newAbsenceDate || addingAbsence}
+                className="flex items-center gap-1 border border-black/10 px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase text-[#1C1A19] hover:bg-black/[0.03] transition-colors disabled:opacity-40"
+              >
+                <Plus size={11} /> Agregar
+              </button>
+            </div>
+          </div>
+
           {dirty && (
             <button
               onClick={() => { onSave({ name: localName, schedule: localSched as StaffWithDetails['schedule'], service_ids: localSvcs }); setDirty(false); }}
@@ -2208,6 +2331,7 @@ function StaffTab({ adminSecret }: { adminSecret: string }) {
           onToggle={() => setExpanded(expanded === member.id ? null : member.id)}
           onSave={(patch) => save(member.id, patch)}
           saving={saving === member.id}
+          adminSecret={adminSecret}
         />
       ))}
 

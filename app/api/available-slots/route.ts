@@ -37,10 +37,21 @@ export async function GET(req: NextRequest) {
       const capableStaffIds = (staffSvcRes.data ?? []).map((r) => r.staff_id as string);
 
       if (capableStaffIds.length > 0) {
+        // Filter out staff absent on this date
+        const absenceRes = await supabase
+          .from('dp_staff_absences')
+          .select('staff_id')
+          .in('staff_id', capableStaffIds)
+          .eq('absence_date', date);
+        const absentIds = new Set((absenceRes.data ?? []).map((r) => r.staff_id as string));
+        const presentStaffIds = capableStaffIds.filter((id) => !absentIds.has(id));
+
+        if (presentStaffIds.length === 0) return NextResponse.json({ slots: [] });
+
         const schedRes = await supabase
           .from('dp_staff_schedule')
           .select('*')
-          .in('staff_id', capableStaffIds)
+          .in('staff_id', presentStaffIds)
           .eq('day_of_week', dow);
 
         const activeSchedules = (schedRes.data ?? []).filter((s) => s.is_active);
