@@ -25,17 +25,19 @@ export async function GET(req: NextRequest) {
   const rangeEnd   = format(addDays(start, 61), 'yyyy-MM-dd');
 
   // Fetch everything in one shot for the whole range
-  const [schedRes, absenceRes, blockedRes, apptRes] = await Promise.all([
+  const [schedRes, absenceRes, blockedRes, apptRes, apptNullRes] = await Promise.all([
     supabase.from('dp_staff_schedule').select('*').in('staff_id', capableIds),
     supabase.from('dp_staff_absences').select('staff_id, absence_date').in('staff_id', capableIds).gte('absence_date', rangeStart).lte('absence_date', rangeEnd),
     supabase.from('dp_blocked_slots').select('block_date, start_time, end_time, all_day').gte('block_date', rangeStart).lte('block_date', rangeEnd),
     supabase.from('dp_appointments').select('staff_id, appointment_date, start_time, end_time, status, created_at').in('staff_id', capableIds).gte('appointment_date', rangeStart).lte('appointment_date', rangeEnd).neq('status', 'cancelled'),
+    // Also fetch appointments with null staff_id (created before staff was configured)
+    supabase.from('dp_appointments').select('staff_id, appointment_date, start_time, end_time, status, created_at').is('staff_id', null).gte('appointment_date', rangeStart).lte('appointment_date', rangeEnd).neq('status', 'cancelled'),
   ]);
 
   const schedules  = schedRes.data  ?? [];
   const absences   = absenceRes.data ?? [];
   const blocked    = blockedRes.data ?? [];
-  const appts      = apptRes.data   ?? [];
+  const appts      = [...(apptRes.data ?? []), ...(apptNullRes.data ?? [])];
 
   const staleThreshold = new Date(Date.now() - 35 * 60 * 1000).toISOString();
 
@@ -46,12 +48,16 @@ export async function GET(req: NextRequest) {
     absentByDate.get(a.absence_date)!.add(a.staff_id as string);
   }
 
+  // Index by date+staff. Null-staff appointments count against ALL capable staff.
   const apptsByDateStaff = new Map<string, typeof appts>();
   for (const a of appts) {
     if (a.status === 'pending_payment' && a.created_at <= staleThreshold) continue;
-    const key = `${a.appointment_date}__${a.staff_id}`;
-    if (!apptsByDateStaff.has(key)) apptsByDateStaff.set(key, []);
-    apptsByDateStaff.get(key)!.push(a);
+    const staffTargets = a.staff_id ? [a.staff_id] : capableIds;
+    for (const sid of staffTargets) {
+      const key = `${a.appointment_date}__${sid}`;
+      if (!apptsByDateStaff.has(key)) apptsByDateStaff.set(key, []);
+      apptsByDateStaff.get(key)!.push(a);
+    }
   }
 
   const blockedByDate = new Map<string, typeof blocked>();
