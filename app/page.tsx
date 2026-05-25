@@ -61,57 +61,56 @@ export default function Home() {
 
       {/* ── NAV ── */}
       <nav
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-16"
+        className="fixed top-0 left-0 right-0 z-50"
         style={{
-          paddingTop: '20px',
-          paddingBottom: '20px',
           background: 'rgba(16,18,20,0.93)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           borderBottom: '1px solid rgba(255,255,255,0.04)',
         }}
       >
-        <Image
-          src="/logos/logo-largo.png"
-          alt="Daniela Palacio"
-          width={180}
-          height={34}
-          style={{ filter: 'brightness(0) invert(1)', opacity: 0.85, width: '180px', height: 'auto' }}
-          priority
-        />
-        {/* Anchor links — desktop only */}
-        <div className="hidden md:flex items-center gap-8">
+        {/* Main bar */}
+        <div className="flex items-center justify-between px-6 md:px-16" style={{ paddingTop: '18px', paddingBottom: '18px' }}>
+          <Image
+            src="/logos/logo-largo.png"
+            alt="Daniela Palacio"
+            width={180}
+            height={34}
+            style={{ filter: 'brightness(0) invert(1)', opacity: 0.85, width: '160px', height: 'auto' }}
+            priority
+          />
+          {/* Anchor links — desktop */}
+          <div className="hidden md:flex items-center gap-8">
+            {[
+              { href: '#daniela',   label: 'Daniela'   },
+              { href: '#servicios', label: 'Servicios' },
+              { href: '#resenas',   label: 'Reseñas'   },
+            ].map(({ href, label }) => (
+              <a key={href} href={href}
+                style={{ fontSize: '9px', letterSpacing: '0.35em', textTransform: 'uppercase', color: '#686560', transition: 'color 0.2s' }}
+                className="hover:text-[#81807F]"
+              >{label}</a>
+            ))}
+          </div>
+          <Link href="/reservar"
+            style={{ color: '#F0EDE8', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', fontWeight: 300, transition: 'opacity 0.2s' }}
+            className="hover:opacity-50"
+          >
+            Reservar
+          </Link>
+        </div>
+        {/* Mobile anchor links — horizontal scroll */}
+        <div className="flex md:hidden overflow-x-auto scrollbar-none px-6 pb-3 gap-7">
           {[
             { href: '#daniela',   label: 'Daniela'   },
-            { href: '#galeria',   label: 'Galería'   },
             { href: '#servicios', label: 'Servicios' },
             { href: '#resenas',   label: 'Reseñas'   },
           ].map(({ href, label }) => (
-            <a
-              key={href}
-              href={href}
-              style={{ fontSize: '9px', letterSpacing: '0.35em', textTransform: 'uppercase', color: '#686560', transition: 'color 0.2s' }}
-              className="hover:text-[#81807F]"
-            >
-              {label}
-            </a>
+            <a key={href} href={href}
+              style={{ fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#686560', whiteSpace: 'nowrap', flexShrink: 0 }}
+            >{label}</a>
           ))}
         </div>
-
-        <Link
-          href="/reservar"
-          style={{
-            color: '#F0EDE8',
-            fontSize: '10px',
-            letterSpacing: '0.35em',
-            textTransform: 'uppercase',
-            fontWeight: 300,
-            transition: 'opacity 0.2s',
-          }}
-          className="hover:opacity-50"
-        >
-          Reservar
-        </Link>
       </nav>
 
       {/* ── HERO ── */}
@@ -248,7 +247,7 @@ export default function Home() {
       <section
         id="daniela"
         className="px-6 md:px-16"
-        style={{ paddingTop: '56px', paddingBottom: '64px' }}
+        style={{ paddingTop: '56px', paddingBottom: '64px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
         <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '40px' }}>
           La estilista
@@ -261,8 +260,8 @@ export default function Home() {
               src="/gallery/daniela-portrait.png"
               alt="Daniela Palacio — estilista"
               fill
-              className="object-cover object-top"
-              style={{ filter: 'brightness(0.96) contrast(1.04) saturate(0.92)' }}
+              className="object-cover"
+              style={{ objectPosition: '35% 8%', filter: 'brightness(0.96) contrast(1.04) saturate(0.92)' }}
             />
           </div>
 
@@ -290,7 +289,7 @@ export default function Home() {
       {/* ── EL ESTUDIO ── */}
       <section
         className="px-6 md:px-16"
-        style={{ paddingTop: '16px', paddingBottom: '80px' }}
+        style={{ paddingTop: '56px', paddingBottom: '80px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
         {/* Label */}
         <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '20px' }}>
@@ -354,7 +353,7 @@ export default function Home() {
       <section
         id="servicios"
         className="px-6 md:px-16"
-        style={{ paddingBottom: '56px' }}
+        style={{ paddingTop: '56px', paddingBottom: '56px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
         <div className="max-w-3xl">
           <p
@@ -449,10 +448,10 @@ export default function Home() {
                               : `desde ${formatPrice(service.price)}`}
                           </span>
                           <span
-                            className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-[0.35] group-hover:translate-x-0"
-                            style={{ color: '#81807F', fontSize: '13px' }}
+                            className="transition-all duration-200 group-hover:opacity-70"
+                            style={{ fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#686560', border: '1px solid rgba(255,255,255,0.1)', padding: '5px 10px', whiteSpace: 'nowrap' }}
                           >
-                            →
+                            Reservar
                           </span>
                         </div>
                       </Link>
@@ -469,7 +468,7 @@ export default function Home() {
       <section
         id="resenas"
         className="px-6 md:px-16"
-        style={{ paddingTop: '48px', paddingBottom: '56px' }}
+        style={{ paddingTop: '56px', paddingBottom: '56px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
         <div className="flex items-baseline gap-6 mb-10">
           <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560' }}>
@@ -513,7 +512,7 @@ export default function Home() {
       <section
         id="horarios"
         className="px-6 md:px-16"
-        style={{ paddingTop: '16px', paddingBottom: '72px' }}
+        style={{ paddingTop: '56px', paddingBottom: '72px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 max-w-4xl">
 

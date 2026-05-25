@@ -73,7 +73,7 @@ function BookingContent() {
     const sid = searchParams.get('service');
     if (sid) {
       const svc = services.find((s) => s.id === sid);
-      if (svc) { setSelectedService(svc); setStep('date'); }
+      if (svc) { setSelectedService(svc); setStep('info'); }
     }
   }, [searchParams, services]);
 
@@ -349,7 +349,7 @@ function BookingContent() {
               <div className="pt-2">
                 <button
                   disabled={!clientName.trim() || !clientPhone.trim()}
-                  onClick={() => setStep('service')}
+                  onClick={() => setStep(selectedService ? 'date' : 'service')}
                   className="w-full flex items-center justify-center gap-3 bg-[#F0EDE8] text-[#16181E] py-4 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Continuar <ArrowRight size={13} />
