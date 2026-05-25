@@ -297,7 +297,8 @@ function BookingContent() {
                       type="tel"
                       inputMode="numeric"
                       value={clientPhone}
-                      onChange={(e) => { setClientPhone(e.target.value); setIsTrusted(false); setTrustedName(null); }}
+                      maxLength={10}
+                      onChange={(e) => { setClientPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setIsTrusted(false); setTrustedName(null); }}
                       onBlur={(e) => checkTrustedPhone(e.target.value)}
                       placeholder="669 123 4567"
                       className="flex-1 w-full bg-transparent px-3 py-3.5 text-white focus:outline-none placeholder:text-white/20"
@@ -382,8 +383,8 @@ function BookingContent() {
                 </p>
               </div>
 
-              {/* Category pills — horizontal scroll */}
-              <div className="flex gap-3 overflow-x-auto pb-1 mb-8 scrollbar-none -mx-5 px-5">
+              {/* Category pills — centered */}
+              <div className="flex justify-center gap-6 pb-1 mb-8 overflow-x-auto scrollbar-none">
                 {categories.map((cat) => {
                   const active = cat === selectedCategory;
                   return (
@@ -608,7 +609,7 @@ function BookingContent() {
                   <p className="text-[10px] tracking-[0.15em] uppercase text-[#666] mb-1">Servicio</p>
                   <p className="text-[#F0EDE8] text-sm">{selectedService.name}</p>
                   <p className="text-[#666] text-xs mt-0.5">
-                    {formatDuration(selectedService.duration_minutes)} · Total {formatPrice(selectedService.price)}
+                    {formatDuration(selectedService.duration_minutes)}
                   </p>
                 </div>
               </div>
