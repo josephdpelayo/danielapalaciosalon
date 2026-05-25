@@ -1738,7 +1738,7 @@ interface AppSettings { [key: string]: string; }
 const DEFAULT_SETTINGS: AppSettings = {
   salon_name:       'Daniela Palacio Hair Room',
   city:             'Mazatlán, Sin.',
-  whatsapp:         '526699445566',
+  whatsapp:         process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526699445566',
   instagram:        'danielapalaciosalon',
   description:      'Estudio especializado en color, cortes y tratamientos.',
   advance_days:     '60',

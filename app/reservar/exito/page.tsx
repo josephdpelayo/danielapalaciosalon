@@ -187,7 +187,7 @@ function ExitoContent() {
               Daniela responde personalmente en horario de atención.
             </p>
             <a
-              href="https://wa.me/526691877077"
+              href={`https://wa.me/${process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691877077'}`}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-center hover:opacity-80 transition-opacity duration-200"

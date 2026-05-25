@@ -228,7 +228,7 @@ export default function Home() {
 
         {/* WhatsApp — esquina inferior derecha del hero */}
         <a
-          href="https://wa.me/526691877077"
+          href={`https://wa.me/${process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691877077'}`}
           target="_blank"
           rel="noopener noreferrer"
           className="absolute bottom-20 right-6 hover:opacity-60 transition-opacity duration-200 flex items-center justify-center"
@@ -403,7 +403,7 @@ export default function Home() {
                   {serviceGroups[cat].map((service, i) => {
                     const isWhatsApp = service.price === null;
                     const href = isWhatsApp
-                      ? `https://wa.me/526691877077?text=${encodeURIComponent('Hola, me interesa información sobre Hair color')}`
+                      ? `https://wa.me/${process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691877077'}?text=${encodeURIComponent('Hola, me interesa información sobre Hair color')}`
                       : `/reservar?service=${service.id}`;
                     const linkProps = isWhatsApp
                       ? { target: '_blank', rel: 'noopener noreferrer' }
@@ -640,7 +640,7 @@ export default function Home() {
             style={{ filter: 'brightness(0) invert(1)', opacity: 0.18, width: '28px', height: '28px' }}
           />
           <a
-            href="https://wa.me/526691877077"
+            href={`https://wa.me/${process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691877077'}`}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:opacity-50 transition-opacity duration-200"
