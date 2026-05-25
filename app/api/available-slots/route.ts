@@ -27,6 +27,11 @@ export async function GET(req: NextRequest) {
       .eq('block_date', date);
     if (!blockRes.error) blockedSlots = blockRes.data ?? [];
 
+    // All-day block = salon intentionally closed
+    if (blockedSlots.some((b) => b.all_day)) {
+      return NextResponse.json({ slots: [], reason: 'blocked' });
+    }
+
     // ── Multi-staff path ─────────────────────────────────────
     if (serviceId) {
       const staffSvcRes = await supabase
@@ -46,7 +51,7 @@ export async function GET(req: NextRequest) {
         const absentIds = new Set((absenceRes.data ?? []).map((r) => r.staff_id as string));
         const presentStaffIds = capableStaffIds.filter((id) => !absentIds.has(id));
 
-        if (presentStaffIds.length === 0) return NextResponse.json({ slots: [] });
+        if (presentStaffIds.length === 0) return NextResponse.json({ slots: [], reason: 'staff_absent' });
 
         const schedRes = await supabase
           .from('dp_staff_schedule')
@@ -56,47 +61,57 @@ export async function GET(req: NextRequest) {
 
         const activeSchedules = (schedRes.data ?? []).filter((s) => s.is_active);
 
-        if (activeSchedules.length > 0) {
-          const staleThreshold = new Date(Date.now() - 35 * 60 * 1000).toISOString();
-          const slotsByStaff: TimeSlot[][] = [];
+        if (activeSchedules.length === 0) return NextResponse.json({ slots: [], reason: 'no_schedule' });
 
-          for (const sch of activeSchedules) {
-            const apptRes = await supabase
-              .from('dp_appointments')
-              .select('start_time, end_time, status, created_at')
-              .eq('appointment_date', date)
-              .eq('staff_id', sch.staff_id)
-              .neq('status', 'cancelled')
-              .or(`status.neq.pending_payment,created_at.gt.${staleThreshold}`);
+        const staleThreshold = new Date(Date.now() - 35 * 60 * 1000).toISOString();
+        const slotsByStaff: TimeSlot[][] = [];
 
-            const appts: ApptRow[] = (apptRes.data ?? []).map((a) => ({
-              start_time: a.start_time as string,
-              end_time:   a.end_time   as string,
-              status:     a.status     as string,
-            }));
+        for (const sch of activeSchedules) {
+          const apptRes = await supabase
+            .from('dp_appointments')
+            .select('start_time, end_time, status, created_at')
+            .eq('appointment_date', date)
+            .eq('staff_id', sch.staff_id)
+            .neq('status', 'cancelled')
+            .or(`status.neq.pending_payment,created_at.gt.${staleThreshold}`);
 
-            const staffSchedule: ScheduleConfig = {
-              id:          sch.id,
-              day_of_week: sch.day_of_week,
-              is_active:   sch.is_active,
-              start_time:  sch.start_time,
-              end_time:    sch.end_time,
-              break_start: sch.break_start ?? null,
-              break_end:   sch.break_end   ?? null,
-            };
+          // Also include null-staff appointments as blockers
+          const nullApptRes = await supabase
+            .from('dp_appointments')
+            .select('start_time, end_time, status, created_at')
+            .eq('appointment_date', date)
+            .is('staff_id', null)
+            .neq('status', 'cancelled')
+            .or(`status.neq.pending_payment,created_at.gt.${staleThreshold}`);
 
-            slotsByStaff.push(
-              generateTimeSlots(staffSchedule, duration, activeMinutes, appts as never, blockedSlots as never)
-            );
-          }
+          const appts: ApptRow[] = [
+            ...(apptRes.data ?? []),
+            ...(nullApptRes.data ?? []),
+          ].map((a) => ({
+            start_time: a.start_time as string,
+            end_time:   a.end_time   as string,
+            status:     a.status     as string,
+          }));
 
-          // Merge: slot is available if ANY staff has it free
-          const merged = mergeStaffSlots(slotsByStaff);
-          return NextResponse.json({ slots: merged });
+          const staffSchedule: ScheduleConfig = {
+            id:          sch.id,
+            day_of_week: sch.day_of_week,
+            is_active:   sch.is_active,
+            start_time:  sch.start_time,
+            end_time:    sch.end_time,
+            break_start: sch.break_start ?? null,
+            break_end:   sch.break_end   ?? null,
+          };
+
+          slotsByStaff.push(
+            generateTimeSlots(staffSchedule, duration, activeMinutes, appts as never, blockedSlots as never)
+          );
         }
 
-        // All capable staff are off that day
-        return NextResponse.json({ slots: [] });
+        // Merge: slot is available if ANY staff has it free
+        const merged = mergeStaffSlots(slotsByStaff);
+        const reason = merged.length === 0 ? 'full' : merged.every((s) => !s.available) ? 'full' : undefined;
+        return NextResponse.json({ slots: merged, ...(reason ? { reason } : {}) });
       }
     }
 

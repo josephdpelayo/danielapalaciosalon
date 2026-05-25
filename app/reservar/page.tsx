@@ -53,6 +53,7 @@ function BookingContent() {
   );
   const [nextAvailable, setNextAvailable] = useState<string | null>(null);
   const [loadingNext, setLoadingNext] = useState(false);
+  const [noAvailReason, setNoAvailReason] = useState<string>('');
   const [showWaitlist, setShowWaitlist] = useState(false);
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   const [waitlistDone, setWaitlistDone] = useState(false);
@@ -90,6 +91,7 @@ function BookingContent() {
     if (!daySchedule || !daySchedule.is_active) { setSlots([]); setLoadingSlots(false); return; }
 
     setNextAvailable(null);
+    setNoAvailReason('');
     setShowWaitlist(false);
     setWaitlistDone(false);
     fetch(`/api/available-slots?date=${format(selectedDate, 'yyyy-MM-dd')}&service_id=${selectedService.id}&duration=${selectedService.duration_minutes}&active_minutes=${selectedService.active_minutes}`)
@@ -97,6 +99,7 @@ function BookingContent() {
       .then((data) => {
         const fetchedSlots = data.slots || [];
         setSlots(fetchedSlots);
+        if (data.reason) setNoAvailReason(data.reason);
         const noAvailability = fetchedSlots.length === 0 || fetchedSlots.every((s: TimeSlot) => !s.available);
         if (noAvailability) {
           setLoadingNext(true);
@@ -402,21 +405,22 @@ function BookingContent() {
                 </p>
               </div>
 
-              {/* Category pills — centered */}
-              <div className="flex justify-center gap-2 pb-1 mb-4 overflow-x-auto scrollbar-none flex-wrap">
+              {/* Category pills — single row */}
+              <div className="flex justify-center gap-2 pb-1 mb-4 overflow-x-auto scrollbar-none">
                 {categories.map((cat) => {
                   const active = cat === selectedCategory;
+                  const label = cat.toLowerCase().includes('tratamiento') ? 'Capilares' : cat;
                   return (
                     <button
                       key={cat}
                       onClick={() => setSelectedCategory(cat)}
-                      className="shrink-0 text-[10px] tracking-[0.15em] uppercase transition-all whitespace-nowrap px-4 py-2 rounded-full border"
+                      className="shrink-0 text-[10px] tracking-[0.12em] uppercase transition-all whitespace-nowrap px-3 py-1.5 rounded-full border"
                       style={active
                         ? { color: '#F0EDE8', borderColor: '#81807F', background: 'rgba(129,128,127,0.12)' }
                         : { color: '#555', borderColor: '#333' }
                       }
                     >
-                      {cat}
+                      {label}
                     </button>
                   );
                 })}
@@ -565,7 +569,13 @@ function BookingContent() {
               </div>
             ) : slots.length === 0 || slots.every(s => !s.available) ? (
               <div className="border border-white/8 px-5 py-6 space-y-3">
-                <p className="text-[#666] text-sm text-center">No hay disponibilidad para este día.</p>
+                <p className="text-[#666] text-sm text-center">
+                  {noAvailReason === 'blocked'      ? 'El salón estará cerrado este día.' :
+                   noAvailReason === 'staff_absent' ? 'El servicio no está disponible este día.' :
+                   noAvailReason === 'no_schedule'  ? 'El salón no trabaja este día.' :
+                   noAvailReason === 'full'         ? 'El día está lleno — no quedan horarios disponibles.' :
+                   'No hay disponibilidad para este día.'}
+                </p>
 
                 {/* Siguiente fecha disponible */}
                 {loadingNext ? (
