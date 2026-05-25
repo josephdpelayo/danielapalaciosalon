@@ -84,6 +84,24 @@ export default function Home() {
           style={{ filter: 'brightness(0) invert(1)', opacity: 0.85, width: '180px', height: 'auto' }}
           priority
         />
+        {/* Anchor links — desktop only */}
+        <div className="hidden md:flex items-center gap-8">
+          {[
+            { href: '#servicios', label: 'Servicios' },
+            { href: '#resenas',   label: 'Reseñas'   },
+            { href: '#horarios',  label: 'Horarios'  },
+          ].map(({ href, label }) => (
+            <a
+              key={href}
+              href={href}
+              style={{ fontSize: '9px', letterSpacing: '0.35em', textTransform: 'uppercase', color: '#686560', transition: 'color 0.2s' }}
+              className="hover:text-[#81807F]"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+
         <Link
           href="/reservar"
           style={{
@@ -502,6 +520,7 @@ export default function Home() {
 
       {/* ── REVIEWS ── */}
       <section
+        id="resenas"
         className="px-6 md:px-16"
         style={{ paddingTop: '48px', paddingBottom: '56px' }}
       >
@@ -545,6 +564,7 @@ export default function Home() {
 
       {/* ── HOURS ── */}
       <section
+        id="horarios"
         className="px-6 md:px-16"
         style={{ paddingBottom: '40px' }}
       >
