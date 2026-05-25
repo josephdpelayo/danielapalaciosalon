@@ -562,7 +562,7 @@ export default function Home() {
                 src="https://maps.google.com/maps?q=Plaza+A2+Mazatlan+Sinaloa+Mexico&t=&z=16&ie=UTF8&iwloc=&output=embed"
                 width="100%"
                 height="130"
-                style={{ border: 0, display: 'block', filter: 'grayscale(1) invert(1) brightness(0.85)' }}
+                style={{ border: 0, display: 'block', filter: 'brightness(0.78) saturate(1.3) contrast(1.05)' }}
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
