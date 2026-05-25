@@ -401,13 +401,8 @@ export default function Home() {
                 )}
                 <div>
                   {serviceGroups[cat].map((service, i) => {
-                    const isWhatsApp = service.price === null;
-                    const href = isWhatsApp
-                      ? `https://wa.me/${process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691877077'}?text=${encodeURIComponent('Hola, me interesa información sobre Hair color')}`
-                      : `/reservar?service=${service.id}`;
-                    const linkProps = isWhatsApp
-                      ? { target: '_blank', rel: 'noopener noreferrer' }
-                      : {};
+                    const href = `/reservar?service=${service.id}`;
+                    const linkProps = {};
 
                     return (
                       <Link
