@@ -16,21 +16,57 @@ export async function POST(req: NextRequest) {
 
   if ((await import("@/lib/supabase")).supabaseReady) {
     const { supabase } = await import('@/lib/supabase');
-
-    // Check for slot conflicts (guard against race conditions at app layer)
     const staleThreshold = new Date(Date.now() - PENDING_PAYMENT_TTL_MS).toISOString();
-    const { data: conflicts } = await supabase
-      .from('dp_appointments')
-      .select('id')
-      .eq('appointment_date', appointment_date)
-      .neq('status', 'cancelled')
-      .or(`status.neq.pending_payment,created_at.gt.${staleThreshold}`)
-      .lt('start_time', end_time)
-      .gt('end_time', start_time)
-      .limit(1);
 
-    if (conflicts && conflicts.length > 0) {
-      return NextResponse.json({ error: 'El horario ya no está disponible. Por favor elige otro.' }, { status: 409 });
+    // ── Multi-staff: find first available staff for this service ──
+    let assignedStaffId: string | null = null;
+
+    const { data: capableStaff } = await supabase
+      .from('dp_staff_services')
+      .select('staff_id, dp_staff!inner(is_active)')
+      .eq('service_id', service_id);
+
+    const activeCapable = (capableStaff ?? []).filter(
+      (r) => (r.dp_staff as unknown as { is_active: boolean })?.is_active
+    );
+
+    if (activeCapable.length > 0) {
+      for (const { staff_id } of activeCapable) {
+        const { data: conflicts } = await supabase
+          .from('dp_appointments')
+          .select('id')
+          .eq('appointment_date', appointment_date)
+          .eq('staff_id', staff_id)
+          .neq('status', 'cancelled')
+          .or(`status.neq.pending_payment,created_at.gt.${staleThreshold}`)
+          .lt('start_time', end_time)
+          .gt('end_time', start_time)
+          .limit(1);
+
+        if (!conflicts || conflicts.length === 0) {
+          assignedStaffId = staff_id;
+          break;
+        }
+      }
+
+      if (!assignedStaffId) {
+        return NextResponse.json({ error: 'El horario ya no está disponible. Por favor elige otro.' }, { status: 409 });
+      }
+    } else {
+      // No staff system configured — global conflict check
+      const { data: conflicts } = await supabase
+        .from('dp_appointments')
+        .select('id')
+        .eq('appointment_date', appointment_date)
+        .neq('status', 'cancelled')
+        .or(`status.neq.pending_payment,created_at.gt.${staleThreshold}`)
+        .lt('start_time', end_time)
+        .gt('end_time', start_time)
+        .limit(1);
+
+      if (conflicts && conflicts.length > 0) {
+        return NextResponse.json({ error: 'El horario ya no está disponible. Por favor elige otro.' }, { status: 409 });
+      }
     }
 
     const { data, error } = await supabase.from('dp_appointments').insert({
@@ -45,6 +81,7 @@ export async function POST(req: NextRequest) {
       notes: notes || null,
       deposit_amount: deposit_amount || null,
       status: initialStatus,
+      staff_id: assignedStaffId,
     }).select().single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

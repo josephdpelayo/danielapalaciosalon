@@ -12,13 +12,14 @@ import {
   ArrowLeft, ArrowRight, Check, X, Scissors, Phone, RefreshCw,
   Trash2, CalendarOff, Star, UserPlus, Calendar, Plus, Pencil, LayoutDashboard,
   Settings, Copy, Check as CheckIcon, MessageCircle, Bell, Users,
+  ChevronDown, ChevronUp,
 } from 'lucide-react';
-import { Appointment, BlockedSlot } from '@/lib/types';
+import { Appointment, BlockedSlot, StaffWithDetails } from '@/lib/types';
 import { formatTime, formatDuration, timeToMinutes, minutesToTime } from '@/lib/slots';
 import { MOCK_SCHEDULE } from '@/lib/mock-data';
 import 'react-day-picker/dist/style.css';
 
-type Tab = 'inicio' | 'agenda' | 'clientes' | 'config';
+type Tab = 'inicio' | 'agenda' | 'clientes' | 'staff' | 'config';
 
 function serviceColor(name: string | undefined): string {
   if (!name) return '#888';
@@ -1916,6 +1917,262 @@ async function registerPush(secret: string): Promise<boolean> {
   return true;
 }
 
+// ── Staff tab ─────────────────────────────────────────────────────
+interface SvcRow { id: string; name: string; category?: string; }
+
+function StaffCard({
+  member, services, expanded, onToggle, onSave, saving,
+}: {
+  member: StaffWithDetails;
+  services: SvcRow[];
+  expanded: boolean;
+  onToggle: () => void;
+  onSave: (patch: Partial<StaffWithDetails & { is_active: boolean }>) => void;
+  saving: boolean;
+}) {
+  const [localName, setLocalName]         = useState(member.name);
+  const [localSvcs, setLocalSvcs]         = useState<string[]>(member.service_ids);
+  const [localSched, setLocalSched]       = useState<ScheduleDay[]>(member.schedule as ScheduleDay[]);
+  const [dirty, setDirty]                 = useState(false);
+
+  useEffect(() => {
+    setLocalName(member.name);
+    setLocalSvcs(member.service_ids);
+    setLocalSched(member.schedule as ScheduleDay[]);
+    setDirty(false);
+  }, [member]);
+
+  const getDay = (dow: number): ScheduleDay =>
+    localSched.find((d) => d.day_of_week === dow) ?? { day_of_week: dow, is_active: false, start_time: '10:00', end_time: '19:00' };
+
+  const updateDay = (dow: number, patch: Partial<ScheduleDay>) => {
+    const cur = getDay(dow);
+    const upd = { ...cur, ...patch };
+    setLocalSched((p) => p.some((d) => d.day_of_week === dow) ? p.map((d) => d.day_of_week === dow ? upd : d) : [...p, upd]);
+    setDirty(true);
+  };
+
+  const toggleSvc = (sid: string) => {
+    setLocalSvcs((p) => p.includes(sid) ? p.filter((s) => s !== sid) : [...p, sid]);
+    setDirty(true);
+  };
+
+  return (
+    <div className="border border-black/8 bg-white overflow-hidden">
+      <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-black/[0.015]" onClick={onToggle}>
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-full bg-[#F0EDE8] flex items-center justify-center shrink-0">
+            <span className="text-[10px] text-[#81807F] font-semibold">{member.name[0]}</span>
+          </div>
+          <div>
+            <p className="text-sm text-[#1C1A19] font-medium">{member.name}</p>
+            <p className="text-[10px] text-[#9A9590] mt-0.5">
+              {member.service_ids.length} servicios · {(member.schedule as ScheduleDay[]).filter((d) => d.is_active).length} días activos
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className={`w-2 h-2 rounded-full ${member.is_active ? 'bg-emerald-400' : 'bg-black/20'}`} />
+          {expanded ? <ChevronUp size={14} className="text-[#9A9590]" /> : <ChevronDown size={14} className="text-[#9A9590]" />}
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="border-t border-black/5 p-4 space-y-6">
+          {/* Name */}
+          <div>
+            <label className="text-[9px] tracking-[0.25em] uppercase text-[#9A9590] block mb-2">Nombre</label>
+            <input
+              value={localName}
+              onChange={(e) => { setLocalName(e.target.value); setDirty(true); }}
+              className="w-full max-w-xs border border-black/10 px-3 py-2 text-sm text-[#1C1A19] focus:outline-none focus:border-[#81807F]/50"
+            />
+          </div>
+
+          {/* Active toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-[#1C1A19]">Activa</p>
+              <p className="text-[11px] text-[#9A9590] mt-0.5">Aparece en el sistema de reservas</p>
+            </div>
+            <button
+              onClick={() => onSave({ is_active: !member.is_active })}
+              className={`relative w-10 h-5 rounded-full transition-colors ${member.is_active ? 'bg-[#81807F]' : 'bg-black/15'}`}
+            >
+              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${member.is_active ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+
+          {/* Services */}
+          <div>
+            <label className="text-[9px] tracking-[0.25em] uppercase text-[#9A9590] block mb-3">Servicios que puede realizar</label>
+            <div className="space-y-1">
+              {services.map((svc) => (
+                <label key={svc.id} className="flex items-center gap-3 py-1 cursor-pointer group" onClick={() => toggleSvc(svc.id)}>
+                  <div className={`w-4 h-4 border flex items-center justify-center shrink-0 transition-colors ${localSvcs.includes(svc.id) ? 'bg-[#1C1A19] border-[#1C1A19]' : 'border-black/15 group-hover:border-[#81807F]/40'}`}>
+                    {localSvcs.includes(svc.id) && <CheckIcon size={10} className="text-white" />}
+                  </div>
+                  <span className="text-sm text-[#1C1A19]">{svc.name}</span>
+                  {svc.category && <span className="text-[10px] text-[#9A9590]">{svc.category}</span>}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Schedule */}
+          <div>
+            <label className="text-[9px] tracking-[0.25em] uppercase text-[#9A9590] block mb-3">Horario semanal</label>
+            <div className="space-y-2">
+              {DAYS_ORDER.map((dow) => {
+                const d = getDay(dow);
+                return (
+                  <div key={dow} className="flex items-center gap-3 flex-wrap">
+                    <button
+                      onClick={() => updateDay(dow, { is_active: !d.is_active })}
+                      className={`w-4 h-4 border shrink-0 flex items-center justify-center transition-colors ${d.is_active ? 'bg-[#1C1A19] border-[#1C1A19]' : 'border-black/15'}`}
+                    >
+                      {d.is_active && <CheckIcon size={9} className="text-white" />}
+                    </button>
+                    <span className="text-xs text-[#1C1A19] w-20">{DAYS_ES[dow]}</span>
+                    {d.is_active ? (
+                      <div className="flex items-center gap-2">
+                        <input type="time" value={d.start_time} onChange={(e) => updateDay(dow, { start_time: e.target.value })}
+                          className="border border-black/10 px-2 py-1 text-xs text-[#1C1A19] focus:outline-none w-[90px]" />
+                        <span className="text-[#9A9590] text-xs">—</span>
+                        <input type="time" value={d.end_time} onChange={(e) => updateDay(dow, { end_time: e.target.value })}
+                          className="border border-black/10 px-2 py-1 text-xs text-[#1C1A19] focus:outline-none w-[90px]" />
+                      </div>
+                    ) : (
+                      <span className="text-xs text-[#9A9590]">Cerrado</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {dirty && (
+            <button
+              onClick={() => { onSave({ name: localName, schedule: localSched as StaffWithDetails['schedule'], service_ids: localSvcs }); setDirty(false); }}
+              disabled={saving}
+              className="flex items-center gap-2 bg-[#F0EDE8] text-[#16181E] px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-40"
+            >
+              {saving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={12} />}
+              {saving ? 'Guardando…' : 'Guardar cambios'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StaffTab({ adminSecret }: { adminSecret: string }) {
+  const [staff, setStaff]     = useState<StaffWithDetails[]>([]);
+  const [services, setServices] = useState<SvcRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [saving, setSaving]   = useState<string | null>(null);
+  const [newName, setNewName] = useState('');
+  const [adding, setAdding]   = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [sr, svr] = await Promise.all([
+        fetch('/api/staff',    { headers: { 'x-admin-secret': adminSecret } }),
+        fetch('/api/services', { headers: { 'x-admin-secret': adminSecret } }),
+      ]);
+      const sd = await sr.json();
+      const svd = await svr.json();
+      setStaff(sd.staff ?? []);
+      setServices(svd.services ?? []);
+    } finally { setLoading(false); }
+  }, [adminSecret]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const save = async (id: string, patch: Partial<StaffWithDetails & { is_active: boolean }>) => {
+    setSaving(id);
+    try {
+      await fetch('/api/staff', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ id, ...patch }),
+      });
+      setStaff((p) => p.map((s) => s.id === id ? { ...s, ...patch } : s));
+    } finally { setSaving(null); }
+  };
+
+  const addStaff = async () => {
+    if (!newName.trim()) return;
+    setAdding(true);
+    try {
+      const res = await fetch('/api/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+      const data = await res.json();
+      if (data.staff) setStaff((p) => [...p, data.staff]);
+      setNewName('');
+    } finally { setAdding(false); }
+  };
+
+  if (loading) return (
+    <div className="flex justify-center py-24">
+      <div className="w-4 h-4 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <SectionHeader title="Trabajadoras" subtitle="Cada trabajadora tiene su propio horario y lista de servicios" />
+
+      {staff.length === 0 && (
+        <div className="border border-black/8 bg-white p-8 text-center">
+          <p className="text-sm text-[#9A9590]">No hay trabajadoras configuradas.</p>
+          <p className="text-xs text-[#B0AAA5] mt-1">Agrega a Daniela y Valeria para comenzar.</p>
+        </div>
+      )}
+
+      {staff.map((member) => (
+        <StaffCard
+          key={member.id}
+          member={member}
+          services={services}
+          expanded={expanded === member.id}
+          onToggle={() => setExpanded(expanded === member.id ? null : member.id)}
+          onSave={(patch) => save(member.id, patch)}
+          saving={saving === member.id}
+        />
+      ))}
+
+      {/* Add staff */}
+      <div className="border border-black/8 bg-white p-4">
+        <p className="text-[9px] tracking-[0.3em] uppercase text-[#9A9590] mb-3">Agregar trabajadora</p>
+        <div className="flex gap-2">
+          <input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="Nombre"
+            onKeyDown={(e) => { if (e.key === 'Enter') addStaff(); }}
+            className="flex-1 border border-black/10 px-3 py-2 text-sm text-[#1C1A19] placeholder:text-black/25 focus:outline-none focus:border-[#81807F]/50"
+          />
+          <button
+            onClick={addStaff}
+            disabled={adding || !newName.trim()}
+            className="flex items-center gap-2 bg-[#F0EDE8] text-[#16181E] px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-40"
+          >
+            {adding ? <div className="w-3 h-3 border border-black border-t-transparent rounded-full animate-spin" /> : <Plus size={12} />}
+            Agregar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [authed, setAuthed]           = useState(false);
@@ -1972,6 +2229,7 @@ export default function AdminPage() {
         {tab === 'inicio'   && <InicioTab adminSecret={adminSecret} />}
         {tab === 'agenda'   && <AgendaTab adminSecret={adminSecret} />}
         {tab === 'clientes' && <ClientesTab adminSecret={adminSecret} />}
+        {tab === 'staff'    && <StaffTab adminSecret={adminSecret} />}
         {tab === 'config'   && <ConfigTab adminSecret={adminSecret} />}
       </div>
 
@@ -1981,6 +2239,7 @@ export default function AdminPage() {
           { key: 'inicio',   label: 'Inicio',   icon: <LayoutDashboard size={20} /> },
           { key: 'agenda',   label: 'Agenda',   icon: <Calendar size={20} /> },
           { key: 'clientes', label: 'Clientes', icon: <Users size={20} /> },
+          { key: 'staff',    label: 'Staff',    icon: <UserPlus size={20} /> },
           { key: 'config',   label: 'Config',   icon: <Settings size={20} /> },
         ] as { key: Tab; label: string; icon: React.ReactNode }[]).map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}

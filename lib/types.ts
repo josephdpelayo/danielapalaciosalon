@@ -54,6 +54,18 @@ export interface TimeSlot {
   available: boolean;
 }
 
+export interface Staff {
+  id: string;
+  name: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface StaffWithDetails extends Staff {
+  schedule: ScheduleConfig[];
+  service_ids: string[];
+}
+
 export interface BookingStep {
   service: Service | null;
   date: Date | null;

@@ -1,4 +1,4 @@
-import { Service, ScheduleConfig } from './types';
+import { Service, ScheduleConfig, StaffWithDetails } from './types';
 
 // active_minutes = tiempo que Daniela trabaja activamente
 // Si active_minutes < duration_minutes → puede recibir otra clienta mientras procesa
@@ -17,7 +17,7 @@ export const MOCK_SERVICES: Service[] = [
   { id: '9', name: 'Tratamientos capilares', description: 'Sujeto a cotización',  duration_minutes: 120, active_minutes: 90,  price: 999,  deposit_amount: 200, active: true, sort_order: 9, category: 'Tratamientos capilares' },
 ];
 
-export const MOCK_SCHEDULE: ScheduleConfig[] = [
+const BASE_SCHEDULE: ScheduleConfig[] = [
   { id: '1', day_of_week: 1, start_time: '10:00', end_time: '19:00', is_active: true },
   { id: '2', day_of_week: 2, start_time: '10:00', end_time: '19:00', is_active: true },
   { id: '3', day_of_week: 3, start_time: '10:00', end_time: '19:00', is_active: true },
@@ -25,4 +25,23 @@ export const MOCK_SCHEDULE: ScheduleConfig[] = [
   { id: '5', day_of_week: 5, start_time: '10:00', end_time: '19:00', is_active: true },
   { id: '6', day_of_week: 6, start_time: '10:00', end_time: '15:00', is_active: true },
   { id: '7', day_of_week: 0, start_time: '00:00', end_time: '00:00', is_active: false },
+];
+
+export const MOCK_SCHEDULE = BASE_SCHEDULE;
+
+export const MOCK_STAFF: StaffWithDetails[] = [
+  {
+    id: 'staff-daniela',
+    name: 'Daniela',
+    is_active: true,
+    schedule: BASE_SCHEDULE.map((d, i) => ({ ...d, id: `d-${i}` })),
+    service_ids: ['1','2','3','4','5','6','7','8','9'],
+  },
+  {
+    id: 'staff-valeria',
+    name: 'Valeria',
+    is_active: true,
+    schedule: BASE_SCHEDULE.map((d, i) => ({ ...d, id: `v-${i}` })),
+    service_ids: ['1','2','3','4','5','6','7'],
+  },
 ];
