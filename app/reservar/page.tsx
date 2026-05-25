@@ -572,9 +572,10 @@ function BookingContent() {
                 ) : nextAvailable ? (
                   <button
                     onClick={() => { setSelectedDate(parseISO(nextAvailable)); setSelectedSlot(null); }}
-                    className="w-full flex items-center justify-center gap-2 border border-[#81807F]/40 text-[#81807F] py-3 text-xs tracking-[0.15em] uppercase hover:border-[#81807F] transition-colors mb-4"
+                    className="w-full flex flex-col items-center gap-1 border border-[#81807F]/40 text-[#81807F] py-3 px-4 hover:border-[#81807F] transition-colors mb-4"
                   >
-                    Ver disponibilidad el {format(parseISO(nextAvailable), "EEEE d 'de' MMMM", { locale: es })} →
+                    <span className="text-[10px] tracking-[0.2em] uppercase text-[#666]">Próxima fecha disponible</span>
+                    <span className="text-sm capitalize">{format(parseISO(nextAvailable), "EEEE d 'de' MMMM", { locale: es })} →</span>
                   </button>
                 ) : (
                   <p className="text-[#444] text-xs tracking-wider mb-5">Sin disponibilidad en los próximos 60 días.</p>
