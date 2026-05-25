@@ -1259,8 +1259,9 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
   const [loading, setLoading]           = useState(false);
   const [togglingStar, setTogglingStar] = useState<string | null>(null);
   const [deletingPhone, setDeletingPhone] = useState<string | null>(null);
-  // edit trusted client
-  const [editingId, setEditingId]       = useState<string | null>(null);
+  // edit client (trusted or normal)
+  const [editingPhone, setEditingPhone] = useState<string | null>(null);
+  const [editingId, setEditingId]       = useState<string | null>(null); // null for non-trusted
   const [editName, setEditName]         = useState('');
   const [editPhone, setEditPhone]       = useState('');
   const [editEmail, setEditEmail]       = useState('');
@@ -1346,26 +1347,45 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
     } finally { setFormSaving(false); }
   };
 
-  const startEdit = (tc: TrustedClient) => {
-    setEditingId(tc.id);
-    setEditName(tc.name);
-    setEditPhone(tc.phone);
-    setEditEmail(tc.email ?? '');
-    setEditNotes(tc.notes ?? '');
+  const startEdit = (c: { name: string; phone: string; phone_normalized: string; email?: string | null; notes?: string | null; trusted_id: string | null }) => {
+    setEditingPhone(c.phone_normalized);
+    setEditingId(c.trusted_id);
+    setEditName(c.name);
+    setEditPhone(c.phone);
+    setEditEmail(c.email ?? '');
+    setEditNotes(c.notes ?? '');
   };
 
+  const closeEdit = () => { setEditingPhone(null); setEditingId(null); };
+
   const handleEdit = async () => {
-    if (!editingId || !editName.trim() || !editPhone.trim()) return;
+    if (!editingPhone || !editName.trim() || !editPhone.trim()) return;
     setEditSaving(true);
     try {
-      const res = await fetch('/api/trusted-clients', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-        body: JSON.stringify({ id: editingId, name: editName.trim(), phone: editPhone.trim(), email: editEmail.trim() || null, notes: editNotes.trim() || null }),
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setTrustedClients(prev => prev.map(c => c.id === editingId ? updated : c).sort((a, b) => a.name.localeCompare(b.name)));
-        setEditingId(null);
+      if (editingId) {
+        // Update existing trusted client
+        const res = await fetch('/api/trusted-clients', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+          body: JSON.stringify({ id: editingId, name: editName.trim(), phone: editPhone.trim(), email: editEmail.trim() || null, notes: editNotes.trim() || null }),
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setTrustedClients(prev => prev.map(c => c.id === editingId ? updated : c).sort((a, b) => a.name.localeCompare(b.name)));
+          closeEdit();
+        }
+      } else {
+        // Promote normal client to trusted with edited info
+        const res = await fetch('/api/trusted-clients', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+          body: JSON.stringify({ name: editName.trim(), phone: editPhone.trim(), email: editEmail.trim() || null, notes: editNotes.trim() || null }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setTrustedClients(prev => [...prev, data as TrustedClient].sort((a, b) => a.name.localeCompare(b.name)));
+          closeEdit();
+        } else {
+          alert(`No se pudo guardar: ${(data as { error?: string }).error ?? 'Error desconocido'}`);
+        }
       }
     } finally { setEditSaving(false); }
   };
@@ -1565,17 +1585,16 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                   {c.notes && <p className="text-[#B0AAA5] text-[10px] mt-0.5 italic">{c.notes}</p>}
                 </div>
 
-                {/* Zone 3: single action */}
-                <div className="shrink-0">
-                  {c.trusted_id ? (
-                    <button
-                      onClick={() => editingId !== null && editingId === c.trusted_id ? setEditingId(null) : startEdit(trustedClients.find(t => t.id === c.trusted_id)!)}
-                      className="text-[#B0AAA5] hover:text-[#81807F] transition-colors p-1.5"
-                      title="Editar"
-                    >
-                      <Pencil size={12} />
-                    </button>
-                  ) : (
+                {/* Zone 3: actions */}
+                <div className="shrink-0 flex items-center gap-0.5">
+                  <button
+                    onClick={() => editingPhone === c.phone_normalized ? closeEdit() : startEdit(c)}
+                    className="text-[#B0AAA5] hover:text-[#81807F] transition-colors p-1.5"
+                    title="Editar"
+                  >
+                    <Pencil size={12} />
+                  </button>
+                  {!c.trusted_id && (
                     <button
                       onClick={() => handleDeleteByPhone(c.phone_normalized, c.name)}
                       disabled={deletingPhone === c.phone_normalized}
@@ -1590,8 +1609,8 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                   )}
                 </div>
               </div>
-              {/* Inline edit form for trusted client */}
-              {editingId !== null && editingId === c.trusted_id && (
+              {/* Inline edit form */}
+              {editingPhone === c.phone_normalized && (
                 <div className="border border-black/10 p-4 mb-2" style={{ background: '#F3F1EE' }}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                     <div>
@@ -1621,7 +1640,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                       {editSaving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={11} />}
                       Guardar
                     </button>
-                    <button onClick={() => setEditingId(null)}
+                    <button onClick={closeEdit}
                       className="px-3 py-2 text-[10px] tracking-[0.15em] uppercase text-[#9A9590] border border-black/8 hover:border-black/20 transition-colors">Cancelar</button>
                   </div>
                 </div>
