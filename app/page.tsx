@@ -287,19 +287,44 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── BRAND STATEMENT ── */}
+      {/* ── EL ESTUDIO ── */}
       <section
         className="px-6 md:px-16"
-        style={{ paddingTop: '16px', paddingBottom: '56px' }}
+        style={{ paddingTop: '16px', paddingBottom: '80px' }}
       >
-        <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '28px' }}>
+        {/* Label */}
+        <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '20px' }}>
           El estudio
         </p>
-        <p style={{ fontSize: '13px', lineHeight: 2, color: '#606060', maxWidth: '400px', fontWeight: 300 }}>
-          Hola, ¡hermosa! Nuestra prioridad es la salud de tu cabello.
-          Cada servicio combina técnica profesional con productos y
-          procesos que lo protegen, nutren y realzan.
+
+        {/* Title */}
+        <h2
+          className="font-[family-name:var(--font-display)]"
+          style={{ fontSize: 'clamp(36px, 7vw, 72px)', fontWeight: 300, color: '#F0EDE8', lineHeight: 1.05, marginBottom: '28px', maxWidth: '640px' }}
+        >
+          Un espacio para ti.
+        </h2>
+
+        {/* Description */}
+        <p style={{ fontSize: '13px', lineHeight: 2, color: '#606060', maxWidth: '400px', fontWeight: 300, marginBottom: '56px' }}>
+          Un ambiente íntimo donde cada visita es una experiencia. Aquí el cuidado va primero — sin prisa, sin ruido. Solo tú y tu cabello.
         </p>
+
+        {/* Staggered photos */}
+        <div style={{ maxWidth: '560px', position: 'relative' }}>
+          {/* Photo 1 — left */}
+          <div style={{ width: '63%', aspectRatio: '3/4', position: 'relative', overflow: 'hidden' }}>
+            <Image src="/gallery/dp-wash.jpg" alt="El estudio" fill className="object-cover" style={{ filter: 'brightness(0.92) contrast(1.04) saturate(0.88)' }} />
+          </div>
+          {/* Photo 2 — right, offset down */}
+          <div style={{ width: '56%', aspectRatio: '3/4', position: 'relative', overflow: 'hidden', marginLeft: 'auto', marginTop: '-38%' }}>
+            <Image src="/gallery/dp-balayage.jpg" alt="El estudio" fill className="object-cover object-top" style={{ filter: 'brightness(0.92) contrast(1.04) saturate(0.88)' }} />
+          </div>
+          {/* Photo 3 — left, offset down */}
+          <div style={{ width: '48%', aspectRatio: '3/4', position: 'relative', overflow: 'hidden', marginTop: '-28%' }}>
+            <Image src="/gallery/dp-texture.jpg" alt="El estudio" fill className="object-cover" style={{ filter: 'brightness(0.92) contrast(1.04) saturate(0.88)' }} />
+          </div>
+        </div>
       </section>
 
       {/* ── GALERÍA ── */}
