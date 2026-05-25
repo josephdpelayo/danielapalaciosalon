@@ -593,6 +593,48 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── LOCATION MAP ── */}
+      <section
+        className="px-6 md:px-16"
+        style={{ paddingBottom: '56px' }}
+      >
+        <p
+          style={{
+            fontSize: '9px',
+            letterSpacing: '0.5em',
+            textTransform: 'uppercase',
+            color: '#686560',
+            marginBottom: '6px',
+          }}
+        >
+          Ubicación
+        </p>
+        <p style={{ fontSize: '12px', fontWeight: 300, color: '#505050', marginBottom: '20px' }}>
+          Plaza A2, piso 3, local 3D — Mazatlán, Sin.
+        </p>
+        <div style={{ maxWidth: '480px', overflow: 'hidden' }}>
+          <iframe
+            title="Ubicación Daniela Palacio Hair Room"
+            src="https://maps.google.com/maps?q=Plaza+A2+Mazatlan+Sinaloa+Mexico&t=&z=16&ie=UTF8&iwloc=&output=embed"
+            width="100%"
+            height="240"
+            style={{ border: 0, display: 'block', filter: 'grayscale(1) invert(1) brightness(0.85)' }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
+        <a
+          href="https://maps.google.com/maps?q=Plaza+A2+Mazatlan+Sinaloa+Mexico"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#686560', marginTop: '12px', display: 'inline-block' }}
+          className="hover:text-[#81807F] transition-colors"
+        >
+          Cómo llegar →
+        </a>
+      </section>
+
       {/* ── INSTAGRAM CTA ── */}
       <section
         className="px-6 md:px-16"

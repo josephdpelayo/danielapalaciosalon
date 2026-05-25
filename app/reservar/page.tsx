@@ -647,9 +647,12 @@ function BookingContent() {
               </p>
             )}
 
-            <p className="text-[#333] text-[10px] tracking-[0.08em] text-center mb-8 leading-relaxed">
-              Política de cancelación: notifica con al menos 24 h de anticipación para reagendar sin cargo.
-            </p>
+            <div className="border border-white/6 px-4 py-3 mb-8 text-center">
+              <p className="text-[#81807F] text-[9px] tracking-[0.2em] uppercase mb-1">Política de cancelación</p>
+              <p className="text-[#555] text-[11px] leading-relaxed">
+                El anticipo <span className="text-[#81807F]">no es reembolsable</span> si cancelas con menos de 24 h de anticipación.
+              </p>
+            </div>
 
             {bookingError && (
               <div className="mb-5 px-4 py-3 border border-red-900/40 bg-red-950/20">
