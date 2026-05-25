@@ -36,12 +36,22 @@ export async function POST(req: NextRequest) {
   }
 
   const { supabase } = await import('@/lib/supabase');
-  const { data, error } = await supabase
+  // Try insert with email first; fall back without it if the column doesn't exist yet
+  let result = await supabase
     .from('dp_trusted_clients')
     .insert({ name, phone, phone_normalized: normalized, notes: notes || null, email: email || null })
     .select()
     .single();
 
+  if (result.error?.message?.includes('email')) {
+    result = await supabase
+      .from('dp_trusted_clients')
+      .insert({ name, phone, phone_normalized: normalized, notes: notes || null })
+      .select()
+      .single();
+  }
+
+  const { data, error } = result;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }

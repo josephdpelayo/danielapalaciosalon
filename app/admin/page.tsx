@@ -1307,7 +1307,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
       const res = await fetch('/api/trusted-clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-        body: JSON.stringify({ name: client.name, phone: client.phone, email: client.email || null, notes: null }),
+        body: JSON.stringify({ name: client.name, phone: client.phone, notes: null }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
