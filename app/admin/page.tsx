@@ -1307,15 +1307,13 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
       const res = await fetch('/api/trusted-clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-        body: JSON.stringify({ name: client.name, phone: client.phone, notes: null }),
+        body: JSON.stringify({ name: client.name, phone: client.phone, email: client.email || null, notes: null }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        const tc = await res.json();
-        setTrustedClients(prev => [...prev, tc]);
+        setTrustedClients(prev => [...prev, data as TrustedClient].sort((a, b) => a.name.localeCompare(b.name)));
       } else {
-        const err = await res.json().catch(() => ({}));
-        const msg = (err as { error?: string }).error ?? 'Error desconocido';
-        alert(`No se pudo agregar: ${msg}`);
+        alert(`No se pudo agregar: ${(data as { error?: string }).error ?? 'Error desconocido'}`);
       }
     } catch {
       alert('Error de conexión. Intenta de nuevo.');
@@ -1541,7 +1539,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {c.trusted_id && (
-                    <button onClick={() => editingId === c.trusted_id ? setEditingId(null) : startEdit(trustedClients.find(t => t.id === c.trusted_id)!)}
+                    <button onClick={() => editingId !== null && editingId === c.trusted_id ? setEditingId(null) : startEdit(trustedClients.find(t => t.id === c.trusted_id)!)}
                       className="text-[#B0AAA5] hover:text-[#81807F] transition-colors p-1.5">
                       <Pencil size={12} />
                     </button>
@@ -1567,7 +1565,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                 </div>
               </div>
               {/* Inline edit form for trusted client */}
-              {editingId === c.trusted_id && (
+              {editingId !== null && editingId === c.trusted_id && (
                 <div className="border border-black/10 p-4 mb-2" style={{ background: '#F3F1EE' }}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                     <div>
