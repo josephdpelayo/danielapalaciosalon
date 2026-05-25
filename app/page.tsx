@@ -35,11 +35,6 @@ const HOURS = [
   { days: 'Domingo',         time: 'Cerrado'              },
 ];
 
-const STEPS = [
-  { n: '01', title: 'Elige tu servicio',   desc: 'Selecciona el tratamiento que deseas y consulta el tiempo estimado.' },
-  { n: '02', title: 'Escoge fecha y hora', desc: 'Ve el calendario en tiempo real con la disponibilidad del estudio.'  },
-  { n: '03', title: 'Confirma tu cita',    desc: 'Recibirás confirmación y recordatorio directo en tu teléfono.'       },
-];
 
 const REVIEWS = [
   { name: 'Fernanda R.',  service: 'Balayage',           text: 'El mejor balayage que me han hecho. Daniela entendió exactamente lo que quería desde la primera consulta.' },
@@ -88,9 +83,9 @@ export default function Home() {
         <div className="hidden md:flex items-center gap-8">
           {[
             { href: '#daniela',   label: 'Daniela'   },
+            { href: '#galeria',   label: 'Galería'   },
             { href: '#servicios', label: 'Servicios' },
             { href: '#resenas',   label: 'Reseñas'   },
-            { href: '#horarios',  label: 'Horarios'  },
           ].map(({ href, label }) => (
             <a
               key={href}
@@ -249,91 +244,6 @@ export default function Home() {
         </a>
       </section>
 
-      {/* ── PHOTO STRIP ── */}
-      {/* Mobile: horizontal scroll. Desktop: 3-column grid with 1px black gaps */}
-      <section
-        className="relative overflow-x-auto md:overflow-x-visible"
-        style={{ scrollbarWidth: 'none' }}
-      >
-        {/* Mobile gradient hint — indicates more photos to the right */}
-        <div
-          className="md:hidden absolute right-0 top-0 bottom-0 z-10 pointer-events-none"
-          style={{
-            width: '48px',
-            background: 'linear-gradient(to right, transparent, #16181E)',
-          }}
-        />
-        {/* Mobile wrapper — flex scroll */}
-        <div className="flex md:hidden" style={{ gap: '1px', minWidth: 'max-content' }}>
-          {GALLERY.map((photo) => (
-            <div
-              key={photo.src}
-              className="relative shrink-0 overflow-hidden"
-              style={{ width: '80vw', maxWidth: '440px', aspectRatio: '3/4' }}
-            >
-              <Image
-                src={photo.src}
-                alt={photo.alt}
-                fill
-                unoptimized
-                className="object-cover transition-transform duration-700 hover:scale-[1.03]"
-                style={{ objectPosition: photo.pos, filter: photo.filter }}
-              />
-            </div>
-          ))}
-        </div>
-        {/* Desktop wrapper — CSS grid */}
-        <div className="hidden md:grid md:grid-cols-3" style={{ gap: '1px', background: '#16181E' }}>
-          {GALLERY.map((photo) => (
-            <div
-              key={photo.src}
-              className="relative overflow-hidden"
-              style={{ aspectRatio: '4/5', width: '100%' }}
-            >
-              <Image
-                src={photo.src}
-                alt={photo.alt}
-                fill
-                unoptimized
-                className="object-cover transition-transform duration-700 hover:scale-[1.03]"
-                style={{ objectPosition: photo.pos, filter: photo.filter }}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── BRAND STATEMENT ── */}
-      <section
-        className="px-6 md:px-16"
-        style={{ paddingTop: '56px', paddingBottom: '28px' }}
-      >
-        <p
-          style={{
-            fontSize: '9px',
-            letterSpacing: '0.5em',
-            textTransform: 'uppercase',
-            color: '#686560',
-            marginBottom: '28px',
-          }}
-        >
-          El estudio
-        </p>
-        <p
-          style={{
-            fontSize: '13px',
-            lineHeight: 2,
-            color: '#606060',
-            maxWidth: '400px',
-            fontWeight: 300,
-          }}
-        >
-          Hola, ¡hermosa! Nuestra prioridad es la salud de tu cabello.
-          Cada servicio combina técnica profesional con productos y
-          procesos que lo protegen, nutren y realzan.
-        </p>
-      </section>
-
       {/* ── MEET DANIELA ── */}
       <section
         id="daniela"
@@ -374,6 +284,44 @@ export default function Home() {
               Me especializo en color — balayage, mechas y tratamientos — con un enfoque personalizado en cada clienta. Porque no hay dos cabellos iguales, y el resultado que buscas merece atención real.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* ── BRAND STATEMENT ── */}
+      <section
+        className="px-6 md:px-16"
+        style={{ paddingTop: '16px', paddingBottom: '56px' }}
+      >
+        <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '28px' }}>
+          El estudio
+        </p>
+        <p style={{ fontSize: '13px', lineHeight: 2, color: '#606060', maxWidth: '400px', fontWeight: 300 }}>
+          Hola, ¡hermosa! Nuestra prioridad es la salud de tu cabello.
+          Cada servicio combina técnica profesional con productos y
+          procesos que lo protegen, nutren y realzan.
+        </p>
+      </section>
+
+      {/* ── GALERÍA ── */}
+      <section
+        id="galeria"
+        className="relative overflow-x-auto md:overflow-x-visible"
+        style={{ scrollbarWidth: 'none', marginBottom: '64px' }}
+      >
+        <div className="md:hidden absolute right-0 top-0 bottom-0 z-10 pointer-events-none" style={{ width: '48px', background: 'linear-gradient(to right, transparent, #16181E)' }} />
+        <div className="flex md:hidden" style={{ gap: '1px', minWidth: 'max-content' }}>
+          {GALLERY.map((photo) => (
+            <div key={photo.src} className="relative shrink-0 overflow-hidden" style={{ width: '80vw', maxWidth: '440px', aspectRatio: '3/4' }}>
+              <Image src={photo.src} alt={photo.alt} fill unoptimized className="object-cover transition-transform duration-700 hover:scale-[1.03]" style={{ objectPosition: photo.pos, filter: photo.filter }} />
+            </div>
+          ))}
+        </div>
+        <div className="hidden md:grid md:grid-cols-3" style={{ gap: '1px', background: '#16181E' }}>
+          {GALLERY.map((photo) => (
+            <div key={photo.src} className="relative overflow-hidden" style={{ aspectRatio: '4/5', width: '100%' }}>
+              <Image src={photo.src} alt={photo.alt} fill unoptimized className="object-cover transition-transform duration-700 hover:scale-[1.03]" style={{ objectPosition: photo.pos, filter: photo.filter }} />
+            </div>
+          ))}
         </div>
       </section>
 
@@ -492,76 +440,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── X DIVIDER ── */}
-      <div
-        className="flex justify-center"
-        style={{ paddingTop: '32px', paddingBottom: '32px' }}
-      >
-        <Image
-          src="/logos/symbol-x.png"
-          alt=""
-          width={36}
-          height={36}
-          style={{ filter: 'brightness(0) invert(1)', opacity: 0.14, width: '36px', height: '36px' }}
-        />
-      </div>
-
-      {/* ── PROCESS ── */}
-      <section
-        className="px-6 md:px-16"
-        style={{ paddingBottom: '48px' }}
-      >
-        <p
-          style={{
-            fontSize: '9px',
-            letterSpacing: '0.5em',
-            textTransform: 'uppercase',
-            color: '#686560',
-            marginBottom: '40px',
-          }}
-        >
-          Proceso
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12 max-w-5xl">
-          {STEPS.map((step) => (
-            <div key={step.n}>
-              <p
-                style={{
-                  fontSize: '11px',
-                  letterSpacing: '0.2em',
-                  color: '#505050',
-                  fontWeight: 300,
-                  marginBottom: '14px',
-                }}
-              >
-                {step.n}
-              </p>
-              <h3
-                className="font-[family-name:var(--font-display)]"
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 300,
-                  color: '#F0EDE8',
-                  marginBottom: '12px',
-                }}
-              >
-                {step.title}
-              </h3>
-              <p
-                style={{
-                  fontSize: '11px',
-                  lineHeight: 1.9,
-                  color: '#686560',
-                }}
-              >
-                {step.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── REVIEWS ── */}
       <section
         id="resenas"
@@ -606,122 +484,99 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── HOURS ── */}
+      {/* ── UBICACIÓN + HORARIOS ── */}
       <section
         id="horarios"
         className="px-6 md:px-16"
-        style={{ paddingBottom: '40px' }}
+        style={{ paddingTop: '16px', paddingBottom: '72px' }}
       >
-        <div style={{ maxWidth: '360px' }}>
-          <p
-            style={{
-              fontSize: '9px',
-              letterSpacing: '0.5em',
-              textTransform: 'uppercase',
-              color: '#686560',
-              marginBottom: '28px',
-            }}
-          >
-            Horarios
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 max-w-4xl">
 
+          {/* Horarios */}
           <div>
-            {HOURS.map((h, i) => (
-              <div
-                key={h.days}
-                className="flex items-baseline justify-between"
-                style={{
-                  paddingTop: '10px',
-                  paddingBottom: '10px',
-                  borderTop: i === 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                  borderBottom: '1px solid rgba(255,255,255,0.05)',
-                }}
-              >
-                <span style={{ fontSize: '12px', fontWeight: 300, color: '#686560' }}>
-                  {h.days}
-                </span>
-                <span
+            <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '28px' }}>
+              Horarios
+            </p>
+            <div>
+              {HOURS.map((h, i) => (
+                <div
+                  key={h.days}
+                  className="flex items-baseline justify-between"
                   style={{
-                    fontSize: '12px',
-                    fontWeight: 300,
-                    marginLeft: '32px',
-                    flexShrink: 0,
-                    color: h.time === 'Cerrado' ? '#505050' : '#81807F',
+                    paddingTop: '10px',
+                    paddingBottom: '10px',
+                    borderTop: i === 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
                   }}
                 >
-                  {h.time}
-                </span>
-              </div>
-            ))}
+                  <span style={{ fontSize: '12px', fontWeight: 300, color: '#686560' }}>{h.days}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 300, marginLeft: '32px', flexShrink: 0, color: h.time === 'Cerrado' ? '#505050' : '#81807F' }}>
+                    {h.time}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* Ubicación */}
+          <div>
+            <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '6px' }}>
+              Ubicación
+            </p>
+            <p style={{ fontSize: '12px', fontWeight: 300, color: '#505050', marginBottom: '20px' }}>
+              Plaza A2, piso 3, local 3D — Mazatlán, Sin.
+            </p>
+            <div style={{ overflow: 'hidden' }}>
+              <iframe
+                title="Ubicación Daniela Palacio Hair Room"
+                src="https://maps.google.com/maps?q=Plaza+A2+Mazatlan+Sinaloa+Mexico&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                width="100%"
+                height="220"
+                style={{ border: 0, display: 'block', filter: 'grayscale(1) invert(1) brightness(0.85)' }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+            <a
+              href="https://maps.google.com/maps?q=Plaza+A2+Mazatlan+Sinaloa+Mexico"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#686560', marginTop: '12px', display: 'inline-block' }}
+              className="hover:text-[#81807F] transition-colors"
+            >
+              Cómo llegar →
+            </a>
+          </div>
+
         </div>
       </section>
 
-      {/* ── LOCATION MAP ── */}
+      {/* ── INSTAGRAM ── */}
       <section
         className="px-6 md:px-16"
-        style={{ paddingBottom: '56px' }}
+        style={{ paddingTop: '56px', paddingBottom: '72px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
-        <p
-          style={{
-            fontSize: '9px',
-            letterSpacing: '0.5em',
-            textTransform: 'uppercase',
-            color: '#686560',
-            marginBottom: '6px',
-          }}
-        >
-          Ubicación
+        <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '28px' }}>
+          Síguenos
         </p>
-        <p style={{ fontSize: '12px', fontWeight: 300, color: '#505050', marginBottom: '20px' }}>
-          Plaza A2, piso 3, local 3D — Mazatlán, Sin.
-        </p>
-        <div style={{ maxWidth: '480px', overflow: 'hidden' }}>
-          <iframe
-            title="Ubicación Daniela Palacio Hair Room"
-            src="https://maps.google.com/maps?q=Plaza+A2+Mazatlan+Sinaloa+Mexico&t=&z=16&ie=UTF8&iwloc=&output=embed"
-            width="100%"
-            height="240"
-            style={{ border: 0, display: 'block', filter: 'grayscale(1) invert(1) brightness(0.85)' }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        </div>
-        <a
-          href="https://maps.google.com/maps?q=Plaza+A2+Mazatlan+Sinaloa+Mexico"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#686560', marginTop: '12px', display: 'inline-block' }}
-          className="hover:text-[#81807F] transition-colors"
-        >
-          Cómo llegar →
-        </a>
-      </section>
-
-      {/* ── INSTAGRAM CTA ── */}
-      <section
-        className="px-6 md:px-16"
-        style={{ paddingBottom: '40px' }}
-      >
         <a
           href="https://instagram.com/danielapalaciosalon"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 hover:opacity-[0.35] transition-opacity duration-200"
-          style={{ color: '#686560' }}
+          className="group flex items-center gap-5 w-fit"
         >
-          <InstagramIcon size={12} />
+          <InstagramIcon size={20} className="text-[#81807F]" />
           <span
-            style={{
-              fontSize: '11px',
-              letterSpacing: '0.12em',
-              color: '#686560',
-            }}
+            className="font-[family-name:var(--font-display)] group-hover:opacity-50 transition-opacity duration-300"
+            style={{ fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: 300, color: '#F0EDE8', letterSpacing: '-0.01em' }}
           >
             @danielapalaciosalon
           </span>
         </a>
+        <p style={{ fontSize: '12px', color: '#505050', fontWeight: 300, marginTop: '16px', maxWidth: '360px', lineHeight: 1.8 }}>
+          Trabajo real, resultados reales. Síguenos para ver transformaciones y disponibilidad.
+        </p>
       </section>
 
       {/* ── FOOTER ── */}
