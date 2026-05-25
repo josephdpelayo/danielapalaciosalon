@@ -85,6 +85,7 @@ export default function Home() {
               { href: '#daniela',   label: 'Daniela'   },
               { href: '#servicios', label: 'Servicios' },
               { href: '#resenas',   label: 'Reseñas'   },
+              { href: '#horarios',  label: 'Dirección' },
             ].map(({ href, label }) => (
               <a key={href} href={href}
                 style={{ fontSize: '9px', letterSpacing: '0.35em', textTransform: 'uppercase', color: '#686560', transition: 'color 0.2s' }}
@@ -105,6 +106,7 @@ export default function Home() {
             { href: '#daniela',   label: 'Daniela'   },
             { href: '#servicios', label: 'Servicios' },
             { href: '#resenas',   label: 'Reseñas'   },
+            { href: '#horarios',  label: 'Dirección' },
           ].map(({ href, label }) => (
             <a key={href} href={href}
               style={{ fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#686560', whiteSpace: 'nowrap', flexShrink: 0 }}
@@ -229,17 +231,21 @@ export default function Home() {
           href="https://wa.me/526691877077"
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute bottom-6 right-6 hover:opacity-70 transition-opacity duration-200"
+          className="absolute bottom-20 right-6 hover:opacity-60 transition-opacity duration-200 flex items-center justify-center"
           style={{
+            width: '46px',
+            height: '46px',
+            borderRadius: '50%',
+            border: '1px solid rgba(240,237,232,0.28)',
             fontSize: '9px',
-            letterSpacing: '0.3em',
+            letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            color: 'rgba(240,237,232,0.35)',
+            color: 'rgba(240,237,232,0.55)',
             fontWeight: 300,
             zIndex: 10,
           }}
         >
-          WA →
+          WA
         </a>
       </section>
 
@@ -353,7 +359,7 @@ export default function Home() {
       <section
         id="servicios"
         className="px-6 md:px-16"
-        style={{ paddingTop: '56px', paddingBottom: '56px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
+        style={{ paddingTop: '40px', paddingBottom: '40px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
         <div className="max-w-3xl">
           <p
@@ -362,7 +368,7 @@ export default function Home() {
               letterSpacing: '0.5em',
               textTransform: 'uppercase',
               color: '#686560',
-              marginBottom: '48px',
+              marginBottom: '28px',
             }}
           >
             Servicios
@@ -379,7 +385,7 @@ export default function Home() {
             const sortedCategories = categoryOrder.filter((c) => serviceGroups[c]?.length);
 
             return sortedCategories.map((cat) => (
-              <div key={cat} style={{ marginBottom: '40px' }}>
+              <div key={cat} style={{ marginBottom: '20px' }}>
                 {cat && (
                   <p
                     style={{
@@ -410,8 +416,8 @@ export default function Home() {
                         {...linkProps}
                         className="group flex items-baseline justify-between"
                         style={{
-                          paddingTop: '20px',
-                          paddingBottom: '20px',
+                          paddingTop: '12px',
+                          paddingBottom: '12px',
                           borderTop: i === 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
                           borderBottom: '1px solid rgba(255,255,255,0.05)',
                           transition: 'opacity 0.2s',
@@ -512,13 +518,13 @@ export default function Home() {
       <section
         id="horarios"
         className="px-6 md:px-16"
-        style={{ paddingTop: '56px', paddingBottom: '72px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
+        style={{ paddingTop: '36px', paddingBottom: '36px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 max-w-4xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 max-w-4xl">
 
           {/* Horarios */}
           <div>
-            <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '28px' }}>
+            <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '16px' }}>
               Horarios
             </p>
             <div>
@@ -527,8 +533,8 @@ export default function Home() {
                   key={h.days}
                   className="flex items-baseline justify-between"
                   style={{
-                    paddingTop: '10px',
-                    paddingBottom: '10px',
+                    paddingTop: '7px',
+                    paddingBottom: '7px',
                     borderTop: i === 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
                     borderBottom: '1px solid rgba(255,255,255,0.05)',
                   }}
@@ -547,7 +553,7 @@ export default function Home() {
             <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '6px' }}>
               Ubicación
             </p>
-            <p style={{ fontSize: '12px', fontWeight: 300, color: '#505050', marginBottom: '20px' }}>
+            <p style={{ fontSize: '12px', fontWeight: 300, color: '#505050', marginBottom: '12px' }}>
               Plaza A2, piso 3, local 3D — Mazatlán, Sin.
             </p>
             <div style={{ overflow: 'hidden' }}>
@@ -555,7 +561,7 @@ export default function Home() {
                 title="Ubicación Daniela Palacio Hair Room"
                 src="https://maps.google.com/maps?q=Plaza+A2+Mazatlan+Sinaloa+Mexico&t=&z=16&ie=UTF8&iwloc=&output=embed"
                 width="100%"
-                height="220"
+                height="170"
                 style={{ border: 0, display: 'block', filter: 'grayscale(1) invert(1) brightness(0.85)' }}
                 allowFullScreen
                 loading="lazy"
