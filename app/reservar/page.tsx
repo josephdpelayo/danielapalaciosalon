@@ -97,7 +97,8 @@ function BookingContent() {
       .then((data) => {
         const fetchedSlots = data.slots || [];
         setSlots(fetchedSlots);
-        if (fetchedSlots.length === 0) {
+        const noAvailability = fetchedSlots.length === 0 || fetchedSlots.every((s: TimeSlot) => !s.available);
+        if (noAvailability) {
           setLoadingNext(true);
           fetch(`/api/next-available?service_id=${selectedService.id}&after=${format(selectedDate, 'yyyy-MM-dd')}`)
             .then((r) => r.json())
@@ -562,7 +563,7 @@ function BookingContent() {
               <div className="flex items-center justify-center py-24">
                 <div className="w-5 h-5 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
               </div>
-            ) : slots.length === 0 ? (
+            ) : slots.length === 0 || slots.every(s => !s.available) ? (
               <div className="border border-white/8 px-5 py-8 text-center">
                 <p className="text-[#666] text-sm mb-5">No hay disponibilidad para este día.</p>
 
