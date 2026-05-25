@@ -8,8 +8,6 @@ import Link from 'next/link';
 const RECS = [
   'Llega 5 minutos antes de tu cita.',
   'Si necesitas cancelar, avisa con al menos 24 horas de anticipación.',
-  'Ven con el cabello lavado y sin productos si es posible.',
-  'Si tienes alguna alergia o condición especial, coméntalo al llegar.',
 ];
 
 function ExitoContent() {
@@ -21,8 +19,6 @@ function ExitoContent() {
   const service   = searchParams.get('service');
   const date      = searchParams.get('date');
   const time      = searchParams.get('time');
-
-  const refCode = id ? id.toString().slice(-8).toUpperCase() : null;
 
   const subtext = isTrusted
     ? 'Confirmada automáticamente — gracias por ser clienta frecuente.'
@@ -36,7 +32,6 @@ function ExitoContent() {
     service && { label: 'Servicio', value: service },
     date    && { label: 'Fecha',    value: date    },
     time    && { label: 'Hora',     value: time    },
-    refCode && { label: 'Ref.',     value: `#${refCode}` },
   ].filter(Boolean) as { label: string; value: string }[];
 
   return (
@@ -54,7 +49,7 @@ function ExitoContent() {
       `}</style>
 
       {/* ── Nav ── */}
-      <nav className="px-6 md:px-10 py-5">
+      <nav className="px-6 md:px-10 py-4">
         <Image
           src="/logos/logo-largo.png"
           alt="Daniela Palacio"
@@ -65,15 +60,15 @@ function ExitoContent() {
       </nav>
 
       {/* ── Main ── */}
-      <div className="flex-1 flex flex-col items-center px-6 pb-20" style={{ paddingTop: '40px' }}>
+      <div className="flex-1 flex flex-col items-center px-6 pb-8" style={{ paddingTop: '24px' }}>
         <div className="w-full max-w-[320px] flex flex-col items-center text-center">
 
           {/* Animated check */}
           <div
-            className="mb-8"
+            className="mb-5"
             style={{ opacity: 0, animation: 'fadeUp 0.5s ease-out 0.1s forwards' }}
           >
-            <svg width="52" height="52" viewBox="0 0 96 96" fill="none" aria-hidden="true">
+            <svg width="48" height="48" viewBox="0 0 96 96" fill="none" aria-hidden="true">
               <circle
                 cx="48" cy="48" r="45"
                 stroke="#81807F" strokeWidth="1"
@@ -94,11 +89,11 @@ function ExitoContent() {
           <h1
             className="font-[family-name:var(--font-display)]"
             style={{
-              fontSize: 'clamp(20px, 5vw, 26px)',
+              fontSize: 'clamp(18px, 5vw, 24px)',
               fontWeight: 300,
               color: '#F0EDE8',
               letterSpacing: '0.02em',
-              marginBottom: '10px',
+              marginBottom: '8px',
               opacity: 0,
               animation: 'fadeUp 0.6s ease-out 0.95s forwards',
             }}
@@ -110,9 +105,9 @@ function ExitoContent() {
           <p
             style={{
               fontSize: '12px',
-              lineHeight: 1.8,
+              lineHeight: 1.65,
               color: '#686560',
-              marginBottom: '40px',
+              marginBottom: '24px',
               opacity: 0,
               animation: 'fadeUp 0.6s ease-out 1.05s forwards',
             }}
@@ -123,7 +118,7 @@ function ExitoContent() {
           {/* Booking details card */}
           {rows.length > 0 && (
             <div
-              className="w-full text-left mb-10"
+              className="w-full text-left mb-6"
               style={{
                 border: '1px solid rgba(255,255,255,0.06)',
                 padding: '0 20px',
@@ -136,8 +131,8 @@ function ExitoContent() {
                   key={label}
                   className="flex items-baseline justify-between"
                   style={{
-                    paddingTop: '13px',
-                    paddingBottom: '13px',
+                    paddingTop: '11px',
+                    paddingBottom: '11px',
                     borderBottom: i < rows.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                   }}
                 >
@@ -155,7 +150,7 @@ function ExitoContent() {
           {/* Volver al inicio */}
           <Link
             href="/"
-            className="hover:opacity-50 transition-opacity duration-200 mb-14"
+            className="hover:opacity-50 transition-opacity duration-200 mb-8"
             style={{
               fontSize: '10px',
               letterSpacing: '0.35em',
@@ -173,23 +168,23 @@ function ExitoContent() {
 
           {/* ── Divider ── */}
           <div
-            className="w-full mb-14"
+            className="w-full mb-6"
             style={{ height: '1px', background: 'rgba(255,255,255,0.05)', opacity: 0, animation: 'fadeUp 0.4s ease-out 1.4s forwards' }}
           />
 
           {/* ── WhatsApp CTA ── */}
           <div
-            className="w-full mb-12"
+            className="w-full mb-6"
             style={{ opacity: 0, animation: 'fadeUp 0.6s ease-out 1.45s forwards' }}
           >
             <p
               className="font-[family-name:var(--font-display)]"
-              style={{ fontSize: '16px', fontWeight: 300, color: '#F0EDE8', marginBottom: '6px', letterSpacing: '0.01em' }}
+              style={{ fontSize: '15px', fontWeight: 300, color: '#F0EDE8', marginBottom: '5px', letterSpacing: '0.01em' }}
             >
               ¿Tienes alguna duda?
             </p>
-            <p style={{ fontSize: '12px', color: '#686560', lineHeight: 1.7, marginBottom: '20px' }}>
-              Escríbenos con confianza. Daniela responde personalmente en horario de atención.
+            <p style={{ fontSize: '12px', color: '#686560', lineHeight: 1.6, marginBottom: '14px' }}>
+              Daniela responde personalmente en horario de atención.
             </p>
             <a
               href="https://wa.me/526691877077"
@@ -203,19 +198,19 @@ function ExitoContent() {
                 letterSpacing: '0.3em',
                 textTransform: 'uppercase',
                 fontWeight: 400,
-                padding: '14px 0',
+                padding: '12px 0',
               }}
             >
               Escribir por WhatsApp
             </a>
-            <p style={{ fontSize: '9px', color: '#484848', letterSpacing: '0.1em', marginTop: '8px' }}>
+            <p style={{ fontSize: '9px', color: '#484848', letterSpacing: '0.1em', marginTop: '7px' }}>
               Lun–Vie 10am–7pm &nbsp;·&nbsp; Sáb 10am–3pm
             </p>
           </div>
 
           {/* ── Recomendaciones ── */}
           <div
-            className="w-full text-left mb-12"
+            className="w-full text-left"
             style={{ opacity: 0, animation: 'fadeUp 0.6s ease-out 1.55s forwards' }}
           >
             <p
@@ -224,17 +219,17 @@ function ExitoContent() {
                 letterSpacing: '0.4em',
                 textTransform: 'uppercase',
                 color: '#686560',
-                marginBottom: '20px',
+                marginBottom: '12px',
               }}
             >
               Antes de tu cita
             </p>
-            <ul style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {RECS.map((rec) => (
                 <li
                   key={rec}
                   className="flex items-start gap-3"
-                  style={{ fontSize: '12px', color: '#686560', lineHeight: 1.7 }}
+                  style={{ fontSize: '12px', color: '#686560', lineHeight: 1.6 }}
                 >
                   <span style={{ color: '#484848', flexShrink: 0, marginTop: '1px' }}>—</span>
                   {rec}
@@ -243,38 +238,16 @@ function ExitoContent() {
             </ul>
           </div>
 
-          {/* ── FAQ link ── */}
-          <div
-            className="w-full"
-            style={{ opacity: 0, animation: 'fadeUp 0.6s ease-out 1.65s forwards' }}
-          >
-            <Link
-              href="/#faq"
-              className="block w-full text-center hover:opacity-60 transition-opacity duration-200"
-              style={{
-                fontSize: '10px',
-                letterSpacing: '0.3em',
-                textTransform: 'uppercase',
-                color: '#81807F',
-                fontWeight: 300,
-                border: '1px solid rgba(129,128,127,0.2)',
-                padding: '13px 0',
-              }}
-            >
-              Preguntas frecuentes
-            </Link>
-          </div>
-
         </div>
       </div>
 
       {/* ── Footer ── */}
       <div
-        className="px-6 md:px-10 py-5 flex items-center justify-between"
+        className="px-6 md:px-10 py-4 flex items-center justify-between"
         style={{
           borderTop: '1px solid rgba(255,255,255,0.04)',
           opacity: 0,
-          animation: 'fadeUp 0.4s ease-out 1.75s forwards',
+          animation: 'fadeUp 0.4s ease-out 1.65s forwards',
         }}
       >
         <p style={{ fontSize: '10px', color: '#3A3A3A', letterSpacing: '0.1em' }}>
