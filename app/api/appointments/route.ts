@@ -17,31 +17,7 @@ export async function POST(req: NextRequest) {
   if ((await import("@/lib/supabase")).supabaseReady) {
     const { supabase } = await import('@/lib/supabase');
     const staleThreshold = new Date(Date.now() - PENDING_PAYMENT_TTL_MS).toISOString();
-    const today = new Date().toISOString().slice(0, 10);
-
-    // ── Duplicate client check: block if already has a future active appointment ──
     const phoneNorm = client_phone.replace(/\D/g, '').slice(-10);
-    const { data: allAppts } = await supabase
-      .from('dp_appointments')
-      .select('client_phone, client_email, appointment_date, start_time')
-      .neq('status', 'cancelled')
-      .gte('appointment_date', today);
-
-    const existing = (allAppts ?? []).find(a => {
-      const norm = a.client_phone.replace(/\D/g, '').slice(-10);
-      if (norm === phoneNorm) return true;
-      if (client_email && a.client_email &&
-          a.client_email.trim().toLowerCase() === client_email.trim().toLowerCase()) return true;
-      return false;
-    });
-
-    if (existing) {
-      const when = `${existing.appointment_date} a las ${existing.start_time.slice(0, 5)}`;
-      return NextResponse.json(
-        { error: `Ya tienes una cita agendada para el ${when}. Escríbenos por WhatsApp si necesitas modificarla.` },
-        { status: 409 }
-      );
-    }
 
     // ── Multi-staff: find first available staff for this service ──
     let assignedStaffId: string | null = null;
@@ -110,6 +86,16 @@ export async function POST(req: NextRequest) {
     }).select().single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // ── Auto-register / update client record ──
+    try {
+      await supabase.from('dp_clients').upsert({
+        name: client_name,
+        phone: client_phone,
+        phone_normalized: phoneNorm,
+        email: client_email || null,
+      }, { onConflict: 'phone_normalized' });
+    } catch { /* table may not exist yet — safe to ignore */ }
 
     // Notify admin — await before returning so Vercel doesn't kill the function first
     try {

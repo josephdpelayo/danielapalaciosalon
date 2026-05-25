@@ -1279,24 +1279,40 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [apptRes, trustedRes] = await Promise.all([
+      const [apptRes, trustedRes, clientsRes] = await Promise.all([
         fetch('/api/appointments', { headers: { 'x-admin-secret': adminSecret } }),
         fetch('/api/trusted-clients', { headers: { 'x-admin-secret': adminSecret } }),
+        fetch('/api/clients', { headers: { 'x-admin-secret': adminSecret } }),
       ]);
-      const apptData    = await apptRes.json();
       const trustedData = await trustedRes.json();
       setTrustedClients(trustedData.clients ?? []);
 
-      const appts: Appointment[] = [...(apptData.appointments ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at));
-      const seen = new Map<string, ClientRecord>();
+      // Build visit-count + last-visit map from appointments
+      const appts: Appointment[] = (await apptRes.json()).appointments ?? [];
+      const visitMap = new Map<string, { count: number; last: string }>();
       for (const a of appts) {
         const norm = a.client_phone.replace(/\D/g, '').slice(-10);
-        if (!seen.has(norm)) {
-          seen.set(norm, { name: a.client_name, phone: a.client_phone, phone_normalized: norm, email: a.client_email, appt_count: 0, last_appt: a.appointment_date });
-        }
-        seen.get(norm)!.appt_count++;
+        const prev = visitMap.get(norm);
+        visitMap.set(norm, {
+          count: (prev?.count ?? 0) + 1,
+          last: !prev || a.appointment_date > prev.last ? a.appointment_date : prev.last,
+        });
       }
-      setAllClients([...seen.values()].sort((a, b) => a.name.localeCompare(b.name)));
+
+      // Primary client list from dp_clients; fall back to appointments if table not yet created
+      const clientsData = await clientsRes.json();
+      const rawClients: { name: string; phone: string; phone_normalized: string; email?: string | null }[] =
+        clientsData.clients?.length > 0
+          ? clientsData.clients
+          : [...new Map(appts.map(a => [a.client_phone.replace(/\D/g, '').slice(-10),
+              { name: a.client_name, phone: a.client_phone, phone_normalized: a.client_phone.replace(/\D/g, '').slice(-10), email: a.client_email }
+            ])).values()];
+
+      setAllClients(rawClients.map(c => ({
+        name: c.name, phone: c.phone, phone_normalized: c.phone_normalized, email: c.email ?? null,
+        appt_count: visitMap.get(c.phone_normalized)?.count ?? 0,
+        last_appt: visitMap.get(c.phone_normalized)?.last ?? null,
+      })).sort((a, b) => a.name.localeCompare(b.name)));
     } catch { /* */ }
     finally { setLoading(false); }
   }, [adminSecret]);
