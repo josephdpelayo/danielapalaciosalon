@@ -2136,6 +2136,7 @@ function StaffTab({ adminSecret }: { adminSecret: string }) {
   const [saving, setSaving]   = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [adding, setAdding]   = useState(false);
+  const [addError, setAddError] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -2168,6 +2169,7 @@ function StaffTab({ adminSecret }: { adminSecret: string }) {
   const addStaff = async () => {
     if (!newName.trim()) return;
     setAdding(true);
+    setAddError('');
     try {
       const res = await fetch('/api/staff', {
         method: 'POST',
@@ -2175,8 +2177,8 @@ function StaffTab({ adminSecret }: { adminSecret: string }) {
         body: JSON.stringify({ name: newName.trim() }),
       });
       const data = await res.json();
-      if (data.staff) setStaff((p) => [...p, data.staff]);
-      setNewName('');
+      if (data.staff) { setStaff((p) => [...p, data.staff]); setNewName(''); }
+      else setAddError(data.error ?? 'Error al agregar');
     } finally { setAdding(false); }
   };
 
@@ -2229,6 +2231,7 @@ function StaffTab({ adminSecret }: { adminSecret: string }) {
             Agregar
           </button>
         </div>
+        {addError && <p className="text-red-500 text-xs mt-2">{addError}</p>}
       </div>
     </div>
   );
