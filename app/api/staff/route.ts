@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ staff: MOCK_STAFF });
   }
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
 
   const { data: staffRows, error } = await supabase
     .from('dp_staff')
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
   const { name } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: 'Name required' }, { status: 400 });
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
   const { data, error } = await supabase
     .from('dp_staff')
     .insert({ name: name.trim(), is_active: true })
@@ -86,7 +86,7 @@ export async function PATCH(req: NextRequest) {
   const { id, name, is_active, schedule, service_ids } = body;
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
 
   // Update core fields
   if (name !== undefined || is_active !== undefined) {
@@ -135,7 +135,7 @@ export async function DELETE(req: NextRequest) {
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
   await supabase.from('dp_staff').delete().eq('id', id);
   return NextResponse.json({ ok: true });
 }
