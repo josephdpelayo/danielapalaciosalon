@@ -48,11 +48,20 @@ function BookingContent() {
   const [isTrusted, setIsTrusted] = useState(false);
   const [trustedName, setTrustedName] = useState<string | null>(null);
   const [checkingPhone, setCheckingPhone] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    MOCK_SERVICES.find(s => s.category)?.category ?? ''
+  );
 
   useEffect(() => {
     fetch('/api/services')
       .then((r) => r.json())
-      .then((d) => { if (d.services?.length) setServices(d.services); })
+      .then((d) => {
+        if (d.services?.length) {
+          setServices(d.services);
+          const firstCat = d.services.find((s: Service) => s.category)?.category;
+          if (firstCat) setSelectedCategory(firstCat);
+        }
+      })
       .catch(() => {});
     fetch('/api/schedule')
       .then((r) => r.json())
@@ -351,54 +360,81 @@ function BookingContent() {
         )}
 
         {/* ─── STEP 2: SERVICE ─── */}
-        {step === 'service' && (
-          <div>
-            <div className="mb-10">
-              <button
-                onClick={() => setStep('info')}
-                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-6"
-              >
-                <ArrowLeft size={13} /> Atrás
-              </button>
-              <h2 className="font-[family-name:var(--font-display)] text-4xl font-light text-[#F0EDE8] leading-tight mb-3">
-                Elige un servicio
-              </h2>
-              <p className="text-[#666] text-xs tracking-[0.1em] uppercase">
-                Selecciona el tratamiento que deseas
-              </p>
-            </div>
-
-            <div className="divide-y divide-white/8">
-              {services.map((svc) => (
+        {step === 'service' && (() => {
+          const categories = [...new Set(
+            services.filter(s => s.active && s.category).map(s => s.category as string)
+          )];
+          const visibleServices = services.filter(s => s.active && s.category === selectedCategory);
+          return (
+            <div>
+              <div className="mb-10">
                 <button
-                  key={svc.id}
-                  onClick={() => { setSelectedService(svc); setSelectedDate(undefined); setSelectedSlot(null); setStep('date'); }}
-                  className="w-full text-left py-6 hover:bg-white/[0.02] transition-colors group"
+                  onClick={() => setStep('info')}
+                  className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-6"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span
-                          className="inline-block w-2 h-2 rounded-full shrink-0"
-                          style={{ background: svcDotColor(svc.name) }}
-                        />
-                        <span className="text-[#F0EDE8] text-sm font-medium group-hover:text-white transition-colors">
-                          {svc.name}
-                        </span>
-                        <span className="text-[10px] text-[#81807F] tracking-[0.15em] uppercase">
-                          {formatPrice(svc.price)}
-                        </span>
-                      </div>
-                      <p className="text-[#666] text-xs leading-relaxed">{svc.description}</p>
-                      <p className="text-[#444] text-[10px] mt-2 tracking-[0.1em] uppercase">{formatDuration(svc.duration_minutes)}</p>
-                    </div>
-                    <ArrowRight size={14} className="text-[#333] group-hover:text-[#81807F] transition-colors mt-1 shrink-0" />
-                  </div>
+                  <ArrowLeft size={13} /> Atrás
                 </button>
-              ))}
+                <h2 className="font-[family-name:var(--font-display)] text-4xl font-light text-[#F0EDE8] leading-tight mb-3">
+                  Elige un servicio
+                </h2>
+                <p className="text-[#666] text-xs tracking-[0.1em] uppercase">
+                  Selecciona el tratamiento que deseas
+                </p>
+              </div>
+
+              {/* Category pills — horizontal scroll */}
+              <div className="flex gap-3 overflow-x-auto pb-1 mb-8 scrollbar-none -mx-5 px-5">
+                {categories.map((cat) => {
+                  const active = cat === selectedCategory;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className="shrink-0 text-xs tracking-[0.15em] uppercase transition-colors whitespace-nowrap pb-2"
+                      style={active
+                        ? { color: '#F0EDE8', borderBottom: '1px solid #81807F' }
+                        : { color: '#444' }
+                      }
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Services — same original style */}
+              <div className="divide-y divide-white/8">
+                {visibleServices.map((svc) => (
+                  <button
+                    key={svc.id}
+                    onClick={() => { setSelectedService(svc); setSelectedDate(undefined); setSelectedSlot(null); setStep('date'); }}
+                    className="w-full text-left py-6 hover:bg-white/[0.02] transition-colors group"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span
+                            className="inline-block w-2 h-2 rounded-full shrink-0"
+                            style={{ background: svcDotColor(svc.name) }}
+                          />
+                          <span className="text-[#F0EDE8] text-sm font-medium group-hover:text-white transition-colors">
+                            {svc.name}
+                          </span>
+                          <span className="text-[10px] text-[#81807F] tracking-[0.15em] uppercase">
+                            {formatPrice(svc.price)}
+                          </span>
+                        </div>
+                        <p className="text-[#666] text-xs leading-relaxed">{svc.description}</p>
+                        <p className="text-[#444] text-[10px] mt-2 tracking-[0.1em] uppercase">{formatDuration(svc.duration_minutes)}</p>
+                      </div>
+                      <ArrowRight size={14} className="text-[#333] group-hover:text-[#81807F] transition-colors mt-1 shrink-0" />
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ─── STEP 3: DATE ─── */}
         {step === 'date' && selectedService && (

@@ -985,7 +985,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
 // ── Services tab ─────────────────────────────────────────────────
 interface ServiceRow {
   id: string; name: string; description: string | null;
-  price: number; duration_minutes: number; active_minutes: number;
+  price: number | null; duration_minutes: number; active_minutes: number;
   deposit_amount: number; active: boolean; sort_order: number;
 }
 type FormState = {
@@ -1098,7 +1098,7 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
 
   const startEdit = (svc: ServiceRow) => {
     setEditingId(svc.id); setShowAdd(false);
-    setForm({ name: svc.name, description: svc.description ?? '', price: String(svc.price),
+    setForm({ name: svc.name, description: svc.description ?? '', price: svc.price != null ? String(svc.price) : '',
       duration_minutes: String(svc.duration_minutes), active_minutes: String(svc.active_minutes),
       deposit_amount: String(svc.deposit_amount) });
   };
@@ -1178,7 +1178,7 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-3 flex-wrap mb-1">
                         <span className="font-[family-name:var(--font-display)] text-[#1C1A19] text-base">{svc.name}</span>
-                        <span className="text-[#81807F] text-sm font-light">${svc.price.toLocaleString('es-MX')}</span>
+                        <span className="text-[#81807F] text-sm font-light">{svc.price != null ? `$${svc.price.toLocaleString('es-MX')}` : 'Por cotización'}</span>
                         <span className="text-[#B0AAA5] text-xs">anticipo ${svc.deposit_amount}</span>
                       </div>
                       {svc.description && <p className="text-[#6B6560] text-xs mb-2">{svc.description}</p>}
