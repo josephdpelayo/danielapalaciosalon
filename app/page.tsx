@@ -41,6 +41,13 @@ const STEPS = [
   { n: '03', title: 'Confirma tu cita',    desc: 'Recibirás confirmación y recordatorio directo en tu teléfono.'       },
 ];
 
+const REVIEWS = [
+  { name: 'Fernanda R.',  service: 'Balayage',           text: 'El mejor balayage que me han hecho. Daniela entendió exactamente lo que quería desde la primera consulta.' },
+  { name: 'Sofía M.',     service: 'Hair color',          text: 'Mi cabello quedó súper saludable y con un color hermoso. El ambiente del estudio es increíble.' },
+  { name: 'Valeria T.',   service: 'Corte + tratamiento', text: 'Puntual, profesional y con una técnica impecable. Ya agendé mi próxima cita.' },
+  { name: 'Mariana L.',   service: 'Mechas',              text: 'Llevaba meses sin hacerme nada y Daniela transformó mi cabello completamente. 100% recomendada.' },
+];
+
 export default function Home() {
   const [services, setServices] = useState<Service[]>(MOCK_SERVICES);
 
@@ -487,6 +494,49 @@ export default function Home() {
                 }}
               >
                 {step.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── REVIEWS ── */}
+      <section
+        className="px-6 md:px-16"
+        style={{ paddingTop: '48px', paddingBottom: '56px' }}
+      >
+        <div className="flex items-baseline gap-6 mb-10">
+          <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560' }}>
+            Reseñas
+          </p>
+          <span style={{ fontSize: '11px', color: '#81807F', letterSpacing: '0.05em' }}>
+            ★★★★★ <span style={{ color: '#505050' }}>5.0</span>
+          </span>
+        </div>
+
+        {/* Mobile: horizontal scroll / Desktop: 2-col grid */}
+        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none md:grid md:grid-cols-2 md:overflow-visible md:pb-0 max-w-3xl">
+          {REVIEWS.map((r) => (
+            <div
+              key={r.name}
+              className="shrink-0 w-[78vw] md:w-auto"
+              style={{
+                borderTop: '1px solid rgba(255,255,255,0.06)',
+                paddingTop: '24px',
+                paddingBottom: '24px',
+              }}
+            >
+              <p style={{ fontSize: '9px', letterSpacing: '0.2em', color: '#81807F', marginBottom: '14px' }}>
+                ★★★★★
+              </p>
+              <p style={{ fontSize: '12px', lineHeight: 1.9, color: '#8A8582', fontWeight: 300, marginBottom: '20px' }}>
+                &ldquo;{r.text}&rdquo;
+              </p>
+              <p className="font-[family-name:var(--font-display)]" style={{ fontSize: '12px', color: '#F0EDE8', fontWeight: 300 }}>
+                {r.name}
+              </p>
+              <p style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#505050', marginTop: '4px' }}>
+                {r.service}
               </p>
             </div>
           ))}
