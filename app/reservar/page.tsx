@@ -214,8 +214,8 @@ function BookingContent() {
       </div>
 
       {/* Progress — thin line + 5 dots + current label */}
-      <div className="px-5 pt-8 pb-5 max-w-xl mx-auto">
-        <div className="relative flex items-center mb-3">
+      <div className="px-5 pt-3 pb-2 max-w-xl mx-auto">
+        <div className="relative flex items-center mb-2">
           <div className="absolute left-0 right-0 h-px bg-white/8" />
           <div
             className="absolute left-0 h-px bg-[#81807F] transition-all duration-500"
@@ -248,13 +248,13 @@ function BookingContent() {
         </div>
       </div>
 
-      <div className="px-5 pb-36 max-w-xl mx-auto">
+      <div className="px-5 pb-8 max-w-xl mx-auto">
 
         {/* ─── STEP 1: INFO ─── */}
         {step === 'info' && (
           <div>
-            <div className="mb-10">
-              <h2 className="font-[family-name:var(--font-display)] text-4xl font-light text-[#F0EDE8] leading-tight mb-3">
+            <div className="mb-4">
+              <h2 className="font-[family-name:var(--font-display)] text-3xl font-light text-[#F0EDE8] leading-tight mb-1">
                 Cuéntame de ti
               </h2>
               <p className="text-[#666] text-xs tracking-[0.1em] uppercase">
@@ -262,11 +262,11 @@ function BookingContent() {
               </p>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-4">
 
               {/* Name */}
               <div>
-                <label className="block text-[10px] tracking-[0.15em] uppercase text-[#666] mb-3">
+                <label className="block text-[10px] tracking-[0.15em] uppercase text-[#666] mb-1.5">
                   Nombre completo *
                 </label>
                 <input
@@ -274,13 +274,13 @@ function BookingContent() {
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   placeholder="Tu nombre"
-                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-3.5 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-white/20" style={{ fontSize: '16px' }}
+                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-2.5 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-white/20" style={{ fontSize: '16px' }}
                 />
               </div>
 
               {/* Phone with +52 prefix */}
               <div>
-                <label className="block text-[10px] tracking-[0.15em] uppercase text-[#666] mb-3">
+                <label className="block text-[10px] tracking-[0.15em] uppercase text-[#666] mb-1.5">
                   WhatsApp *
                 </label>
                 <div className={`flex border transition-colors ${isTrusted ? 'border-[#81807F]/60' : 'border-white/10 focus-within:border-[#81807F]/60'}`}>
@@ -301,7 +301,7 @@ function BookingContent() {
                       onChange={(e) => { setClientPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setIsTrusted(false); setTrustedName(null); }}
                       onBlur={(e) => checkTrustedPhone(e.target.value)}
                       placeholder="669 123 4567"
-                      className="flex-1 w-full bg-transparent px-3 py-3.5 text-white focus:outline-none placeholder:text-white/20"
+                      className="flex-1 w-full bg-transparent px-3 py-2.5 text-white focus:outline-none placeholder:text-white/20"
                       style={{ fontSize: '16px' }}
                     />
                     {checkingPhone && (
@@ -320,7 +320,7 @@ function BookingContent() {
 
               {/* Email optional */}
               <div>
-                <label className="block text-[10px] tracking-[0.15em] uppercase text-[#666] mb-3">
+                <label className="block text-[10px] tracking-[0.15em] uppercase text-[#666] mb-1.5">
                   Correo electrónico <span className="normal-case tracking-normal text-[#444]">— opcional</span>
                 </label>
                 <input
@@ -328,30 +328,30 @@ function BookingContent() {
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
                   placeholder="tu@correo.com"
-                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-3.5 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-white/20" style={{ fontSize: '16px' }}
+                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-2.5 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-white/20" style={{ fontSize: '16px' }}
                 />
               </div>
 
               {/* Notes optional */}
               <div>
-                <label className="block text-[10px] tracking-[0.15em] uppercase text-[#666] mb-3">
+                <label className="block text-[10px] tracking-[0.15em] uppercase text-[#666] mb-1.5">
                   Notas <span className="normal-case tracking-normal text-[#444]">— opcional</span>
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Longitud de cabello, alergias, referencias de color..."
-                  rows={3}
-                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-3.5 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-white/20 resize-none"
+                  rows={2}
+                  className="w-full bg-transparent border border-white/10 text-[#F0EDE8] px-4 py-2.5 focus:outline-none focus:border-[#81807F]/60 transition-colors placeholder:text-white/20 resize-none"
                   style={{ fontSize: '16px' }}
                 />
               </div>
 
-              <div className="pt-2">
+              <div>
                 <button
                   disabled={!clientName.trim() || !clientPhone.trim()}
                   onClick={() => setStep(selectedService ? 'date' : 'service')}
-                  className="w-full flex items-center justify-center gap-3 bg-[#F0EDE8] text-[#16181E] py-4 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-3 bg-[#F0EDE8] text-[#16181E] py-3 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Continuar <ArrowRight size={13} />
                 </button>
@@ -368,14 +368,14 @@ function BookingContent() {
           const visibleServices = services.filter(s => s.active && s.category === selectedCategory);
           return (
             <div>
-              <div className="mb-10">
+              <div className="mb-4">
                 <button
                   onClick={() => setStep('info')}
-                  className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-6"
+                  className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-3"
                 >
                   <ArrowLeft size={13} /> Atrás
                 </button>
-                <h2 className="font-[family-name:var(--font-display)] text-4xl font-light text-[#F0EDE8] leading-tight mb-3">
+                <h2 className="font-[family-name:var(--font-display)] text-3xl font-light text-[#F0EDE8] leading-tight mb-1">
                   Elige un servicio
                 </h2>
                 <p className="text-[#666] text-xs tracking-[0.1em] uppercase">
@@ -384,7 +384,7 @@ function BookingContent() {
               </div>
 
               {/* Category pills — centered */}
-              <div className="flex justify-center gap-6 pb-1 mb-8 overflow-x-auto scrollbar-none">
+              <div className="flex justify-center gap-6 pb-1 mb-4 overflow-x-auto scrollbar-none">
                 {categories.map((cat) => {
                   const active = cat === selectedCategory;
                   return (
@@ -409,7 +409,7 @@ function BookingContent() {
                   <button
                     key={svc.id}
                     onClick={() => { setSelectedService(svc); setSelectedDate(undefined); setSelectedSlot(null); setStep('date'); }}
-                    className="w-full text-left py-6 hover:bg-white/[0.02] transition-colors group"
+                    className="w-full text-left py-4 hover:bg-white/[0.02] transition-colors group"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -440,14 +440,14 @@ function BookingContent() {
         {/* ─── STEP 3: DATE ─── */}
         {step === 'date' && selectedService && (
           <div>
-            <div className="mb-10">
+            <div className="mb-4">
               <button
                 onClick={() => setStep('service')}
-                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-6"
+                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-3"
               >
                 <ArrowLeft size={13} /> Atrás
               </button>
-              <h2 className="font-[family-name:var(--font-display)] text-4xl font-light text-[#F0EDE8] leading-tight mb-3">
+              <h2 className="font-[family-name:var(--font-display)] text-3xl font-light text-[#F0EDE8] leading-tight mb-1">
                 Elige una fecha
               </h2>
               <div className="flex items-center gap-3">
@@ -502,14 +502,14 @@ function BookingContent() {
         {/* ─── STEP 4: TIME ─── */}
         {step === 'time' && selectedService && selectedDate && (
           <div>
-            <div className="mb-8">
+            <div className="mb-4">
               <button
                 onClick={() => setStep('date')}
-                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-6"
+                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-3"
               >
                 <ArrowLeft size={13} /> Atrás
               </button>
-              <h2 className="font-[family-name:var(--font-display)] text-4xl font-light text-[#F0EDE8] leading-tight mb-5">
+              <h2 className="font-[family-name:var(--font-display)] text-3xl font-light text-[#F0EDE8] leading-tight mb-3">
                 Elige un horario
               </h2>
               {/* Day navigation */}
