@@ -403,17 +403,17 @@ function BookingContent() {
               </div>
 
               {/* Category pills — centered */}
-              <div className="flex justify-center gap-6 pb-1 mb-4 overflow-x-auto scrollbar-none">
+              <div className="flex justify-center gap-2 pb-1 mb-4 overflow-x-auto scrollbar-none flex-wrap">
                 {categories.map((cat) => {
                   const active = cat === selectedCategory;
                   return (
                     <button
                       key={cat}
                       onClick={() => setSelectedCategory(cat)}
-                      className="shrink-0 text-xs tracking-[0.15em] uppercase transition-colors whitespace-nowrap pb-2"
+                      className="shrink-0 text-[10px] tracking-[0.15em] uppercase transition-all whitespace-nowrap px-4 py-2 rounded-full border"
                       style={active
-                        ? { color: '#F0EDE8', borderBottom: '1px solid #81807F' }
-                        : { color: '#444' }
+                        ? { color: '#F0EDE8', borderColor: '#81807F', background: 'rgba(129,128,127,0.12)' }
+                        : { color: '#555', borderColor: '#333' }
                       }
                     >
                       {cat}
