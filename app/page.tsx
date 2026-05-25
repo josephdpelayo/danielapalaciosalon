@@ -518,7 +518,7 @@ export default function Home() {
       <section
         id="horarios"
         className="px-6 md:px-16"
-        style={{ paddingTop: '36px', paddingBottom: '36px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
+        style={{ paddingTop: '28px', paddingBottom: '28px', borderTop: '1px solid rgba(255,255,255,0.04)', scrollMarginTop: '64px' }}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 max-w-4xl">
 
@@ -561,7 +561,7 @@ export default function Home() {
                 title="Ubicación Daniela Palacio Hair Room"
                 src="https://maps.google.com/maps?q=Plaza+A2+Mazatlan+Sinaloa+Mexico&t=&z=16&ie=UTF8&iwloc=&output=embed"
                 width="100%"
-                height="170"
+                height="130"
                 style={{ border: 0, display: 'block', filter: 'grayscale(1) invert(1) brightness(0.85)' }}
                 allowFullScreen
                 loading="lazy"
@@ -585,28 +585,25 @@ export default function Home() {
       {/* ── INSTAGRAM ── */}
       <section
         className="px-6 md:px-16"
-        style={{ paddingTop: '56px', paddingBottom: '72px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
+        style={{ paddingTop: '28px', paddingBottom: '32px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
-        <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '28px' }}>
+        <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#686560', marginBottom: '16px' }}>
           Síguenos
         </p>
         <a
           href="https://instagram.com/danielapalaciosalon"
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex items-center gap-5 w-fit"
+          className="group flex items-center gap-4 w-fit"
         >
-          <InstagramIcon size={20} className="text-[#81807F]" />
+          <InstagramIcon size={18} className="text-[#81807F]" />
           <span
             className="font-[family-name:var(--font-display)] group-hover:opacity-50 transition-opacity duration-300"
-            style={{ fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: 300, color: '#F0EDE8', letterSpacing: '-0.01em' }}
+            style={{ fontSize: 'clamp(22px, 4vw, 36px)', fontWeight: 300, color: '#F0EDE8', letterSpacing: '-0.01em' }}
           >
             @danielapalaciosalon
           </span>
         </a>
-        <p style={{ fontSize: '12px', color: '#505050', fontWeight: 300, marginTop: '16px', maxWidth: '360px', lineHeight: 1.8 }}>
-          Trabajo real, resultados reales. Síguenos para ver transformaciones y disponibilidad.
-        </p>
       </section>
 
       {/* ── FOOTER ── */}
