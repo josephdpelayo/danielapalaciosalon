@@ -1248,15 +1248,16 @@ interface ClientRecord {
   last_appt: string | null;
 }
 type ClientFilter = 'todos' | 'nuevos' | 'frecuentes';
+type ClientSort   = 'az' | 'za' | 'visitas' | 'ultima';
 
 function ClientesTab({ adminSecret }: { adminSecret: string }) {
   const [filter, setFilter]             = useState<ClientFilter>('todos');
+  const [sort, setSort]                 = useState<ClientSort>('az');
   const [clientSearch, setClientSearch] = useState('');
   const [trustedClients, setTrustedClients] = useState<TrustedClient[]>([]);
   const [allClients, setAllClients]     = useState<ClientRecord[]>([]);
   const [loading, setLoading]           = useState(false);
-  const [promoting, setPromoting]       = useState<string | null>(null);
-  const [deleting, setDeleting]         = useState<string | null>(null);
+  const [togglingStar, setTogglingStar] = useState<string | null>(null);
   const [deletingPhone, setDeletingPhone] = useState<string | null>(null);
   // edit trusted client
   const [editingId, setEditingId]       = useState<string | null>(null);
@@ -1301,36 +1302,32 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const promote = async (client: ClientRecord) => {
-    setPromoting(client.phone_normalized);
+  const toggleStar = async (c: { name: string; phone: string; phone_normalized: string; trusted_id: string | null }) => {
+    setTogglingStar(c.phone_normalized);
     try {
-      const res = await fetch('/api/trusted-clients', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-        body: JSON.stringify({ name: client.name, phone: client.phone, notes: null }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        setTrustedClients(prev => [...prev, data as TrustedClient].sort((a, b) => a.name.localeCompare(b.name)));
+      if (c.trusted_id) {
+        await fetch('/api/trusted-clients', {
+          method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+          body: JSON.stringify({ id: c.trusted_id }),
+        });
+        setTrustedClients(prev => prev.filter(tc => tc.id !== c.trusted_id));
       } else {
-        alert(`No se pudo agregar: ${(data as { error?: string }).error ?? 'Error desconocido'}`);
+        const res = await fetch('/api/trusted-clients', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+          body: JSON.stringify({ name: c.name, phone: c.phone, notes: null }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setTrustedClients(prev => [...prev, data as TrustedClient].sort((a, b) => a.name.localeCompare(b.name)));
+        } else {
+          alert(`No se pudo agregar: ${(data as { error?: string }).error ?? 'Error desconocido'}`);
+        }
       }
     } catch {
       alert('Error de conexión. Intenta de nuevo.');
     } finally {
-      setPromoting(null);
+      setTogglingStar(null);
     }
-  };
-
-  const demote = async (id: string) => {
-    setDeleting(id);
-    try {
-      await fetch('/api/trusted-clients', {
-        method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-        body: JSON.stringify({ id }),
-      });
-      setTrustedClients(prev => prev.filter(c => c.id !== id));
-    } finally { setDeleting(null); }
   };
 
   const handleAdd = async () => {
@@ -1390,30 +1387,41 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
     const q = clientSearch.trim().toLowerCase();
     const applySearch = <T extends { name: string; phone: string }>(list: T[]) =>
       q ? list.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)) : list;
+
+    const applySort = <T extends { name: string; appt_count: number; last_appt: string | null }>(list: T[]): T[] => {
+      const s = [...list];
+      if (sort === 'az')      s.sort((a, b) => a.name.localeCompare(b.name));
+      else if (sort === 'za') s.sort((a, b) => b.name.localeCompare(a.name));
+      else if (sort === 'visitas') s.sort((a, b) => (b.appt_count ?? 0) - (a.appt_count ?? 0));
+      else if (sort === 'ultima')  s.sort((a, b) => (b.last_appt ?? '').localeCompare(a.last_appt ?? ''));
+      return s;
+    };
+
     if (filter === 'frecuentes') {
       const list = trustedClients.map(tc => {
         const norm = tc.phone.replace(/\D/g, '').slice(-10);
         const fromAppts = allClients.find(c => c.phone_normalized === norm);
         return { name: tc.name, phone: tc.phone, phone_normalized: norm, email: tc.email, appt_count: fromAppts?.appt_count ?? 0, last_appt: fromAppts?.last_appt ?? null, trusted_id: tc.id, notes: tc.notes };
-      }).sort((a, b) => a.name.localeCompare(b.name));
-      return applySearch(list);
+      });
+      return applySearch(applySort(list));
     }
     if (filter === 'nuevos') {
       const list = allClients.filter(c => !trustedNorms.has(c.phone_normalized)).map(c => ({ ...c, trusted_id: null as string | null, notes: null as string | null }));
-      return applySearch(list);
+      return applySearch(applySort(list));
     }
     // todos
-    const result: (ClientRecord & { trusted_id: string | null; notes: string | null })[] = allClients.map(c => ({
-      ...c, trusted_id: trustedNorms.get(c.phone_normalized)?.id ?? null, notes: null,
-    }));
+    const result: (ClientRecord & { trusted_id: string | null; notes: string | null })[] = allClients.map(c => {
+      const tc = trustedNorms.get(c.phone_normalized);
+      return { ...c, trusted_id: tc?.id ?? null, notes: tc?.notes ?? null, email: c.email ?? tc?.email ?? null };
+    });
     for (const tc of trustedClients) {
       const norm = tc.phone.replace(/\D/g, '').slice(-10);
       if (!allClients.find(c => c.phone_normalized === norm)) {
         result.push({ name: tc.name, phone: tc.phone, phone_normalized: norm, email: tc.email, appt_count: 0, last_appt: null, trusted_id: tc.id, notes: tc.notes });
       }
     }
-    return applySearch(result.sort((a, b) => a.name.localeCompare(b.name)));
-  }, [filter, clientSearch, allClients, trustedClients]);
+    return applySearch(applySort(result));
+  }, [filter, sort, clientSearch, allClients, trustedClients]);
 
   const counts = useMemo(() => {
     const trustedNorms = new Set(trustedClients.map(tc => tc.phone.replace(/\D/g, '').slice(-10)));
@@ -1426,9 +1434,9 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
   }, [allClients, trustedClients]);
 
   return (
-    <div className="space-y-6">
-      {/* Filter + actions */}
-      <div className="flex items-center gap-0 border-b border-black/8 flex-wrap">
+    <div className="space-y-4">
+      {/* Filter tabs */}
+      <div className="flex items-center gap-0 border-b border-black/8">
         {(['todos', 'nuevos', 'frecuentes'] as ClientFilter[]).map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`px-4 py-3 text-[9px] tracking-[0.18em] uppercase border-b-2 transition-colors capitalize ${
@@ -1437,25 +1445,32 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
             {f} <span className="ml-1 opacity-50">({counts[f]})</span>
           </button>
         ))}
-        <div className="ml-auto flex items-center gap-2 pb-1">
-          <button onClick={load} disabled={loading} className="text-[#9A9590] hover:text-[#81807F] transition-colors p-1">
-            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-          </button>
-          <button onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-1.5 text-[9px] tracking-[0.15em] uppercase border border-[#81807F]/30 text-[#81807F] px-3 py-1.5 hover:bg-[#81807F]/10 transition-colors">
-            <UserPlus size={11} /> Agregar
-          </button>
-        </div>
       </div>
 
-      {/* Search */}
-      <input
-        type="text" value={clientSearch}
-        onChange={e => setClientSearch(e.target.value)}
-        placeholder="Buscar por nombre o teléfono..."
-        className="w-full bg-transparent border border-black/8 text-[#1C1A19] px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/40 placeholder:text-black/25"
-        style={{ fontSize: '16px' }}
-      />
+      {/* Search + sort + actions row */}
+      <div className="flex items-center gap-2">
+        <input
+          type="text" value={clientSearch}
+          onChange={e => setClientSearch(e.target.value)}
+          placeholder="Buscar..."
+          className="flex-1 min-w-0 bg-transparent border border-black/8 text-[#1C1A19] px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/40 placeholder:text-black/25"
+          style={{ fontSize: '16px' }}
+        />
+        <select value={sort} onChange={e => setSort(e.target.value as ClientSort)}
+          className="shrink-0 bg-transparent border border-black/8 text-[#6B6560] text-[9px] tracking-[0.1em] uppercase px-2 py-2 focus:outline-none cursor-pointer">
+          <option value="az">A–Z</option>
+          <option value="za">Z–A</option>
+          <option value="visitas">+ Visitas</option>
+          <option value="ultima">Última</option>
+        </select>
+        <button onClick={load} disabled={loading} className="shrink-0 text-[#9A9590] hover:text-[#81807F] transition-colors p-1.5 border border-black/8">
+          <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />
+        </button>
+        <button onClick={() => setShowForm(v => !v)}
+          className="shrink-0 flex items-center gap-1.5 text-[9px] tracking-[0.15em] uppercase border border-[#81807F]/30 text-[#81807F] px-3 py-2 hover:bg-[#81807F]/10 transition-colors">
+          <UserPlus size={11} /> Agregar
+        </button>
+      </div>
 
       {/* Add form */}
       {showForm && (
@@ -1520,46 +1535,57 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         <div className="divide-y divide-black/5">
           {displayed.map(c => (
             <div key={c.phone_normalized}>
-              <div className="flex items-center justify-between py-3.5 gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  {c.trusted_id
-                    ? <Star size={11} className="text-[#81807F] shrink-0" />
-                    : <span className="w-2.5 h-2.5 rounded-full border border-black/10 shrink-0" />
+              <div className="flex items-center py-3 gap-3">
+                {/* Zone 1: star toggle */}
+                <button
+                  onClick={() => toggleStar(c)}
+                  disabled={togglingStar === c.phone_normalized}
+                  className="shrink-0 p-1 transition-colors disabled:opacity-40"
+                  title={c.trusted_id ? 'Quitar de frecuentes' : 'Agregar a frecuentes'}
+                >
+                  {togglingStar === c.phone_normalized
+                    ? <div className="w-3.5 h-3.5 border border-amber-400 border-t-transparent rounded-full animate-spin" />
+                    : c.trusted_id
+                      ? <Star size={14} className="text-amber-400" fill="#fbbf24" />
+                      : <Star size={14} className="text-black/20 hover:text-amber-300 transition-colors" />
                   }
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-[#1C1A19] text-sm">{c.name}</p>
-                      {c.appt_count > 0 && (
-                        <span className="text-[9px] tracking-wider text-[#B0AAA5]">{c.appt_count} visita{c.appt_count !== 1 ? 's' : ''}</span>
-                      )}
-                    </div>
-                    <p className="text-[#6B6560] text-xs mt-0.5 truncate">{c.phone}{c.email ? <span className="text-[#B0AAA5]"> · {c.email}</span> : null}</p>
-                    {c.notes && <p className="text-[#B0AAA5] text-[10px] mt-0.5 italic">{c.notes}</p>}
+                </button>
+
+                {/* Zone 2: info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-[#1C1A19] text-sm">{c.name}</p>
+                    {c.appt_count > 0 && (
+                      <span className="text-[9px] tracking-wider text-[#B0AAA5]">{c.appt_count} visita{c.appt_count !== 1 ? 's' : ''}</span>
+                    )}
                   </div>
+                  <p className="text-[#6B6560] text-xs mt-0.5 truncate">
+                    {c.phone}{c.email ? <span className="text-[#B0AAA5]"> · {c.email}</span> : null}
+                  </p>
+                  {c.notes && <p className="text-[#B0AAA5] text-[10px] mt-0.5 italic">{c.notes}</p>}
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {c.trusted_id && (
-                    <button onClick={() => editingId !== null && editingId === c.trusted_id ? setEditingId(null) : startEdit(trustedClients.find(t => t.id === c.trusted_id)!)}
-                      className="text-[#B0AAA5] hover:text-[#81807F] transition-colors p-1.5">
+
+                {/* Zone 3: single action */}
+                <div className="shrink-0">
+                  {c.trusted_id ? (
+                    <button
+                      onClick={() => editingId !== null && editingId === c.trusted_id ? setEditingId(null) : startEdit(trustedClients.find(t => t.id === c.trusted_id)!)}
+                      className="text-[#B0AAA5] hover:text-[#81807F] transition-colors p-1.5"
+                      title="Editar"
+                    >
                       <Pencil size={12} />
                     </button>
-                  )}
-                  {!c.trusted_id ? (
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => promote(c)} disabled={promoting === c.phone_normalized}
-                        className="flex items-center gap-1 text-[9px] tracking-[0.1em] uppercase border border-[#81807F]/25 text-[#81807F]/60 px-2.5 py-1.5 hover:bg-[#81807F]/10 hover:text-[#81807F] transition-colors disabled:opacity-40">
-                        {promoting === c.phone_normalized ? <div className="w-3 h-3 border border-[#81807F] border-t-transparent rounded-full animate-spin" /> : <Star size={9} />}
-                        Frecuente
-                      </button>
-                      <button onClick={() => handleDeleteByPhone(c.phone_normalized, c.name)} disabled={deletingPhone === c.phone_normalized}
-                        className="text-[#B0AAA5] hover:text-red-500 transition-colors disabled:opacity-40 p-1.5">
-                        {deletingPhone === c.phone_normalized ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={12} />}
-                      </button>
-                    </div>
                   ) : (
-                    <button onClick={() => demote(c.trusted_id!)} disabled={deleting === c.trusted_id}
-                      className="text-[#B0AAA5] hover:text-red-500 transition-colors disabled:opacity-40 p-1.5">
-                      {deleting === c.trusted_id ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={13} />}
+                    <button
+                      onClick={() => handleDeleteByPhone(c.phone_normalized, c.name)}
+                      disabled={deletingPhone === c.phone_normalized}
+                      className="text-[#B0AAA5] hover:text-red-500 transition-colors disabled:opacity-40 p-1.5"
+                      title="Eliminar registros"
+                    >
+                      {deletingPhone === c.phone_normalized
+                        ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                        : <Trash2 size={12} />
+                      }
                     </button>
                   )}
                 </div>
