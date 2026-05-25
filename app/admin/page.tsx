@@ -1368,10 +1368,12 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
           method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
           body: JSON.stringify({ id: editingId, name: editName.trim(), phone: editPhone.trim(), email: editEmail.trim() || null, notes: editNotes.trim() || null }),
         });
+        const data = await res.json().catch(() => ({}));
         if (res.ok) {
-          const updated = await res.json();
-          setTrustedClients(prev => prev.map(c => c.id === editingId ? updated : c).sort((a, b) => a.name.localeCompare(b.name)));
+          setTrustedClients(prev => prev.map(c => c.id === editingId ? data : c).sort((a, b) => a.name.localeCompare(b.name)));
           closeEdit();
+        } else {
+          alert(`No se pudo guardar: ${(data as { error?: string }).error ?? 'Error desconocido'}`);
         }
       } else {
         // Promote normal client to trusted with edited info

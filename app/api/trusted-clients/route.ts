@@ -30,12 +30,26 @@ export async function POST(req: NextRequest) {
   if (!name || !phone) return NextResponse.json({ error: 'Nombre y teléfono requeridos' }, { status: 400 });
 
   const normalized = normalizePhone(phone);
+  const emailNorm = email ? email.trim().toLowerCase() : null;
 
   if (!(await import('@/lib/supabase')).supabaseReady) {
-    return NextResponse.json({ id: 'mock-' + Date.now(), name, phone, phone_normalized: normalized, notes, email: email || null });
+    return NextResponse.json({ id: 'mock-' + Date.now(), name, phone, phone_normalized: normalized, notes, email: emailNorm });
   }
 
   const { supabase } = await import('@/lib/supabase');
+
+  // Duplicate phone check
+  const { data: dupPhone } = await supabase
+    .from('dp_trusted_clients').select('name').eq('phone_normalized', normalized).maybeSingle();
+  if (dupPhone) return NextResponse.json({ error: `El teléfono ya está registrado para ${dupPhone.name}` }, { status: 409 });
+
+  // Duplicate email check
+  if (emailNorm) {
+    const { data: dupEmail } = await supabase
+      .from('dp_trusted_clients').select('name').ilike('email', emailNorm).maybeSingle();
+    if (dupEmail) return NextResponse.json({ error: `El correo ya está registrado para ${dupEmail.name}` }, { status: 409 });
+  }
+
   // Try insert with email first; fall back without it if the column doesn't exist yet
   let result = await supabase
     .from('dp_trusted_clients')
@@ -65,15 +79,29 @@ export async function PUT(req: NextRequest) {
   if (!id || !name || !phone) return NextResponse.json({ error: 'id, nombre y teléfono requeridos' }, { status: 400 });
 
   const normalized = normalizePhone(phone);
+  const emailNorm = email ? email.trim().toLowerCase() : null;
 
   if (!(await import('@/lib/supabase')).supabaseReady) {
-    return NextResponse.json({ id, name, phone, phone_normalized: normalized, email: email || null, notes: notes || null });
+    return NextResponse.json({ id, name, phone, phone_normalized: normalized, email: emailNorm, notes: notes || null });
   }
 
   const { supabase } = await import('@/lib/supabase');
+
+  // Duplicate phone check (excluding self)
+  const { data: dupPhone } = await supabase
+    .from('dp_trusted_clients').select('name').eq('phone_normalized', normalized).neq('id', id).maybeSingle();
+  if (dupPhone) return NextResponse.json({ error: `El teléfono ya está registrado para ${dupPhone.name}` }, { status: 409 });
+
+  // Duplicate email check (excluding self)
+  if (emailNorm) {
+    const { data: dupEmail } = await supabase
+      .from('dp_trusted_clients').select('name').ilike('email', emailNorm).neq('id', id).maybeSingle();
+    if (dupEmail) return NextResponse.json({ error: `El correo ya está registrado para ${dupEmail.name}` }, { status: 409 });
+  }
+
   const { data, error } = await supabase
     .from('dp_trusted_clients')
-    .update({ name, phone, phone_normalized: normalized, email: email || null, notes: notes || null })
+    .update({ name, phone, phone_normalized: normalized, email: emailNorm, notes: notes || null })
     .eq('id', id)
     .select()
     .single();
