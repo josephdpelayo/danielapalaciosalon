@@ -172,9 +172,9 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   const [msgConf, setMsgConf]           = useState(DEFAULT_SETTINGS.msg_confirmation);
   const [msgReminder, setMsgReminder]   = useState(DEFAULT_SETTINGS.msg_reminder_24h);
   const [search, setSearch]             = useState('');
-  const [openProximas, setOpenProximas]       = useState(true);
-  const [openRecordatorios, setOpenRecordatorios] = useState(true);
-  const [openBitacora, setOpenBitacora]       = useState(true);
+  const [openProximas, setOpenProximas]           = useState(false);
+  const [openRecordatorios, setOpenRecordatorios] = useState(false);
+  const [openBitacora, setOpenBitacora]           = useState(false);
   const [waitlist, setWaitlist]               = useState<WaitlistEntry[]>([]);
   const [updatingWaitlist, setUpdatingWaitlist] = useState<string | null>(null);
   const [triggeringReminders, setTriggeringReminders] = useState(false);
@@ -262,184 +262,47 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
 
-      {/* ── Quick access ── */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* ── Stats compactas ── */}
+      <div className="flex border border-black/8 bg-white">
         {[
-          { id: 'sec-proximas',      label: 'Próximas citas',  color: '#3B82F6', bg: '#EFF6FF', count: upcoming.length },
-          { id: 'sec-atencion',      label: 'Req. atención',   color: '#EF4444', bg: '#FEF2F2', count: needsAction.length },
-          { id: 'sec-recordatorios', label: 'Recordatorios',   color: '#F59E0B', bg: '#FFFBEB', count: tomorrowAppts.length },
-          { id: 'sec-bitacora',      label: 'Bitácora',        color: '#10B981', bg: '#ECFDF5', count: null },
-        ].map(({ id, label, color, bg, count }) => (
-          <button key={id} onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="text-left p-3 rounded-sm hover:opacity-80 active:opacity-60 transition-opacity"
-            style={{ background: bg, border: `1px solid ${color}30` }}>
-            <span className="block text-[10px] tracking-[0.15em] uppercase font-medium" style={{ color }}>
-              {label}
-            </span>
-            {count !== null && (
-              <span className="block text-xl font-light mt-0.5" style={{ color, fontFamily: 'var(--font-display)' }}>{count}</span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Stats ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px border border-black/8">
-        {[
-          { label: 'Hoy',          val: todayAppts.length,                                      color: '#1C1A19' },
-          { label: 'Sin confirmar', val: needsAction.length,                                    color: needsAction.length > 0 ? '#fb923c' : '#9A9590' },
-          { label: 'Total activas', val: appointments.filter((a) => a.status !== 'cancelled').length, color: '#81807F' },
-          { label: 'Este mes', val: `$${monthRevenue.toLocaleString('es-MX')}`, color: '#81807F' },
-        ].map((s) => (
-          <div key={s.label} className="p-4 text-center" style={{ background: '#FFFFFF' }}>
-            <div className="font-[family-name:var(--font-display)] text-3xl font-light mb-1" style={{ color: s.color }}>{s.val}</div>
-            <div className="text-[9px] tracking-[0.2em] uppercase text-[#9A9590]">{s.label}</div>
+          { label: 'Hoy',          val: todayAppts.length,  color: todayAppts.length > 0 ? '#1C1A19' : '#9A9590' },
+          { label: 'Pendientes',   val: needsAction.length, color: needsAction.length > 0 ? '#fb923c' : '#9A9590' },
+          { label: 'Próximas',     val: upcoming.length,    color: '#81807F' },
+          { label: 'Este mes',     val: `$${monthRevenue.toLocaleString('es-MX')}`, color: '#81807F' },
+        ].map((s, i) => (
+          <div key={s.label} className={`flex-1 py-3 text-center ${i < 3 ? 'border-r border-black/8' : ''}`}>
+            <div className="font-[family-name:var(--font-display)] text-2xl font-light" style={{ color: s.color }}>{s.val}</div>
+            <div className="text-[9px] tracking-[0.15em] uppercase text-[#9A9590] mt-0.5">{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* ── Próximas citas ── */}
-      {Object.keys(upcomingByDate).length > 0 && (
-        <div id="sec-proximas" className="border border-black/5">
-          <button
-            onClick={() => setOpenProximas(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/4 transition-colors"
-          >
-            <span className="text-[10px] tracking-[0.3em] uppercase text-[#6B6560]">
-              Próximas citas <span className="text-[#B0AAA5]">· {upcoming.length}</span>
-            </span>
-            <ArrowRight size={12} className={`text-[#B0AAA5] transition-transform duration-200 ${openProximas ? 'rotate-90' : ''}`} />
-          </button>
-          {openProximas && (
-            <div className="px-4 pb-4 space-y-4 border-t border-black/5 pt-4">
-              {Object.keys(upcomingByDate).sort().map((date) => {
-                const dt = parseISO(date + 'T12:00:00');
-                const label = isTomorrow(dt) ? 'Mañana' : format(dt, "EEE d MMM", { locale: es });
-                return (
-                  <div key={date}>
-                    <p className="text-[9px] tracking-[0.2em] uppercase text-[#81807F] mb-1 capitalize">{label} · {format(dt, "d 'de' MMMM", { locale: es })}</p>
-                    {upcomingByDate[date].map(apt => (
-                      <div key={apt.id} className="flex items-center justify-between py-2.5 border-b border-black/5"
-                        style={{ borderLeft: `3px solid ${serviceColor(apt.dp_services?.name)}`, paddingLeft: '10px' }}>
-                        <div>
-                          <p className="text-[#1C1A19] text-sm">{apt.client_name}</p>
-                          <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
-                        </div>
-                        <StatusBadge status={apt.status} />
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
+      {/* ── Citas de hoy ── */}
+      {todayAppts.length > 0 && (
+        <div className="border border-black/5 bg-white">
+          <p className="text-[9px] tracking-[0.3em] uppercase text-[#81807F] px-4 py-2.5 border-b border-black/5">Hoy · {todayAppts.length}</p>
+          {todayAppts.map((apt, idx) => (
+            <div key={apt.id}
+              className={`flex items-center justify-between px-4 py-2.5 ${idx < todayAppts.length - 1 ? 'border-b border-black/5' : ''}`}
+              style={{ borderLeft: `3px solid ${serviceColor(apt.dp_services?.name)}`, paddingLeft: '14px' }}>
+              <div>
+                <p className="text-[#1C1A19] text-sm">{apt.client_name}</p>
+                <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
+              </div>
+              <StatusBadge status={apt.status} />
             </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Recordatorios de mañana ── */}
-      {tomorrowAppts.length > 0 && (
-        <div id="sec-recordatorios" className="border border-black/5">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-black/5">
-            <button
-              onClick={() => setOpenRecordatorios(v => !v)}
-              className="flex items-center gap-2 text-left"
-            >
-              <span className="text-[10px] tracking-[0.3em] uppercase flex items-center gap-2 text-[#81807F]">
-                <Bell size={11} /> Recordatorios de mañana
-                <span className="text-[#6B6560]">· {tomorrowAppts.length}</span>
-                {sentReminderIds.size > 0 && (
-                  <span className="text-emerald-600">({sentReminderIds.size} enviados)</span>
-                )}
-              </span>
-            </button>
-            {/* Botón debug: dispara el cron manualmente */}
-            <button
-              disabled={triggeringReminders}
-              onClick={async () => {
-                setTriggeringReminders(true);
-                setTriggerResult(null);
-                try {
-                  const res = await fetch('/api/admin/trigger-reminders', {
-                    method: 'POST',
-                    headers: { 'x-admin-secret': adminSecret },
-                  });
-                  const data = await res.json();
-                  setTriggerResult({ count: data.count ?? 0, pushed: !data.error });
-                } catch {
-                  setTriggerResult({ count: 0, pushed: false });
-                } finally {
-                  setTriggeringReminders(false);
-                }
-              }}
-              className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-amber-300 text-amber-700 px-2.5 py-1.5 hover:bg-amber-50 transition-colors disabled:opacity-40"
-            >
-              {triggeringReminders ? (
-                <div className="w-3 h-3 border border-amber-600 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Bell size={9} />
-              )}
-              Disparar push
-            </button>
-          </div>
-
-          {/* Resultado del trigger */}
-          {triggerResult && (
-            <div className={`px-4 py-2 text-[10px] tracking-wider border-b border-black/5 ${triggerResult.pushed ? 'text-emerald-700 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
-              {triggerResult.pushed
-                ? `✓ Push enviado — ${triggerResult.count} recordatorio${triggerResult.count !== 1 ? 's' : ''} detectado${triggerResult.count !== 1 ? 's' : ''}`
-                : '✕ Error al disparar — revisa CRON_SECRET en Vercel'}
-            </div>
-          )}
-
-          {/* Lista de recordatorios */}
-          {openRecordatorios && (
-            <div className="pb-3">
-              {tomorrowAppts.map((apt, idx) => {
-                const sent = sentReminderIds.has(apt.id);
-                const waLink = waHref(apt.client_phone, fillTemplate(msgReminder, apt));
-                return (
-                  <a
-                    key={apt.id}
-                    href={waLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setSentReminderIds((prev) => new Set([...prev, apt.id]))}
-                    className={`flex items-center justify-between px-4 py-3 transition-colors ${sent ? 'bg-emerald-50/60' : 'hover:bg-black/2'} ${idx < tomorrowAppts.length - 1 ? 'border-b border-black/5' : ''}`}
-                    style={{ borderLeft: `3px solid ${sent ? '#10b981' : serviceColor(apt.dp_services?.name)}`, paddingLeft: '14px' }}
-                  >
-                    <div className="min-w-0">
-                      <p className={`text-sm ${sent ? 'text-emerald-700' : 'text-[#1C1A19]'}`}>{apt.client_name}</p>
-                      <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
-                    </div>
-                    {sent ? (
-                      <span className="flex items-center gap-1 text-[9px] text-emerald-600 uppercase tracking-wider">
-                        <Check size={11} /> Enviado
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-[9px] text-[#25D366] uppercase tracking-wider border border-[#25D366]/30 px-2 py-1">
-                        <MessageCircle size={9} /> WA →
-                      </span>
-                    )}
-                  </a>
-                );
-              })}
-              <p className="text-[#C0BBB6] text-[10px] px-4 pt-3">
-                Toca cada nombre para abrir WhatsApp con el recordatorio pre-escrito.
-              </p>
-            </div>
-          )}
+          ))}
         </div>
       )}
 
       {/* ── Requieren atención ── */}
       {needsAction.length > 0 && (
-        <div id="sec-atencion">
-          <p className="text-[10px] tracking-[0.3em] uppercase mb-4 flex items-center gap-2" style={{ color: '#fb923c' }}>
+        <div>
+          <p className="text-[10px] tracking-[0.3em] uppercase mb-3 flex items-center gap-2" style={{ color: '#fb923c' }}>
             <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-            Requieren atención · {needsAction.length}
+            Pendientes · {needsAction.length}
           </p>
           <div className="space-y-2">
             {needsAction.map((apt) => {
@@ -456,12 +319,8 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                         <span className="text-[#1C1A19] text-sm font-medium">{apt.client_name}</span>
                         <StatusBadge status={apt.status} />
                       </div>
-                      <p className="text-[#6B6560] text-xs mb-0.5">{apt.dp_services?.name ?? '—'}</p>
-                      <p className="text-[#6B6560] text-xs">
-                        {dtStr} · {formatTime(apt.start_time)} – {formatTime(apt.end_time)}
-                      </p>
-                      <a href={`https://wa.me/52${apt.client_phone.replace(/\D/g, '')}`}
-                        target="_blank" rel="noopener noreferrer"
+                      <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {dtStr} {formatTime(apt.start_time)}</p>
+                      <a href={`https://wa.me/52${apt.client_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-1 text-[#9A9590] hover:text-[#25D366] transition-colors text-xs mt-1 w-fit">
                         <Phone size={10} /> {apt.client_phone}
                       </a>
@@ -474,7 +333,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                       </button>
                       <button onClick={() => updateStatus(apt.id, 'cancelled')} disabled={updating === apt.id}
                         className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-red-300 text-red-500 px-3 py-1.5 hover:bg-red-50 transition-colors disabled:opacity-40">
-                        <X size={10} /> No aceptar
+                        <X size={10} /> Cancelar
                       </button>
                     </div>
                   </div>
@@ -485,128 +344,150 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
         </div>
       )}
 
-      {/* ── Bitácora ── */}
-      <div id="sec-bitacora" className="border border-black/5">
-        <button
-          onClick={() => setOpenBitacora(v => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/4 transition-colors"
-        >
-          <span className="text-[10px] tracking-[0.3em] uppercase text-[#6B6560]">Bitácora · últimas reservas</span>
-          <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-            <button onClick={load} disabled={loading} className="text-[#9A9590] hover:text-[#81807F] transition-colors p-0.5">
-              <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+      {/* ── Recordatorios de mañana ── */}
+      {tomorrowAppts.length > 0 && (
+        <div className="border border-black/5">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button onClick={() => setOpenRecordatorios(v => !v)} className="flex-1 flex items-center gap-2 text-left min-w-0">
+              <Bell size={11} className="text-amber-500 shrink-0" />
+              <span className="text-[10px] tracking-[0.25em] uppercase text-[#6B6560] truncate">
+                Recordatorios mañana · {tomorrowAppts.length}
+                {sentReminderIds.size > 0 && <span className="text-emerald-600 ml-1">({sentReminderIds.size} ✓)</span>}
+              </span>
+              <ArrowRight size={11} className={`text-[#B0AAA5] transition-transform shrink-0 ${openRecordatorios ? 'rotate-90' : ''}`} />
             </button>
-            <ArrowRight size={12} className={`text-[#B0AAA5] transition-transform duration-200 pointer-events-none ${openBitacora ? 'rotate-90' : ''}`} />
+            <button disabled={triggeringReminders}
+              onClick={async () => {
+                setTriggeringReminders(true); setTriggerResult(null);
+                try {
+                  const res = await fetch('/api/admin/trigger-reminders', { method: 'POST', headers: { 'x-admin-secret': adminSecret } });
+                  const data = await res.json();
+                  setTriggerResult({ count: data.count ?? 0, pushed: !data.error });
+                } catch { setTriggerResult({ count: 0, pushed: false }); }
+                finally { setTriggeringReminders(false); }
+              }}
+              className="flex items-center gap-1 text-[9px] uppercase border border-amber-200 text-amber-600 px-2 py-1 hover:bg-amber-50 transition-colors disabled:opacity-40 shrink-0 ml-2">
+              {triggeringReminders ? <div className="w-3 h-3 border border-amber-500 border-t-transparent rounded-full animate-spin" /> : <Bell size={9} />}
+              Push
+            </button>
           </div>
-        </button>
-        {openBitacora && (
-        <div className="px-4 pb-4 border-t border-black/5 pt-4">
-        <input
-          type="text" value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar clienta..."
-          className="w-full bg-transparent border border-black/8 text-[#1C1A19] px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/40 placeholder:text-black/25 mb-4"
-          style={{ fontSize: '16px' }}
-        />
-
-        {(() => {
-          const filteredRecent = search.trim()
-            ? recent.filter((a) => a.client_name.toLowerCase().includes(search.toLowerCase()))
-            : recent;
-          return filteredRecent.length === 0 ? (
-            <div className="border border-black/5 py-14 text-center">
-              <p className="text-[#9A9590] text-sm">
-                {search.trim() ? 'Sin resultados para esta búsqueda.' : 'No hay reservas registradas.'}
-              </p>
+          {triggerResult && (
+            <div className={`px-4 py-1.5 text-[10px] border-t border-black/5 ${triggerResult.pushed ? 'text-emerald-700 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
+              {triggerResult.pushed ? `✓ Push enviado — ${triggerResult.count} recordatorio${triggerResult.count !== 1 ? 's' : ''}` : '✕ Error — revisa CRON_SECRET en Vercel'}
             </div>
-          ) : (
-            <div className="divide-y divide-black/5">
-              {filteredRecent.map((apt) => {
-                const color = serviceColor(apt.dp_services?.name);
-                const dtStr = isToday(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Hoy'
-                  : isTomorrow(parseISO(apt.appointment_date + 'T12:00:00')) ? 'Mañana'
-                  : format(parseISO(apt.appointment_date + 'T12:00:00'), "d MMM", { locale: es });
-                const ago = formatDistanceToNow(parseISO(apt.created_at), { locale: es, addSuffix: true });
+          )}
+          {openRecordatorios && (
+            <div className="border-t border-black/5">
+              {tomorrowAppts.map((apt, idx) => {
+                const sent = sentReminderIds.has(apt.id);
                 return (
-                  <div key={apt.id} className="py-3.5 flex items-start gap-3"
-                    style={{ borderLeft: `2px solid ${color}40`, paddingLeft: '12px' }}>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <span className="text-[#1C1A19] text-sm">{apt.client_name}</span>
-                        <StatusBadge status={apt.status} />
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'}</span>
-                        <span className="text-[#B0AAA5] text-xs">·</span>
-                        <span className="text-[#6B6560] text-xs">{dtStr} {formatTime(apt.start_time)}</span>
-                      </div>
+                  <a key={apt.id} href={waHref(apt.client_phone, fillTemplate(msgReminder, apt))}
+                    target="_blank" rel="noopener noreferrer"
+                    onClick={() => setSentReminderIds((prev) => new Set([...prev, apt.id]))}
+                    className={`flex items-center justify-between px-4 py-3 transition-colors ${sent ? 'bg-emerald-50/60' : 'hover:bg-black/2'} ${idx < tomorrowAppts.length - 1 ? 'border-b border-black/5' : ''}`}
+                    style={{ borderLeft: `3px solid ${sent ? '#10b981' : serviceColor(apt.dp_services?.name)}`, paddingLeft: '14px' }}>
+                    <div>
+                      <p className={`text-sm ${sent ? 'text-emerald-700' : 'text-[#1C1A19]'}`}>{apt.client_name}</p>
+                      <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
                     </div>
-                    <span className="text-[#B0AAA5] text-[10px] shrink-0 mt-0.5">{ago}</span>
-                  </div>
+                    {sent
+                      ? <span className="flex items-center gap-1 text-[9px] text-emerald-600 uppercase tracking-wider"><Check size={11} /> OK</span>
+                      : <span className="flex items-center gap-1 text-[9px] text-[#25D366] border border-[#25D366]/30 px-2 py-1"><MessageCircle size={9} /> WA</span>
+                    }
+                  </a>
                 );
               })}
             </div>
-          );
-        })()}
+          )}
         </div>
-        )}
-      </div>
+      )}
 
-      {/* Lista de espera */}
+      {/* ── Lista de espera ── */}
       {waitlist.length > 0 && (
-        <div className="border border-black/8 bg-white overflow-hidden">
-          <div className="px-4 py-3 border-b border-black/5 flex items-center justify-between">
-            <p className="text-[9px] tracking-[0.25em] uppercase text-[#9A9590]">Lista de espera</p>
-            <span className="text-[10px] bg-[#F0EDE8] text-[#81807F] px-2 py-0.5">{waitlist.length}</span>
-          </div>
+        <div className="border border-black/5">
+          <p className="text-[9px] tracking-[0.3em] uppercase text-[#9A9590] px-4 py-2.5 border-b border-black/5 flex items-center justify-between">
+            Lista de espera <span className="bg-[#F0EDE8] text-[#81807F] px-2 py-0.5">{waitlist.length}</span>
+          </p>
           <div className="divide-y divide-black/5">
             {waitlist.map((entry) => (
-              <div key={entry.id} className="px-4 py-3 flex items-start justify-between gap-3">
+              <div key={entry.id} className="px-4 py-3 flex items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[#1C1A19]">{entry.client_name}</p>
-                  <p className="text-xs text-[#9A9590] mt-0.5">{entry.client_phone}</p>
-                  {entry.dp_services?.name && <p className="text-xs text-[#6B6560] mt-0.5">{entry.dp_services.name}</p>}
-                  {entry.preferred_date && (
-                    <p className="text-[10px] text-[#B0AAA5] mt-0.5">Prefiere: {format(parseISO(entry.preferred_date), "d MMM", { locale: es })}</p>
-                  )}
+                  <p className="text-sm text-[#1C1A19] truncate">{entry.client_name}</p>
+                  <p className="text-xs text-[#9A9590]">{entry.dp_services?.name ?? '—'}{entry.preferred_date ? ` · ${format(parseISO(entry.preferred_date), "d MMM", { locale: es })}` : ''}</p>
                 </div>
-                <div className="flex gap-2 shrink-0">
-                  <a
-                    href={`https://wa.me/${entry.client_phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${entry.client_name}, te contactamos de Daniela Palacio Hair Room porque se liberó un lugar. ¿Te gustaría agendar tu cita?`)}`}
+                <div className="flex gap-1.5 shrink-0">
+                  <a href={`https://wa.me/${entry.client_phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${entry.client_name}, te contactamos de Daniela Palacio Hair Room porque se liberó un lugar. ¿Te gustaría agendar tu cita?`)}`}
                     target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 px-2 py-1 text-[10px] tracking-wider uppercase hover:bg-[#25D366]/20 transition-colors"
-                  >
+                    className="flex items-center gap-1 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 px-2 py-1 text-[10px] uppercase hover:bg-[#25D366]/20 transition-colors">
                     <MessageCircle size={10} /> WA
                   </a>
-                  <button
-                    title="Marcar como avisada (después de enviar el WA)"
-                    disabled={updatingWaitlist === entry.id}
+                  <button title="Marcar avisada" disabled={updatingWaitlist === entry.id}
                     onClick={async () => {
                       setUpdatingWaitlist(entry.id);
                       await fetch('/api/waitlist', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret }, body: JSON.stringify({ id: entry.id, status: 'notified' }) });
                       setWaitlist((p) => p.filter((e) => e.id !== entry.id));
                       setUpdatingWaitlist(null);
                     }}
-                    className="text-emerald-600 hover:text-emerald-700 transition-colors p-1 disabled:opacity-40"
-                  >
+                    className="text-emerald-600 hover:text-emerald-700 p-1 disabled:opacity-40 transition-colors">
                     <Check size={13} />
                   </button>
-                  <button
-                    title="Quitar de la lista"
+                  <button title="Quitar"
                     onClick={async () => {
                       setUpdatingWaitlist(entry.id);
                       await fetch('/api/waitlist', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret }, body: JSON.stringify({ id: entry.id, status: 'cancelled' }) });
                       setWaitlist((p) => p.filter((e) => e.id !== entry.id));
                       setUpdatingWaitlist(null);
                     }}
-                    className="text-[#B0AAA5] hover:text-red-400 transition-colors p-1"
-                  >
+                    className="text-[#B0AAA5] hover:text-red-400 p-1 transition-colors">
                     <X size={13} />
                   </button>
                 </div>
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ── Próximas citas ── */}
+      {upcoming.length > 0 && (
+        <div className="border border-black/5">
+          <button onClick={() => setOpenProximas(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/4 transition-colors">
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#6B6560]">
+              Próximas · {upcoming.length}
+            </span>
+            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+              <button onClick={(e) => { e.stopPropagation(); load(); }} disabled={loading}
+                className="text-[#9A9590] hover:text-[#81807F] transition-colors p-0.5">
+                <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+              </button>
+              <ArrowRight size={12} className={`text-[#B0AAA5] transition-transform duration-200 ${openProximas ? 'rotate-90' : ''}`} />
+            </div>
+          </button>
+          {openProximas && (
+            <div className="border-t border-black/5">
+              {Object.keys(upcomingByDate).sort().map((date) => {
+                const dt = parseISO(date + 'T12:00:00');
+                const label = isTomorrow(dt) ? 'Mañana' : format(dt, "EEE d 'de' MMM", { locale: es });
+                return (
+                  <div key={date}>
+                    <p className="text-[9px] tracking-[0.2em] uppercase text-[#81807F] px-4 py-2 bg-black/[0.02] border-b border-black/5 capitalize">{label}</p>
+                    {upcomingByDate[date].map((apt, idx, arr) => (
+                      <div key={apt.id}
+                        className={`flex items-center justify-between px-4 py-2.5 ${idx < arr.length - 1 ? 'border-b border-black/5' : ''}`}
+                        style={{ borderLeft: `3px solid ${serviceColor(apt.dp_services?.name)}`, paddingLeft: '14px' }}>
+                        <div>
+                          <p className="text-[#1C1A19] text-sm">{apt.client_name}</p>
+                          <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
+                        </div>
+                        <StatusBadge status={apt.status} />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
