@@ -177,6 +177,9 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   const [openBitacora, setOpenBitacora]       = useState(true);
   const [waitlist, setWaitlist]               = useState<WaitlistEntry[]>([]);
   const [updatingWaitlist, setUpdatingWaitlist] = useState<string | null>(null);
+  const [triggeringReminders, setTriggeringReminders] = useState(false);
+  const [triggerResult, setTriggerResult]     = useState<{ count: number; pushed: boolean } | null>(null);
+  const [sentReminderIds, setSentReminderIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -338,28 +341,94 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
       {/* ── Recordatorios de mañana ── */}
       {tomorrowAppts.length > 0 && (
         <div id="sec-recordatorios" className="border border-black/5">
-          <button
-            onClick={() => setOpenRecordatorios(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/4 transition-colors"
-          >
-            <span className="text-[10px] tracking-[0.3em] uppercase flex items-center gap-2 text-[#81807F]">
-              <Bell size={11} /> Recordatorios de mañana <span className="text-[#6B6560] ml-1">· {tomorrowAppts.length}</span>
-            </span>
-            <ArrowRight size={12} className={`text-[#B0AAA5] transition-transform duration-200 ${openRecordatorios ? 'rotate-90' : ''}`} />
-          </button>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-black/5">
+            <button
+              onClick={() => setOpenRecordatorios(v => !v)}
+              className="flex items-center gap-2 text-left"
+            >
+              <span className="text-[10px] tracking-[0.3em] uppercase flex items-center gap-2 text-[#81807F]">
+                <Bell size={11} /> Recordatorios de mañana
+                <span className="text-[#6B6560]">· {tomorrowAppts.length}</span>
+                {sentReminderIds.size > 0 && (
+                  <span className="text-emerald-600">({sentReminderIds.size} enviados)</span>
+                )}
+              </span>
+            </button>
+            {/* Botón debug: dispara el cron manualmente */}
+            <button
+              disabled={triggeringReminders}
+              onClick={async () => {
+                setTriggeringReminders(true);
+                setTriggerResult(null);
+                try {
+                  const res = await fetch('/api/admin/trigger-reminders', {
+                    method: 'POST',
+                    headers: { 'x-admin-secret': adminSecret },
+                  });
+                  const data = await res.json();
+                  setTriggerResult({ count: data.count ?? 0, pushed: !data.error });
+                } catch {
+                  setTriggerResult({ count: 0, pushed: false });
+                } finally {
+                  setTriggeringReminders(false);
+                }
+              }}
+              className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-amber-300 text-amber-700 px-2.5 py-1.5 hover:bg-amber-50 transition-colors disabled:opacity-40"
+            >
+              {triggeringReminders ? (
+                <div className="w-3 h-3 border border-amber-600 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Bell size={9} />
+              )}
+              Disparar push
+            </button>
+          </div>
+
+          {/* Resultado del trigger */}
+          {triggerResult && (
+            <div className={`px-4 py-2 text-[10px] tracking-wider border-b border-black/5 ${triggerResult.pushed ? 'text-emerald-700 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
+              {triggerResult.pushed
+                ? `✓ Push enviado — ${triggerResult.count} recordatorio${triggerResult.count !== 1 ? 's' : ''} detectado${triggerResult.count !== 1 ? 's' : ''}`
+                : '✕ Error al disparar — revisa CRON_SECRET en Vercel'}
+            </div>
+          )}
+
+          {/* Lista de recordatorios */}
           {openRecordatorios && (
-            <div className="px-4 pb-4 border-t border-black/5 pt-4 space-y-2">
-              {tomorrowAppts.map((apt) => (
-                <div key={apt.id} className="flex items-center justify-between gap-3 py-3 border-b border-black/5"
-                  style={{ borderLeft: `3px solid ${serviceColor(apt.dp_services?.name)}`, paddingLeft: '12px' }}>
-                  <div className="min-w-0">
-                    <p className="text-[#1C1A19] text-sm">{apt.client_name}</p>
-                    <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
-                  </div>
-                  <WaButton href={waHref(apt.client_phone, fillTemplate(msgReminder, apt))} label="Recordatorio" />
-                </div>
-              ))}
-              <p className="text-[#B0AAA5] text-[10px] pt-1">El botón abre WhatsApp con el mensaje pre-llenado listo para enviar.</p>
+            <div className="pb-3">
+              {tomorrowAppts.map((apt, idx) => {
+                const sent = sentReminderIds.has(apt.id);
+                const waLink = waHref(apt.client_phone, fillTemplate(msgReminder, apt));
+                return (
+                  <a
+                    key={apt.id}
+                    href={waLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setSentReminderIds((prev) => new Set([...prev, apt.id]))}
+                    className={`flex items-center justify-between px-4 py-3 transition-colors ${sent ? 'bg-emerald-50/60' : 'hover:bg-black/2'} ${idx < tomorrowAppts.length - 1 ? 'border-b border-black/5' : ''}`}
+                    style={{ borderLeft: `3px solid ${sent ? '#10b981' : serviceColor(apt.dp_services?.name)}`, paddingLeft: '14px' }}
+                  >
+                    <div className="min-w-0">
+                      <p className={`text-sm ${sent ? 'text-emerald-700' : 'text-[#1C1A19]'}`}>{apt.client_name}</p>
+                      <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {formatTime(apt.start_time)}</p>
+                    </div>
+                    {sent ? (
+                      <span className="flex items-center gap-1 text-[9px] text-emerald-600 uppercase tracking-wider">
+                        <Check size={11} /> Enviado
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-[9px] text-[#25D366] uppercase tracking-wider border border-[#25D366]/30 px-2 py-1">
+                        <MessageCircle size={9} /> WA →
+                      </span>
+                    )}
+                  </a>
+                );
+              })}
+              <p className="text-[#C0BBB6] text-[10px] px-4 pt-3">
+                Toca cada nombre para abrir WhatsApp con el recordatorio pre-escrito.
+              </p>
             </div>
           )}
         </div>
