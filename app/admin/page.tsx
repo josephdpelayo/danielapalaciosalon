@@ -505,18 +505,25 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                   <a
                     href={`https://wa.me/${entry.client_phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${entry.client_name}, te contactamos de Daniela Palacio Hair Room porque se liberó un lugar. ¿Te gustaría agendar tu cita?`)}`}
                     target="_blank" rel="noopener noreferrer"
-                    onClick={async () => {
-                      if (updatingWaitlist) return;
-                      setUpdatingWaitlist(entry.id);
-                      await fetch('/api/waitlist', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret }, body: JSON.stringify({ id: entry.id, status: 'notified' }) });
-                      setWaitlist((p) => p.filter((e) => e.id !== entry.id));
-                      setUpdatingWaitlist(null);
-                    }}
                     className="flex items-center gap-1 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 px-2 py-1 text-[10px] tracking-wider uppercase hover:bg-[#25D366]/20 transition-colors"
                   >
                     <MessageCircle size={10} /> WA
                   </a>
                   <button
+                    title="Marcar como avisada (después de enviar el WA)"
+                    disabled={updatingWaitlist === entry.id}
+                    onClick={async () => {
+                      setUpdatingWaitlist(entry.id);
+                      await fetch('/api/waitlist', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret }, body: JSON.stringify({ id: entry.id, status: 'notified' }) });
+                      setWaitlist((p) => p.filter((e) => e.id !== entry.id));
+                      setUpdatingWaitlist(null);
+                    }}
+                    className="text-emerald-600 hover:text-emerald-700 transition-colors p-1 disabled:opacity-40"
+                  >
+                    <Check size={13} />
+                  </button>
+                  <button
+                    title="Quitar de la lista"
                     onClick={async () => {
                       setUpdatingWaitlist(entry.id);
                       await fetch('/api/waitlist', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret }, body: JSON.stringify({ id: entry.id, status: 'cancelled' }) });
@@ -2398,9 +2405,12 @@ export default function AdminPage() {
         <span className="font-[family-name:var(--font-display)] text-xs tracking-[0.3em] uppercase text-[#81807F]">Admin</span>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => registerPush(adminSecret).then(setPushEnabled).catch(() => {})}
+            onClick={() => registerPush(adminSecret).then((ok) => {
+              setPushEnabled(ok);
+              if (!ok) alert('No se pudo activar. Asegúrate de que el navegador tenga permisos de notificación y recarga la página.');
+            }).catch((err) => alert('Error: ' + err?.message))}
             title={pushEnabled ? 'Notificaciones activas' : 'Activar notificaciones'}
-            className={`transition-colors p-1 ${pushEnabled ? 'text-[#81807F]' : 'text-[#C0BBB6] hover:text-[#81807F]'}`}
+            className={`transition-colors p-1 ${pushEnabled ? 'text-[#25D366]' : 'text-[#C0BBB6] hover:text-[#81807F]'}`}
           >
             <Bell size={15} />
           </button>
