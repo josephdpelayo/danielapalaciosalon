@@ -57,6 +57,8 @@ function BookingContent() {
   const [showWaitlist, setShowWaitlist] = useState(false);
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   const [waitlistDone, setWaitlistDone] = useState(false);
+  const [waitlistName, setWaitlistName] = useState('');
+  const [waitlistPhone, setWaitlistPhone] = useState('');
 
   useEffect(() => {
     fetch('/api/services')
@@ -94,6 +96,8 @@ function BookingContent() {
     setNoAvailReason('');
     setShowWaitlist(false);
     setWaitlistDone(false);
+    setWaitlistName('');
+    setWaitlistPhone('');
     fetch(`/api/available-slots?date=${format(selectedDate, 'yyyy-MM-dd')}&service_id=${selectedService.id}&duration=${selectedService.duration_minutes}&active_minutes=${selectedService.active_minutes}`)
       .then((r) => r.json())
       .then((data) => {
@@ -602,10 +606,26 @@ function BookingContent() {
                       Avisarme cuando haya disponibilidad
                     </button>
                   ) : (
-                    <div className="border-t border-white/8 pt-4">
-                      <p className="text-[#444] text-xs mb-3 text-center">Te avisaremos por WhatsApp cuando se libere un lugar para <span className="text-[#81807F]">{selectedService?.name}</span>.</p>
+                    <div className="border border-white/10 p-4 space-y-3">
+                      <p className="text-[#666] text-xs text-center">Te avisamos por WhatsApp cuando haya lugar para <span className="text-[#81807F]">{selectedService?.name}</span>.</p>
+                      <input
+                        type="text"
+                        placeholder="Tu nombre"
+                        value={waitlistName}
+                        onChange={(e) => setWaitlistName(e.target.value)}
+                        className="w-full bg-transparent border border-white/15 text-[#F0EDE8] placeholder:text-[#444] px-3 py-2.5 text-sm focus:outline-none focus:border-[#81807F]/60"
+                        style={{ fontSize: '16px' }}
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Tu WhatsApp (10 dígitos)"
+                        value={waitlistPhone}
+                        onChange={(e) => setWaitlistPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        className="w-full bg-transparent border border-white/15 text-[#F0EDE8] placeholder:text-[#444] px-3 py-2.5 text-sm focus:outline-none focus:border-[#81807F]/60"
+                        style={{ fontSize: '16px' }}
+                      />
                       <button
-                        disabled={waitlistSubmitting}
+                        disabled={waitlistSubmitting || !waitlistName.trim() || waitlistPhone.length < 10}
                         onClick={async () => {
                           setWaitlistSubmitting(true);
                           try {
@@ -615,9 +635,8 @@ function BookingContent() {
                               body: JSON.stringify({
                                 service_id: selectedService?.id,
                                 preferred_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
-                                client_name: clientName.trim() || 'Sin nombre',
-                                client_phone: countryCode + clientPhone,
-                                client_email: clientEmail || null,
+                                client_name: waitlistName.trim(),
+                                client_phone: '52' + waitlistPhone,
                               }),
                             });
                             setWaitlistDone(true);
@@ -625,13 +644,13 @@ function BookingContent() {
                         }}
                         className="w-full flex items-center justify-center gap-2 bg-[#F0EDE8] text-[#16181E] py-3 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-40"
                       >
-                        {waitlistSubmitting ? 'Guardando…' : 'Confirmar — avisarme'}
+                        {waitlistSubmitting ? 'Guardando…' : 'Avisarme por WhatsApp'}
                       </button>
                     </div>
                   )
                 ) : (
                   <div className="flex items-center justify-center gap-2 text-[#81807F] text-xs tracking-wider py-1">
-                    <Check size={13} /> Te avisaremos por WhatsApp cuando haya disponibilidad
+                    <Check size={13} /> Listo, te avisamos cuando haya disponibilidad
                   </div>
                 )}
               </div>
