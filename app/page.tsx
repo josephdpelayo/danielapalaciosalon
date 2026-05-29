@@ -8,26 +8,6 @@ import { formatDuration, formatPrice } from '@/lib/slots';
 import { MOCK_SERVICES } from '@/lib/mock-data';
 import type { Service } from '@/lib/types';
 
-const GALLERY = [
-  {
-    src:    '/gallery/dp-balayage.jpg',
-    alt:    'Balayage — resultado final',
-    pos:    'center top',
-    filter: 'brightness(0.96) contrast(1.04) saturate(0.9)',
-  },
-  {
-    src:    '/gallery/dp-texture.jpg',
-    alt:    'Textura y color natural',
-    pos:    'center center',
-    filter: 'brightness(0.93) contrast(1.06) saturate(0.88)',
-  },
-  {
-    src:    '/gallery/dp-wash.jpg',
-    alt:    'Tratamiento capilar en salón',
-    pos:    'center 30%',
-    filter: 'brightness(0.88) contrast(1.1)',
-  },
-];
 
 const HOURS = [
   { days: 'Lunes — Viernes', time: '10:00 am — 7:00 pm' },
@@ -332,28 +312,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── GALERÍA ── */}
-      <section
-        id="galeria"
-        className="relative overflow-x-auto md:overflow-x-visible"
-        style={{ scrollbarWidth: 'none', marginBottom: '64px' }}
-      >
-        <div className="md:hidden absolute right-0 top-0 bottom-0 z-10 pointer-events-none" style={{ width: '48px', background: 'linear-gradient(to right, transparent, #16181E)' }} />
-        <div className="flex md:hidden" style={{ gap: '1px', minWidth: 'max-content' }}>
-          {GALLERY.map((photo) => (
-            <div key={photo.src} className="relative shrink-0 overflow-hidden" style={{ width: '80vw', maxWidth: '440px', aspectRatio: '3/4' }}>
-              <Image src={photo.src} alt={photo.alt} fill unoptimized className="object-cover transition-transform duration-700 hover:scale-[1.03]" style={{ objectPosition: photo.pos, filter: photo.filter }} />
-            </div>
-          ))}
-        </div>
-        <div className="hidden md:grid md:grid-cols-3" style={{ gap: '1px', background: '#16181E' }}>
-          {GALLERY.map((photo) => (
-            <div key={photo.src} className="relative overflow-hidden" style={{ aspectRatio: '4/5', width: '100%' }}>
-              <Image src={photo.src} alt={photo.alt} fill unoptimized className="object-cover transition-transform duration-700 hover:scale-[1.03]" style={{ objectPosition: photo.pos, filter: photo.filter }} />
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* ── SERVICES ── */}
       <section
