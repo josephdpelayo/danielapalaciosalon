@@ -216,6 +216,24 @@ export default function Home() {
           />
         </div>
 
+        {/* Instagram — esquina inferior izquierda del hero */}
+        <a
+          href="https://instagram.com/danielapalaciosalon"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-20 left-6 hover:opacity-60 transition-opacity duration-200 flex items-center justify-center"
+          style={{
+            width: '46px',
+            height: '46px',
+            borderRadius: '50%',
+            border: '1px solid rgba(240,237,232,0.28)',
+            color: 'rgba(240,237,232,0.55)',
+            zIndex: 10,
+          }}
+        >
+          <InstagramIcon size={14} />
+        </a>
+
         {/* WhatsApp — esquina inferior derecha del hero */}
         <a
           href={`https://wa.me/${process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691877077'}`}
