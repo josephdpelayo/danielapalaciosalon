@@ -33,6 +33,16 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    const els = document.querySelectorAll('[data-reveal]');
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } }),
+      { threshold: 0.07 }
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+
   return (
     <main
       style={{ background: '#16181E', color: '#F0EDE8', fontFamily: 'var(--font-body)' }}
@@ -232,6 +242,7 @@ export default function Home() {
       {/* ── MEET DANIELA ── */}
       <section
         id="daniela"
+        data-reveal
         className="px-6 md:px-16"
         style={{ paddingTop: '56px', paddingBottom: '64px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
@@ -274,6 +285,7 @@ export default function Home() {
 
       {/* ── EL ESTUDIO ── */}
       <section
+        data-reveal
         className="px-6 md:px-16"
         style={{ paddingTop: '56px', paddingBottom: '80px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
@@ -316,6 +328,7 @@ export default function Home() {
       {/* ── SERVICES ── */}
       <section
         id="servicios"
+        data-reveal
         className="px-6 md:px-16"
         style={{ paddingTop: '40px', paddingBottom: '40px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
@@ -426,6 +439,7 @@ export default function Home() {
       {/* ── REVIEWS ── */}
       <section
         id="resenas"
+        data-reveal
         className="px-6 md:px-16"
         style={{ paddingTop: '56px', paddingBottom: '56px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
@@ -470,6 +484,7 @@ export default function Home() {
       {/* ── UBICACIÓN + HORARIOS ── */}
       <section
         id="horarios"
+        data-reveal
         className="px-6 md:px-16"
         style={{ paddingTop: '28px', paddingBottom: '28px', borderTop: '1px solid rgba(255,255,255,0.04)', scrollMarginTop: '64px' }}
       >
@@ -537,6 +552,7 @@ export default function Home() {
 
       {/* ── INSTAGRAM ── */}
       <section
+        data-reveal
         className="px-6 md:px-16"
         style={{ paddingTop: '28px', paddingBottom: '32px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
@@ -557,6 +573,47 @@ export default function Home() {
             @danielapalaciosalon
           </span>
         </a>
+      </section>
+
+      {/* ── CTA CIERRE ── */}
+      <section
+        data-reveal
+        className="px-6 md:px-16 flex flex-col items-center text-center"
+        style={{ paddingTop: '96px', paddingBottom: '96px', borderTop: '1px solid rgba(255,255,255,0.04)' }}
+      >
+        <Image
+          src="/logos/symbol-x.png"
+          alt=""
+          width={24}
+          height={24}
+          style={{ filter: 'brightness(0) invert(1)', opacity: 0.12, width: '24px', height: '24px', marginBottom: '40px' }}
+        />
+        <h2
+          className="font-[family-name:var(--font-display)]"
+          style={{ fontSize: 'clamp(32px, 6vw, 60px)', fontWeight: 300, color: '#F0EDE8', lineHeight: 1.1, marginBottom: '16px', letterSpacing: '-0.01em' }}
+        >
+          Tu cabello merece atención real.
+        </h2>
+        <p style={{ fontSize: '11px', letterSpacing: '0.4em', textTransform: 'uppercase', color: '#686560', marginBottom: '48px' }}>
+          cuidado que transforma
+        </p>
+        <Link
+          href="/reservar"
+          style={{
+            display: 'inline-block',
+            background: '#F0EDE8',
+            color: '#16181E',
+            fontSize: '10px',
+            letterSpacing: '0.4em',
+            textTransform: 'uppercase',
+            fontWeight: 400,
+            padding: '16px 48px',
+            transition: 'opacity 0.2s',
+          }}
+          className="hover:opacity-75"
+        >
+          Reservar cita
+        </Link>
       </section>
 
       {/* ── FOOTER ── */}

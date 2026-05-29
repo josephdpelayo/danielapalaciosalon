@@ -170,7 +170,17 @@ function BookingContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: appt.id, status: 'confirmed' }),
         });
-        window.location.href = `/reservar/exito?id=${appt.id}&trusted=1`;
+        const exitoP = new URLSearchParams({
+          id: appt.id, trusted: '1',
+          service: selectedService.name,
+          date: format(selectedDate, "d 'de' MMMM", { locale: es }),
+          time: formatTime(selectedSlot.start),
+          dateiso: format(selectedDate, 'yyyy-MM-dd'),
+          t24: selectedSlot.start,
+          dur: String(selectedService.duration_minutes),
+          name: clientName,
+        });
+        window.location.href = `/reservar/exito?${exitoP}`;
         return;
       }
 
@@ -199,6 +209,10 @@ function BookingContent() {
           service: selectedService.name,
           date: format(selectedDate, "d 'de' MMMM", { locale: es }),
           time: formatTime(selectedSlot.start),
+          dateiso: format(selectedDate, 'yyyy-MM-dd'),
+          t24: selectedSlot.start,
+          dur: String(selectedService.duration_minutes),
+          name: clientName,
         });
         window.location.href = `/reservar/pagar?${params}`;
       }

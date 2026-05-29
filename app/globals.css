@@ -66,6 +66,18 @@ body {
   animation: shimmer 4s linear infinite;
 }
 
+/* Scroll reveal */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+[data-reveal].visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* Subtle noise texture */
 body::before {
   content: '';

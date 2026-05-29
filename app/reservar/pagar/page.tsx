@@ -8,11 +8,15 @@ function PagarContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const id = searchParams.get('id') ?? '';
-  const amount = searchParams.get('amount') ?? '200';
+  const id      = searchParams.get('id') ?? '';
+  const amount  = searchParams.get('amount') ?? '200';
   const service = searchParams.get('service') ?? 'Servicio';
-  const date = searchParams.get('date') ?? '';
-  const time = searchParams.get('time') ?? '';
+  const date    = searchParams.get('date') ?? '';
+  const time    = searchParams.get('time') ?? '';
+  const dateiso    = searchParams.get('dateiso') ?? '';
+  const t24        = searchParams.get('t24') ?? '';
+  const dur        = searchParams.get('dur') ?? '60';
+  const clientName = searchParams.get('name') ?? '';
 
   const [paying, setPaying] = useState(false);
   const [cardNumber, setCardNumber] = useState('');
@@ -42,7 +46,15 @@ function PagarContent() {
       });
     } catch {}
 
-    router.push(`/reservar/exito?id=${id}`);
+    const exitoP = new URLSearchParams({ id });
+    if (service) exitoP.set('service', service);
+    if (date) exitoP.set('date', date);
+    if (time) exitoP.set('time', time);
+    if (dateiso) exitoP.set('dateiso', dateiso);
+    if (t24) exitoP.set('t24', t24);
+    if (dur) exitoP.set('dur', dur);
+    if (clientName) exitoP.set('name', clientName);
+    router.push(`/reservar/exito?${exitoP}`);
   };
 
   const handleCancel = () => {
