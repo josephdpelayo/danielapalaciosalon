@@ -319,15 +319,15 @@ export default function Home() {
         <div style={{ maxWidth: '560px', position: 'relative' }}>
           {/* Photo 1 — left */}
           <div style={{ width: '63%', aspectRatio: '3/4', position: 'relative', overflow: 'hidden' }}>
-            <Image src="/gallery/dp-wash.jpg" alt="El estudio" fill className="object-cover" style={{ filter: 'brightness(0.92) contrast(1.04) saturate(0.88)' }} />
+            <Image src="/gallery/estudio-3.jpg" alt="El estudio" fill className="object-cover" style={{ filter: 'brightness(0.92) contrast(1.04) saturate(0.88)' }} />
           </div>
           {/* Photo 2 — right, offset down */}
           <div style={{ width: '56%', aspectRatio: '3/4', position: 'relative', overflow: 'hidden', marginLeft: 'auto', marginTop: '-38%' }}>
-            <Image src="/gallery/dp-balayage.jpg" alt="El estudio" fill className="object-cover object-top" style={{ filter: 'brightness(0.92) contrast(1.04) saturate(0.88)' }} />
+            <Image src="/gallery/estudio-2.jpg" alt="El estudio" fill className="object-cover object-top" style={{ filter: 'brightness(0.92) contrast(1.04) saturate(0.88)' }} />
           </div>
           {/* Photo 3 — left, offset down */}
           <div style={{ width: '48%', aspectRatio: '3/4', position: 'relative', overflow: 'hidden', marginTop: '-28%' }}>
-            <Image src="/gallery/dp-texture.jpg" alt="El estudio" fill className="object-cover" style={{ filter: 'brightness(0.92) contrast(1.04) saturate(0.88)' }} />
+            <Image src="/gallery/estudio-1.jpg" alt="El estudio" fill className="object-cover" style={{ filter: 'brightness(0.92) contrast(1.04) saturate(0.88)' }} />
           </div>
         </div>
       </section>
