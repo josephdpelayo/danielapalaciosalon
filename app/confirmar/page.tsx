@@ -143,7 +143,7 @@ function ConfirmarContent() {
             Este link ya fue usado o no es válido. Si tienes dudas escríbele a Daniela directamente.
           </p>
           <a
-            href={`https://wa.me/${process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691459296'}`}
+            href={`https://wa.me/${process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691877077'}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-[11px] tracking-[0.2em] uppercase transition-opacity hover:opacity-70"
