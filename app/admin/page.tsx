@@ -1418,16 +1418,21 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
     } finally { setEditSaving(false); }
   };
 
-  const handleDeleteByPhone = async (phoneNorm: string, displayName: string) => {
-    if (!confirm(`¿Eliminar todos los registros de ${displayName}? Esta acción no se puede deshacer.`)) return;
-    setDeletingPhone(phoneNorm);
+  const handleDeleteClient = async (c: ClientRow) => {
+    if (!confirm(`¿Eliminar a ${c.name} por completo? Se borrarán sus citas y todos sus datos. Esta acción no se puede deshacer.`)) return;
+    setDeletingPhone(c.phone_normalized);
     try {
-      await fetch('/api/appointments', {
-        method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-        body: JSON.stringify({ phone: phoneNorm }),
-      });
-      setAllClients(prev => prev.filter(c => c.phone_normalized !== phoneNorm));
-      if (selectedClient?.phone_normalized === phoneNorm) setSelectedClient(null);
+      const headers = { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret };
+      await Promise.all([
+        fetch('/api/appointments', { method: 'DELETE', headers, body: JSON.stringify({ phone: c.phone_normalized }) }),
+        fetch('/api/clients',      { method: 'DELETE', headers, body: JSON.stringify({ phone_normalized: c.phone_normalized }) }),
+        c.trusted_id
+          ? fetch('/api/trusted-clients', { method: 'DELETE', headers, body: JSON.stringify({ id: c.trusted_id }) })
+          : Promise.resolve(),
+      ]);
+      setAllClients(prev => prev.filter(x => x.phone_normalized !== c.phone_normalized));
+      setTrustedClients(prev => prev.filter(x => x.id !== c.trusted_id));
+      setSelectedClient(null);
     } finally { setDeletingPhone(null); }
   };
 
@@ -1667,22 +1672,20 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                 )}
               </div>
 
-              {/* Danger zone */}
-              {!selectedClient.trusted_id && (
-                <div className="pt-2 border-t border-black/6">
-                  <button
-                    onClick={() => handleDeleteByPhone(selectedClient.phone_normalized, selectedClient.name)}
-                    disabled={deletingPhone === selectedClient.phone_normalized}
-                    className="flex items-center gap-2 text-red-400 hover:text-red-600 transition-colors text-[10px] tracking-[0.15em] uppercase disabled:opacity-40"
-                  >
-                    {deletingPhone === selectedClient.phone_normalized
-                      ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
-                      : <Trash2 size={11} />
-                    }
-                    Eliminar registros
-                  </button>
-                </div>
-              )}
+              {/* Danger zone — siempre visible */}
+              <div className="pt-2 border-t border-black/6">
+                <button
+                  onClick={() => handleDeleteClient(selectedClient)}
+                  disabled={deletingPhone === selectedClient.phone_normalized}
+                  className="flex items-center gap-2 text-red-400 hover:text-red-600 transition-colors text-[10px] tracking-[0.15em] uppercase disabled:opacity-40"
+                >
+                  {deletingPhone === selectedClient.phone_normalized
+                    ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                    : <Trash2 size={11} />
+                  }
+                  Eliminar cliente
+                </button>
+              </div>
             </div>
           </div>
         </div>
