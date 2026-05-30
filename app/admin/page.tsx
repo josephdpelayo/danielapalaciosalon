@@ -12,10 +12,10 @@ import {
   ArrowLeft, ArrowRight, Check, X, Scissors, Phone, RefreshCw,
   Trash2, CalendarOff, Star, UserPlus, Calendar, Plus, Pencil, LayoutDashboard,
   Settings, Copy, Check as CheckIcon, MessageCircle, Bell, Users,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, ChevronRight, TrendingUp, Clock, Banknote, Award,
 } from 'lucide-react';
 import { Appointment, BlockedSlot, StaffWithDetails } from '@/lib/types';
-import { formatTime, formatDuration, timeToMinutes, minutesToTime } from '@/lib/slots';
+import { formatTime, formatDuration, formatPrice, timeToMinutes, minutesToTime } from '@/lib/slots';
 import { MOCK_SCHEDULE } from '@/lib/mock-data';
 import 'react-day-picker/dist/style.css';
 
@@ -1264,31 +1264,35 @@ interface ClientRecord {
 type ClientFilter = 'todos' | 'nuevos' | 'frecuentes';
 type ClientSort   = 'az' | 'za' | 'visitas' | 'ultima';
 
+type ClientRow = ClientRecord & { trusted_id: string | null; notes: string | null };
+
 function ClientesTab({ adminSecret }: { adminSecret: string }) {
-  const [filter, setFilter]             = useState<ClientFilter>('todos');
-  const [sort, setSort]                 = useState<ClientSort>('az');
-  const [clientSearch, setClientSearch] = useState('');
+  const [filter, setFilter]               = useState<ClientFilter>('todos');
+  const [sort, setSort]                   = useState<ClientSort>('visitas');
+  const [clientSearch, setClientSearch]   = useState('');
   const [trustedClients, setTrustedClients] = useState<TrustedClient[]>([]);
-  const [allClients, setAllClients]     = useState<ClientRecord[]>([]);
-  const [loading, setLoading]           = useState(false);
-  const [togglingStar, setTogglingStar] = useState<string | null>(null);
+  const [allClients, setAllClients]       = useState<ClientRecord[]>([]);
+  const [allAppts, setAllAppts]           = useState<Appointment[]>([]);
+  const [loading, setLoading]             = useState(false);
+  const [togglingStar, setTogglingStar]   = useState<string | null>(null);
   const [deletingPhone, setDeletingPhone] = useState<string | null>(null);
-  // edit client (trusted or normal)
-  const [editingPhone, setEditingPhone] = useState<string | null>(null);
-  const [editingId, setEditingId]       = useState<string | null>(null); // null for non-trusted
-  const [editName, setEditName]         = useState('');
-  const [editPhone, setEditPhone]       = useState('');
-  const [editEmail, setEditEmail]       = useState('');
-  const [editNotes, setEditNotes]       = useState('');
-  const [editSaving, setEditSaving]     = useState(false);
+  const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null);
+  // edit
+  const [editingPhone, setEditingPhone]   = useState<string | null>(null);
+  const [editingId, setEditingId]         = useState<string | null>(null);
+  const [editName, setEditName]           = useState('');
+  const [editPhone, setEditPhone]         = useState('');
+  const [editEmail, setEditEmail]         = useState('');
+  const [editNotes, setEditNotes]         = useState('');
+  const [editSaving, setEditSaving]       = useState(false);
   // add form
-  const [showForm, setShowForm]         = useState(false);
-  const [formSaving, setFormSaving]     = useState(false);
-  const [name, setName]                 = useState('');
-  const [countryCode, setCountryCode]   = useState('+52');
-  const [phone, setPhone]               = useState('');
-  const [email, setEmail]               = useState('');
-  const [notes, setNotes]               = useState('');
+  const [showForm, setShowForm]           = useState(false);
+  const [formSaving, setFormSaving]       = useState(false);
+  const [name, setName]                   = useState('');
+  const [countryCode, setCountryCode]     = useState('+52');
+  const [phone, setPhone]                 = useState('');
+  const [email, setEmail]                 = useState('');
+  const [notes, setNotes]                 = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1301,8 +1305,9 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
       const trustedData = await trustedRes.json();
       setTrustedClients(trustedData.clients ?? []);
 
-      // Build visit-count + last-visit map from appointments
       const appts: Appointment[] = (await apptRes.json()).appointments ?? [];
+      setAllAppts(appts);
+
       const visitMap = new Map<string, { count: number; last: string }>();
       for (const a of appts) {
         const norm = a.client_phone.replace(/\D/g, '').slice(-10);
@@ -1313,7 +1318,6 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         });
       }
 
-      // Primary client list from dp_clients; fall back to appointments if table not yet created
       const clientsData = await clientsRes.json();
       const rawClients: { name: string; phone: string; phone_normalized: string; email?: string | null }[] =
         clientsData.clients?.length > 0
@@ -1333,7 +1337,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const toggleStar = async (c: { name: string; phone: string; phone_normalized: string; trusted_id: string | null }) => {
+  const toggleStar = async (c: ClientRow) => {
     setTogglingStar(c.phone_normalized);
     try {
       if (c.trusted_id) {
@@ -1342,23 +1346,24 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
           body: JSON.stringify({ id: c.trusted_id }),
         });
         setTrustedClients(prev => prev.filter(tc => tc.id !== c.trusted_id));
+        if (selectedClient?.phone_normalized === c.phone_normalized)
+          setSelectedClient(prev => prev ? { ...prev, trusted_id: null } : null);
       } else {
         const res = await fetch('/api/trusted-clients', {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-          body: JSON.stringify({ name: c.name, phone: c.phone, notes: null }),
+          body: JSON.stringify({ name: c.name, phone: c.phone, notes: c.notes ?? null }),
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
           setTrustedClients(prev => [...prev, data as TrustedClient].sort((a, b) => a.name.localeCompare(b.name)));
+          if (selectedClient?.phone_normalized === c.phone_normalized)
+            setSelectedClient(prev => prev ? { ...prev, trusted_id: (data as TrustedClient).id } : null);
         } else {
           alert(`No se pudo agregar: ${(data as { error?: string }).error ?? 'Error desconocido'}`);
         }
       }
-    } catch {
-      alert('Error de conexión. Intenta de nuevo.');
-    } finally {
-      setTogglingStar(null);
-    }
+    } catch { alert('Error de conexión. Intenta de nuevo.'); }
+    finally { setTogglingStar(null); }
   };
 
   const handleAdd = async () => {
@@ -1377,15 +1382,12 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
     } finally { setFormSaving(false); }
   };
 
-  const startEdit = (c: { name: string; phone: string; phone_normalized: string; email?: string | null; notes?: string | null; trusted_id: string | null }) => {
+  const startEdit = (c: ClientRow) => {
     setEditingPhone(c.phone_normalized);
     setEditingId(c.trusted_id);
-    setEditName(c.name);
-    setEditPhone(c.phone);
-    setEditEmail(c.email ?? '');
-    setEditNotes(c.notes ?? '');
+    setEditName(c.name); setEditPhone(c.phone);
+    setEditEmail(c.email ?? ''); setEditNotes(c.notes ?? '');
   };
-
   const closeEdit = () => { setEditingPhone(null); setEditingId(null); };
 
   const handleEdit = async () => {
@@ -1393,7 +1395,6 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
     setEditSaving(true);
     try {
       if (editingId) {
-        // Update existing trusted client
         const res = await fetch('/api/trusted-clients', {
           method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
           body: JSON.stringify({ id: editingId, name: editName.trim(), phone: editPhone.trim(), email: editEmail.trim() || null, notes: editNotes.trim() || null }),
@@ -1402,11 +1403,8 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         if (res.ok) {
           setTrustedClients(prev => prev.map(c => c.id === editingId ? data : c).sort((a, b) => a.name.localeCompare(b.name)));
           closeEdit();
-        } else {
-          alert(`No se pudo guardar: ${(data as { error?: string }).error ?? 'Error desconocido'}`);
-        }
+        } else { alert(`No se pudo guardar: ${(data as { error?: string }).error ?? 'Error desconocido'}`); }
       } else {
-        // Promote normal client to trusted with edited info
         const res = await fetch('/api/trusted-clients', {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
           body: JSON.stringify({ name: editName.trim(), phone: editPhone.trim(), email: editEmail.trim() || null, notes: editNotes.trim() || null }),
@@ -1415,9 +1413,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         if (res.ok) {
           setTrustedClients(prev => [...prev, data as TrustedClient].sort((a, b) => a.name.localeCompare(b.name)));
           closeEdit();
-        } else {
-          alert(`No se pudo guardar: ${(data as { error?: string }).error ?? 'Error desconocido'}`);
-        }
+        } else { alert(`No se pudo guardar: ${(data as { error?: string }).error ?? 'Error desconocido'}`); }
       }
     } finally { setEditSaving(false); }
   };
@@ -1431,6 +1427,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         body: JSON.stringify({ phone: phoneNorm }),
       });
       setAllClients(prev => prev.filter(c => c.phone_normalized !== phoneNorm));
+      if (selectedClient?.phone_normalized === phoneNorm) setSelectedClient(null);
     } finally { setDeletingPhone(null); }
   };
 
@@ -1439,16 +1436,14 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
     const q = clientSearch.trim().toLowerCase();
     const applySearch = <T extends { name: string; phone: string }>(list: T[]) =>
       q ? list.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)) : list;
-
     const applySort = <T extends { name: string; appt_count: number; last_appt: string | null }>(list: T[]): T[] => {
       const s = [...list];
-      if (sort === 'az')      s.sort((a, b) => a.name.localeCompare(b.name));
-      else if (sort === 'za') s.sort((a, b) => b.name.localeCompare(a.name));
+      if (sort === 'az')           s.sort((a, b) => a.name.localeCompare(b.name));
+      else if (sort === 'za')      s.sort((a, b) => b.name.localeCompare(a.name));
       else if (sort === 'visitas') s.sort((a, b) => (b.appt_count ?? 0) - (a.appt_count ?? 0));
       else if (sort === 'ultima')  s.sort((a, b) => (b.last_appt ?? '').localeCompare(a.last_appt ?? ''));
       return s;
     };
-
     if (filter === 'frecuentes') {
       const list = trustedClients.map(tc => {
         const norm = tc.phone.replace(/\D/g, '').slice(-10);
@@ -1461,16 +1456,14 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
       const list = allClients.filter(c => !trustedNorms.has(c.phone_normalized)).map(c => ({ ...c, trusted_id: null as string | null, notes: null as string | null }));
       return applySearch(applySort(list));
     }
-    // todos
-    const result: (ClientRecord & { trusted_id: string | null; notes: string | null })[] = allClients.map(c => {
+    const result: ClientRow[] = allClients.map(c => {
       const tc = trustedNorms.get(c.phone_normalized);
       return { ...c, trusted_id: tc?.id ?? null, notes: tc?.notes ?? null, email: c.email ?? tc?.email ?? null };
     });
     for (const tc of trustedClients) {
       const norm = tc.phone.replace(/\D/g, '').slice(-10);
-      if (!allClients.find(c => c.phone_normalized === norm)) {
+      if (!allClients.find(c => c.phone_normalized === norm))
         result.push({ name: tc.name, phone: tc.phone, phone_normalized: norm, email: tc.email, appt_count: 0, last_appt: null, trusted_id: tc.id, notes: tc.notes });
-      }
     }
     return applySearch(applySort(result));
   }, [filter, sort, clientSearch, allClients, trustedClients]);
@@ -1485,35 +1478,257 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
     };
   }, [allClients, trustedClients]);
 
+  // ── Client profile (ficha) panel ─────────────────────────────────
+  const clientFicha = useMemo(() => {
+    if (!selectedClient) return null;
+    const norm = selectedClient.phone_normalized;
+    const appts = allAppts
+      .filter(a => a.client_phone.replace(/\D/g, '').slice(-10) === norm)
+      .sort((a, b) => b.appointment_date.localeCompare(a.appointment_date));
+    const confirmed  = appts.filter(a => a.status === 'confirmed');
+    const cancelled  = appts.filter(a => a.status === 'cancelled');
+    const totalSpent = confirmed.reduce((s, a) => s + (a.deposit_amount ?? 0), 0);
+    const avgTicket  = confirmed.length > 0 ? Math.round(totalSpent / confirmed.length) : 0;
+    const svcCount   = confirmed.reduce((acc, a) => {
+      const n = (a.dp_services as { name?: string } | null)?.name ?? 'Servicio';
+      acc[n] = (acc[n] ?? 0) + 1; return acc;
+    }, {} as Record<string, number>);
+    const favService = Object.entries(svcCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+    const today = new Date().toISOString().slice(0, 10);
+    const nextAppt = [...appts]
+      .filter(a => a.appointment_date >= today && a.status !== 'cancelled')
+      .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date))[0] ?? null;
+    return { appts, confirmed: confirmed.length, cancelled: cancelled.length, totalSpent, avgTicket, favService, nextAppt };
+  }, [selectedClient, allAppts]);
+
+  const statusStyle = (status: string) => {
+    if (status === 'confirmed')       return { label: 'Confirmada', color: 'text-emerald-700', dot: 'bg-emerald-400' };
+    if (status === 'cancelled')       return { label: 'Cancelada',  color: 'text-red-500',     dot: 'bg-red-400'     };
+    if (status === 'pending_payment') return { label: 'Pago pend.', color: 'text-amber-600',   dot: 'bg-amber-400'   };
+    return                                   { label: 'Pendiente',  color: 'text-amber-600',   dot: 'bg-amber-300'   };
+  };
+
+  const waHrefClient = (c: ClientRow) =>
+    `https://wa.me/${c.phone.replace(/\D/g, '')}`;
+
   return (
     <div className="space-y-4">
-      {/* Filter tabs */}
+      {/* ── Ficha panel (slide-in) ── */}
+      {selectedClient && clientFicha && (
+        <div className="fixed inset-0 z-50 flex" style={{ background: 'rgba(0,0,0,0.35)' }} onClick={() => setSelectedClient(null)}>
+          <div
+            className="ml-auto h-full overflow-y-auto flex flex-col"
+            style={{ width: 'min(480px, 100vw)', background: '#FAF8F5', boxShadow: '-4px 0 40px rgba(0,0,0,0.15)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-black/8" style={{ background: '#FAF8F5' }}>
+              <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-[#6B6560] hover:text-[#1C1A19] transition-colors">
+                <ArrowLeft size={15} />
+                <span className="text-[10px] tracking-[0.2em] uppercase">Clientes</span>
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleStar(selectedClient)}
+                  disabled={togglingStar === selectedClient.phone_normalized}
+                  className="p-1.5 transition-colors disabled:opacity-40"
+                  title={selectedClient.trusted_id ? 'Quitar de frecuentes' : 'Marcar como frecuente'}
+                >
+                  {togglingStar === selectedClient.phone_normalized
+                    ? <div className="w-3.5 h-3.5 border border-amber-400 border-t-transparent rounded-full animate-spin" />
+                    : selectedClient.trusted_id
+                      ? <Star size={15} className="text-amber-400" fill="#fbbf24" />
+                      : <Star size={15} className="text-black/25 hover:text-amber-300 transition-colors" />
+                  }
+                </button>
+                <a href={waHrefClient(selectedClient)} target="_blank" rel="noopener noreferrer"
+                  className="p-1.5 text-[#9A9590] hover:text-emerald-600 transition-colors" title="WhatsApp">
+                  <MessageCircle size={15} />
+                </a>
+                <button onClick={() => { startEdit(selectedClient); setSelectedClient(null); }}
+                  className="p-1.5 text-[#9A9590] hover:text-[#6B6560] transition-colors" title="Editar">
+                  <Pencil size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 px-5 py-5 space-y-6">
+              {/* Identity */}
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-lg font-light"
+                  style={{ background: selectedClient.trusted_id ? '#fef3c7' : '#EDEBE7', color: selectedClient.trusted_id ? '#d97706' : '#6B6560' }}>
+                  {selectedClient.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-[#1C1A19] font-light text-lg leading-tight">{selectedClient.name}</h2>
+                    {selectedClient.trusted_id && (
+                      <span className="text-[8px] tracking-[0.2em] uppercase bg-amber-100 text-amber-700 px-2 py-0.5">Frecuente</span>
+                    )}
+                  </div>
+                  <p className="text-[#6B6560] text-sm mt-0.5">{selectedClient.phone}</p>
+                  {selectedClient.email && <p className="text-[#9A9590] text-xs mt-0.5">{selectedClient.email}</p>}
+                  {selectedClient.notes && (
+                    <p className="text-[#9A9590] text-xs mt-1.5 italic border-l-2 border-[#D5D0CA] pl-2">{selectedClient.notes}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Stats grid */}
+              <div>
+                <p className="text-[9px] tracking-[0.3em] uppercase text-[#9A9590] mb-3">Estadísticas</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="border border-black/8 p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <TrendingUp size={11} className="text-[#9A9590]" />
+                      <span className="text-[8px] tracking-[0.2em] uppercase text-[#9A9590]">Visitas confirmadas</span>
+                    </div>
+                    <p className="text-2xl font-light text-[#1C1A19]">{clientFicha.confirmed}</p>
+                    {clientFicha.cancelled > 0 && (
+                      <p className="text-[9px] text-[#B0AAA5] mt-0.5">{clientFicha.cancelled} cancelada{clientFicha.cancelled !== 1 ? 's' : ''}</p>
+                    )}
+                  </div>
+                  <div className="border border-black/8 p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Banknote size={11} className="text-[#9A9590]" />
+                      <span className="text-[8px] tracking-[0.2em] uppercase text-[#9A9590]">Total pagado</span>
+                    </div>
+                    <p className="text-2xl font-light text-[#1C1A19]">{clientFicha.totalSpent > 0 ? formatPrice(clientFicha.totalSpent) : '—'}</p>
+                    {clientFicha.avgTicket > 0 && (
+                      <p className="text-[9px] text-[#B0AAA5] mt-0.5">ticket prom. {formatPrice(clientFicha.avgTicket)}</p>
+                    )}
+                  </div>
+                  {clientFicha.favService && (
+                    <div className="col-span-2 border border-black/8 p-3 flex items-center gap-3">
+                      <Award size={13} className="text-[#9A9590] shrink-0" />
+                      <div>
+                        <p className="text-[8px] tracking-[0.2em] uppercase text-[#9A9590]">Servicio favorito</p>
+                        <p className="text-[#1C1A19] text-sm font-light mt-0.5">{clientFicha.favService}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Próxima cita */}
+              {clientFicha.nextAppt && (
+                <div>
+                  <p className="text-[9px] tracking-[0.3em] uppercase text-[#9A9590] mb-2">Próxima cita</p>
+                  <div className="border border-black/8 p-3 flex items-center gap-3">
+                    <Calendar size={13} className="text-[#81807F] shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[#1C1A19] text-sm font-light">
+                        {(clientFicha.nextAppt.dp_services as { name?: string } | null)?.name ?? 'Servicio'}
+                      </p>
+                      <p className="text-[#6B6560] text-xs mt-0.5">
+                        {format(parseISO(clientFicha.nextAppt.appointment_date), "d 'de' MMMM", { locale: es })} · {formatTime(clientFicha.nextAppt.start_time)}
+                      </p>
+                    </div>
+                    <span className={`text-[8px] tracking-[0.15em] uppercase px-2 py-1 ${statusStyle(clientFicha.nextAppt.status).color}`}
+                      style={{ background: 'rgba(0,0,0,0.04)' }}>
+                      {statusStyle(clientFicha.nextAppt.status).label}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Historial */}
+              <div>
+                <p className="text-[9px] tracking-[0.3em] uppercase text-[#9A9590] mb-2">
+                  Historial · {clientFicha.appts.length} cita{clientFicha.appts.length !== 1 ? 's' : ''}
+                </p>
+                {clientFicha.appts.length === 0 ? (
+                  <p className="text-[#B0AAA5] text-sm py-4 text-center">Sin citas registradas.</p>
+                ) : (
+                  <div className="divide-y divide-black/5">
+                    {clientFicha.appts.map(a => {
+                      const st = statusStyle(a.status);
+                      return (
+                        <div key={a.id} className="py-3 flex items-center gap-3">
+                          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${st.dot}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[#1C1A19] text-sm font-light">
+                              {(a.dp_services as { name?: string } | null)?.name ?? 'Servicio'}
+                            </p>
+                            <p className="text-[#9A9590] text-xs mt-0.5">
+                              {format(parseISO(a.appointment_date), "d MMM yyyy", { locale: es })} · {formatTime(a.start_time)}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className={`text-[9px] tracking-[0.1em] uppercase ${st.color}`}>{st.label}</p>
+                            {(a.deposit_amount ?? 0) > 0 && a.status === 'confirmed' && (
+                              <p className="text-[#B0AAA5] text-[9px] mt-0.5">{formatPrice(a.deposit_amount)}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Danger zone */}
+              {!selectedClient.trusted_id && (
+                <div className="pt-2 border-t border-black/6">
+                  <button
+                    onClick={() => handleDeleteByPhone(selectedClient.phone_normalized, selectedClient.name)}
+                    disabled={deletingPhone === selectedClient.phone_normalized}
+                    className="flex items-center gap-2 text-red-400 hover:text-red-600 transition-colors text-[10px] tracking-[0.15em] uppercase disabled:opacity-40"
+                  >
+                    {deletingPhone === selectedClient.phone_normalized
+                      ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                      : <Trash2 size={11} />
+                    }
+                    Eliminar registros
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Summary bar ── */}
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: 'Total',      value: counts.todos,      icon: <Users size={11} /> },
+          { label: 'Frecuentes', value: counts.frecuentes, icon: <Star size={11} />  },
+          { label: 'Nuevas',     value: counts.nuevos,     icon: <UserPlus size={11} /> },
+        ].map(s => (
+          <div key={s.label} className="border border-black/8 px-3 py-2.5 flex flex-col gap-0.5">
+            <div className="flex items-center gap-1.5 text-[#9A9590]">{s.icon}<span className="text-[8px] tracking-[0.18em] uppercase">{s.label}</span></div>
+            <p className="text-xl font-light text-[#1C1A19]">{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Filter tabs ── */}
       <div className="flex items-center gap-0 border-b border-black/8">
-        {(['todos', 'nuevos', 'frecuentes'] as ClientFilter[]).map(f => (
+        {(['todos', 'frecuentes', 'nuevos'] as ClientFilter[]).map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`px-4 py-3 text-[9px] tracking-[0.18em] uppercase border-b-2 transition-colors capitalize ${
               filter === f ? 'border-[#1C1A19] text-[#1C1A19]' : 'border-transparent text-[#9A9590] hover:text-[#6B6560]'
             }`}>
-            {f} <span className="ml-1 opacity-50">({counts[f]})</span>
+            {f} <span className="ml-1 opacity-40">({counts[f]})</span>
           </button>
         ))}
       </div>
 
-      {/* Search + sort + actions row */}
+      {/* ── Search + sort + actions ── */}
       <div className="flex items-center gap-2">
         <input
           type="text" value={clientSearch}
           onChange={e => setClientSearch(e.target.value)}
-          placeholder="Buscar..."
+          placeholder="Buscar por nombre o teléfono..."
           className="flex-1 min-w-0 bg-transparent border border-black/8 text-[#1C1A19] px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/40 placeholder:text-black/25"
           style={{ fontSize: '16px' }}
         />
         <select value={sort} onChange={e => setSort(e.target.value as ClientSort)}
           className="shrink-0 bg-transparent border border-black/8 text-[#6B6560] text-[9px] tracking-[0.1em] uppercase px-2 py-2 focus:outline-none cursor-pointer">
+          <option value="visitas">+ Visitas</option>
+          <option value="ultima">Última visita</option>
           <option value="az">A–Z</option>
           <option value="za">Z–A</option>
-          <option value="visitas">+ Visitas</option>
-          <option value="ultima">Última</option>
         </select>
         <button onClick={load} disabled={loading} className="shrink-0 text-[#9A9590] hover:text-[#81807F] transition-colors p-1.5 border border-black/8">
           <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />
@@ -1524,7 +1739,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         </button>
       </div>
 
-      {/* Add form */}
+      {/* ── Add form ── */}
       {showForm && (
         <div className="border border-black/10 p-4">
           <p className="text-[10px] tracking-[0.3em] uppercase text-[#6B6560] mb-4">Nueva clienta frecuente</p>
@@ -1570,7 +1785,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         </div>
       )}
 
-      {/* List */}
+      {/* ── Client list ── */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <div className="w-4 h-4 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
@@ -1587,83 +1802,65 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         <div className="divide-y divide-black/5">
           {displayed.map(c => (
             <div key={c.phone_normalized}>
-              <div className="flex items-center py-3 gap-3">
-                {/* Zone 1: star toggle */}
-                <button
-                  onClick={() => toggleStar(c)}
-                  disabled={togglingStar === c.phone_normalized}
-                  className="shrink-0 p-1 transition-colors disabled:opacity-40"
-                  title={c.trusted_id ? 'Quitar de frecuentes' : 'Agregar a frecuentes'}
-                >
-                  {togglingStar === c.phone_normalized
-                    ? <div className="w-3.5 h-3.5 border border-amber-400 border-t-transparent rounded-full animate-spin" />
-                    : c.trusted_id
-                      ? <Star size={14} className="text-amber-400" fill="#fbbf24" />
-                      : <Star size={14} className="text-black/20 hover:text-amber-300 transition-colors" />
-                  }
-                </button>
+              {/* Main row — tappable */}
+              <button
+                className="w-full text-left flex items-center py-3 gap-3 hover:bg-black/[0.02] transition-colors active:bg-black/5 -mx-1 px-1"
+                onClick={() => setSelectedClient(c)}
+              >
+                {/* Avatar */}
+                <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-light"
+                  style={{ background: c.trusted_id ? '#fef3c7' : '#EDEBE7', color: c.trusted_id ? '#d97706' : '#6B6560' }}>
+                  {c.name.charAt(0).toUpperCase()}
+                </div>
 
-                {/* Zone 2: info */}
+                {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
                     <p className="text-[#1C1A19] text-sm">{c.name}</p>
+                    {c.trusted_id && <Star size={10} className="text-amber-400 shrink-0" fill="#fbbf24" />}
+                  </div>
+                  <p className="text-[#9A9590] text-xs mt-0.5 truncate">{c.phone}</p>
+                </div>
+
+                {/* Stats + arrow */}
+                <div className="shrink-0 text-right flex items-center gap-3">
+                  <div>
                     {c.appt_count > 0 && (
-                      <span className="text-[9px] tracking-wider text-[#B0AAA5]">{c.appt_count} visita{c.appt_count !== 1 ? 's' : ''}</span>
+                      <p className="text-[#1C1A19] text-sm font-light">{c.appt_count}<span className="text-[#B0AAA5] text-[10px] ml-0.5">citas</span></p>
+                    )}
+                    {c.last_appt && (
+                      <p className="text-[#B0AAA5] text-[9px] mt-0.5">
+                        {format(parseISO(c.last_appt), "d MMM", { locale: es })}
+                      </p>
                     )}
                   </div>
-                  <p className="text-[#6B6560] text-xs mt-0.5 truncate">
-                    {c.phone}{c.email ? <span className="text-[#B0AAA5]"> · {c.email}</span> : null}
-                  </p>
-                  {c.notes && <p className="text-[#B0AAA5] text-[10px] mt-0.5 italic">{c.notes}</p>}
+                  <ChevronRight size={14} className="text-black/20" />
                 </div>
+              </button>
 
-                {/* Zone 3: actions */}
-                <div className="shrink-0 flex items-center gap-0.5">
-                  <button
-                    onClick={() => editingPhone === c.phone_normalized ? closeEdit() : startEdit(c)}
-                    className="text-[#B0AAA5] hover:text-[#81807F] transition-colors p-1.5"
-                    title="Editar"
-                  >
-                    <Pencil size={12} />
-                  </button>
-                  {!c.trusted_id && (
-                    <button
-                      onClick={() => handleDeleteByPhone(c.phone_normalized, c.name)}
-                      disabled={deletingPhone === c.phone_normalized}
-                      className="text-[#B0AAA5] hover:text-red-500 transition-colors disabled:opacity-40 p-1.5"
-                      title="Eliminar registros"
-                    >
-                      {deletingPhone === c.phone_normalized
-                        ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
-                        : <Trash2 size={12} />
-                      }
-                    </button>
-                  )}
-                </div>
-              </div>
-              {/* Inline edit form */}
+              {/* Inline edit form (when editing outside ficha) */}
               {editingPhone === c.phone_normalized && (
                 <div className="border border-black/10 p-4 mb-2" style={{ background: '#F3F1EE' }}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                     <div>
                       <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Nombre</label>
                       <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
-                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
                     </div>
                     <div>
                       <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Teléfono</label>
                       <input type="text" value={editPhone} onChange={e => setEditPhone(e.target.value)}
-                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
                     </div>
                     <div>
                       <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Correo (opcional)</label>
                       <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)}
-                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
                     </div>
                     <div>
                       <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Notas (opcional)</label>
                       <input type="text" value={editNotes} onChange={e => setEditNotes(e.target.value)}
-                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25" style={{ fontSize: '16px' }} />
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -1672,8 +1869,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                       {editSaving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={11} />}
                       Guardar
                     </button>
-                    <button onClick={closeEdit}
-                      className="px-3 py-2 text-[10px] tracking-[0.15em] uppercase text-[#9A9590] border border-black/8 hover:border-black/20 transition-colors">Cancelar</button>
+                    <button onClick={closeEdit} className="px-3 py-2 text-[10px] tracking-[0.15em] uppercase text-[#9A9590] border border-black/8 hover:border-black/20 transition-colors">Cancelar</button>
                   </div>
                 </div>
               )}
