@@ -40,7 +40,7 @@ function CanceladoContent() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <a
-          href={`https://wa.me/${process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691877077'}`}
+          href={`https://wa.me/${process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691459296'}`}
           target="_blank"
           rel="noopener noreferrer"
           className="border border-[#2A2620] text-[#7A7168] px-6 py-3 text-xs tracking-[0.2em] uppercase hover:border-[#81807F] hover:text-[#81807F] transition-colors"

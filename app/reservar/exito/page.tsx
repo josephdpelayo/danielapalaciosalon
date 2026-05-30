@@ -61,7 +61,7 @@ function ExitoContent() {
 
   const hasCalendar = !!(dateiso && t24);
 
-  const waPhone = process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691877077';
+  const waPhone = process.env.NEXT_PUBLIC_SALON_WHATSAPP ?? '526691459296';
   const waMessage = service && date && time
     ? `Hola Daniela, tengo una cita para ${service} el ${date} a las ${time}. ¿Puedes confirmarme?`
     : '¡Hola Daniela! Tengo una cita agendada y quería confirmar los detalles.';
