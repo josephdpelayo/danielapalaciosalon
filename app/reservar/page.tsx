@@ -12,8 +12,8 @@ import { Service, TimeSlot } from '@/lib/types';
 import { formatTime, formatDuration, formatPrice } from '@/lib/slots';
 import 'react-day-picker/dist/style.css';
 
-type Step = 'date' | 'service' | 'time' | 'info' | 'confirm';
-const STEPS_LIST: Step[] = ['date', 'service', 'time', 'info', 'confirm'];
+type Step = 'service' | 'date' | 'time' | 'info' | 'confirm';
+const STEPS_LIST: Step[] = ['service', 'date', 'time', 'info', 'confirm'];
 
 function svcDotColor(name: string): string {
   const n = name.toLowerCase();
@@ -30,7 +30,7 @@ function svcDotColor(name: string): string {
 function BookingContent() {
   const searchParams = useSearchParams();
 
-  const [step, setStep] = useState<Step>('date');
+  const [step, setStep] = useState<Step>('service');
   const [services, setServices] = useState<Service[]>(MOCK_SERVICES);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -84,7 +84,7 @@ function BookingContent() {
     const sid = searchParams.get('service');
     if (sid) {
       const svc = services.find((s) => s.id === sid);
-      if (svc) { setSelectedService(svc); setStep('date'); }
+      if (svc) { setSelectedService(svc); setStep('service'); }
     }
   }, [searchParams, services]);
 
@@ -245,44 +245,22 @@ function BookingContent() {
   };
 
   const handleServiceSelect = async (svc: Service) => {
-    if (!selectedDate) return;
     setCheckingAvail(true);
     setServiceNoAvail(null);
-    try {
-      const res = await fetch(
-        `/api/available-slots?date=${format(selectedDate, 'yyyy-MM-dd')}&service_id=${svc.id}&duration=${svc.duration_minutes}&active_minutes=${svc.active_minutes ?? svc.duration_minutes}`
-      );
-      const data = await res.json();
-      const hasSlots = (data.slots ?? []).some((s: TimeSlot) => s.available);
-      if (hasSlots) {
-        setSelectedService(svc);
-        setSelectedSlot(null);
-        setSlots(data.slots);
-        setStep('time');
-      } else {
-        // Load blocked dates for this service, then send back to calendar
-        await loadBlockedDates(svc);
-        setSelectedService(svc);
-        setSelectedDate(undefined);
-        setSelectedSlot(null);
-        setServiceNoAvail({ reason: data.reason ?? 'no_slots', svc });
-        setStep('date');
-      }
-    } catch {
-      setSelectedService(svc);
-      setSelectedSlot(null);
-      setStep('time');
-    } finally {
-      setCheckingAvail(false);
-    }
+    setSelectedDate(undefined);
+    setSelectedSlot(null);
+    setSelectedService(svc);
+    await loadBlockedDates(svc);
+    setCheckingAvail(false);
+    setStep('date');
   };
 
   const stepIndex = STEPS_LIST.indexOf(step);
 
   // Step label map for progress dots aria
   const stepLabels: Record<Step, string> = {
-    date: 'Fecha',
     service: 'Servicio',
+    date: 'Fecha',
     time: 'Horario',
     info: 'Datos',
     confirm: 'Confirmar',
@@ -463,7 +441,7 @@ function BookingContent() {
           </div>
         )}
 
-        {/* ─── STEP 2: SERVICE ─── */}
+        {/* ─── STEP 1: SERVICE ─── */}
         {step === 'service' && (() => {
           const categories = [...new Set(
             services.filter(s => s.active && s.category).map(s => s.category as string)
@@ -472,12 +450,7 @@ function BookingContent() {
           return (
             <div>
               <div className="mb-4">
-                <button
-                  onClick={() => setStep('date')}
-                  className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-3"
-                >
-                  <ArrowLeft size={13} /> Atrás
-                </button>
+                <div className="h-6 mb-3" />{/* spacer instead of back button */}
                 <h2 className="font-[family-name:var(--font-display)] text-3xl font-light text-[#F0EDE8] leading-tight mb-1">
                   Elige un servicio
                 </h2>
@@ -544,46 +517,23 @@ function BookingContent() {
           );
         })()}
 
-        {/* ─── STEP 1: DATE ─── */}
-        {step === 'date' && (
+        {/* ─── STEP 2: DATE ─── */}
+        {step === 'date' && selectedService && (
           <div>
             <div className="mb-4">
+              <button
+                onClick={() => setStep('service')}
+                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-3"
+              >
+                <ArrowLeft size={13} /> Atrás
+              </button>
               <h2 className="font-[family-name:var(--font-display)] text-3xl font-light text-[#F0EDE8] leading-tight mb-1">
                 ¿Qué día te queda bien?
               </h2>
-              {selectedService ? (
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-[#81807F] text-xs tracking-[0.1em] uppercase">
-                    {selectedService.name}
-                  </p>
-                  <button
-                    onClick={() => { setSelectedService(null); setBlockedDates(new Set()); setServiceNoAvail(null); }}
-                    className="text-[10px] text-[#555] border border-white/8 px-2 py-0.5 hover:border-white/20 transition-colors tracking-wider uppercase"
-                  >
-                    Cambiar
-                  </button>
-                </div>
-              ) : (
-                <p className="text-[#666] text-xs tracking-[0.1em] uppercase">
-                  Elige una fecha y te mostramos disponibilidad
-                </p>
-              )}
+              <p className="text-[#81807F] text-xs tracking-[0.1em] uppercase">
+                {selectedService.name} · {checkingAvail ? 'Cargando disponibilidad…' : 'Solo se muestran días con horarios libres'}
+              </p>
             </div>
-
-            {/* Banner: fecha seleccionada no disponible para el servicio */}
-            {serviceNoAvail && (
-              <div className="mb-4 border border-white/8 px-4 py-3 space-y-1">
-                <p className="text-[#F0EDE8] text-xs leading-snug">
-                  {serviceNoAvail.reason === 'staff_absent' ? 'La estilista no trabaja ese día.' :
-                   serviceNoAvail.reason === 'blocked'      ? 'El salón estará cerrado ese día.' :
-                   serviceNoAvail.reason === 'full'         ? 'Ese día está completo.' :
-                   'Sin disponibilidad ese día.'}
-                </p>
-                <p className="text-[#555] text-[11px]">
-                  Los días disponibles para <span className="text-[#81807F]">{serviceNoAvail.svc.name}</span> están marcados en el calendario.
-                </p>
-              </div>
-            )}
 
             <div className="border border-white/8 flex justify-center py-2 overflow-x-auto">
               <DayPicker
@@ -611,10 +561,10 @@ function BookingContent() {
             {selectedDate && (
               <div className="mt-8">
                 <button
-                  onClick={() => setStep('service')}
+                  onClick={() => setStep('time')}
                   className="w-full flex items-center justify-center gap-3 bg-[#F0EDE8] text-[#16181E] py-4 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors"
                 >
-                  Elegir servicio <ArrowRight size={13} />
+                  Ver horarios <ArrowRight size={13} />
                 </button>
               </div>
             )}
@@ -626,7 +576,7 @@ function BookingContent() {
           <div>
             <div className="mb-4">
               <button
-                onClick={() => setStep('service')}
+                onClick={() => setStep('date')}
                 className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-3"
               >
                 <ArrowLeft size={13} /> Atrás
