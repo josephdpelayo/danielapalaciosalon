@@ -115,6 +115,99 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ id: mockId, status: initialStatus });
 }
 
+export async function PATCH(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
+  const body = await req.json();
+  const { id, appointment_date, start_time, end_time, notes, service_id } = body;
+
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+
+  if (!(await import('@/lib/supabase')).supabaseReady) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
+  }
+
+  const { supabase } = await import('@/lib/supabase');
+
+  // Fetch the existing appointment to know its staff_id and current values
+  const { data: existing, error: fetchError } = await supabase
+    .from('dp_appointments')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !existing) {
+    return NextResponse.json({ error: 'Cita no encontrada' }, { status: 404 });
+  }
+
+  const newDate      = appointment_date ?? existing.appointment_date;
+  const newStart     = start_time       ?? existing.start_time;
+  const newEnd       = end_time         ?? existing.end_time;
+  const newServiceId = service_id       ?? existing.service_id;
+  const newNotes     = notes !== undefined ? notes : existing.notes;
+
+  if (!newStart || !newEnd || !newDate) {
+    return NextResponse.json({ error: 'Missing required time fields' }, { status: 400 });
+  }
+
+  const staleThreshold = new Date(Date.now() - PENDING_PAYMENT_TTL_MS).toISOString();
+
+  // Conflict check: same logic as POST, but excluding this appointment's own id
+  if (existing.staff_id) {
+    const { data: conflicts } = await supabase
+      .from('dp_appointments')
+      .select('id')
+      .eq('appointment_date', newDate)
+      .eq('staff_id', existing.staff_id)
+      .neq('status', 'cancelled')
+      .neq('id', id)
+      .or(`status.neq.pending_payment,created_at.gt.${staleThreshold}`)
+      .lt('start_time', newEnd)
+      .gt('end_time', newStart)
+      .limit(1);
+
+    if (conflicts && conflicts.length > 0) {
+      return NextResponse.json({ error: 'El horario ya no está disponible. Por favor elige otro.' }, { status: 409 });
+    }
+  } else {
+    // Global conflict check (no staff assigned)
+    const { data: conflicts } = await supabase
+      .from('dp_appointments')
+      .select('id')
+      .eq('appointment_date', newDate)
+      .neq('status', 'cancelled')
+      .neq('id', id)
+      .or(`status.neq.pending_payment,created_at.gt.${staleThreshold}`)
+      .lt('start_time', newEnd)
+      .gt('end_time', newStart)
+      .limit(1);
+
+    if (conflicts && conflicts.length > 0) {
+      return NextResponse.json({ error: 'El horario ya no está disponible. Por favor elige otro.' }, { status: 409 });
+    }
+  }
+
+  const updatePayload: Record<string, unknown> = {
+    appointment_date: newDate,
+    start_time:       newStart,
+    end_time:         newEnd,
+    notes:            newNotes,
+    service_id:       newServiceId,
+  };
+
+  const { data, error } = await supabase
+    .from('dp_appointments')
+    .update(updatePayload)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json(data);
+}
+
 export async function DELETE(req: NextRequest) {
   const authErr = requireAdmin(req);
   if (authErr) return authErr;
