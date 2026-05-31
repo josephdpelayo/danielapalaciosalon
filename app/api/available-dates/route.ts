@@ -68,46 +68,25 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // 5. Staff schedules (day_of_week active per staff)
-  let staffActiveDoW = new Map<string, Set<number>>(); // staff_id → Set<day_of_week>
-  if (capableIds.length > 0) {
-    const { data: schRows } = await supabase
-      .from('dp_staff_schedule')
-      .select('staff_id, day_of_week, is_active')
-      .in('staff_id', capableIds)
-      .eq('is_active', true);
-    for (const row of schRows ?? []) {
-      if (!staffActiveDoW.has(row.staff_id as string)) staffActiveDoW.set(row.staff_id as string, new Set());
-      staffActiveDoW.get(row.staff_id as string)!.add(row.day_of_week as number);
-    }
-  }
-
-  // 6. For each date, determine if it's blocked
+  // 5. For each date: block if salon closed OR all capable staff absent
   const blocked_dates: string[] = [];
 
   for (const d of dateRange) {
     const dow = getDay(new Date(d + 'T12:00:00'));
 
-    // Salon closed this day of week
+    // Salon closed this day of week (business schedule is the base)
     if (!activeDoW.has(dow)) { blocked_dates.push(d); continue; }
 
     // All-day admin block
     if (allDayBlockedSet.has(d)) { blocked_dates.push(d); continue; }
 
-    // If no capable staff configured: use global schedule only (already checked above)
+    // No staff assigned to this service → rely on business schedule only (already open)
     if (capableIds.length === 0) continue;
 
-    // Check if at least one capable staff is present AND working this day
+    // Block if ALL capable staff are absent this day
     const absentToday = absentMap.get(d) ?? new Set<string>();
-    const hasAvailableStaff = capableIds.some((id) => {
-      if (absentToday.has(id)) return false;
-      const staffDays = staffActiveDoW.get(id);
-      // No staff schedule configured → fall back to global schedule (already checked above)
-      if (!staffDays || staffDays.size === 0) return true;
-      return staffDays.has(dow);
-    });
-
-    if (!hasAvailableStaff) { blocked_dates.push(d); continue; }
+    const anyPresent = capableIds.some((id) => !absentToday.has(id));
+    if (!anyPresent) { blocked_dates.push(d); continue; }
   }
 
   return NextResponse.json({ blocked_dates });
