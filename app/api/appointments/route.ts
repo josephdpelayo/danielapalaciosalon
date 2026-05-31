@@ -212,18 +212,30 @@ export async function DELETE(req: NextRequest) {
   const authErr = requireAdmin(req);
   if (authErr) return authErr;
 
-  const { phone } = await req.json();
-  if (!phone) return NextResponse.json({ error: 'Missing phone' }, { status: 400 });
+  const body = await req.json();
+  const { id, phone_normalized } = body;
 
-  const normalized = phone.replace(/\D/g, '').slice(-10);
+  if (!id && !phone_normalized) {
+    return NextResponse.json({ error: 'Missing id or phone_normalized' }, { status: 400 });
+  }
+
   if (!(await import('@/lib/supabase')).supabaseReady) return NextResponse.json({ ok: true, deleted: 0 });
 
   const { supabase } = await import('@/lib/supabase');
+
+  // Single appointment delete by id
+  if (id) {
+    const { error } = await supabase.from('dp_appointments').delete().eq('id', id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  // Bulk delete by normalized phone (backward-compatible client flow)
   const { data: appts } = await supabase.from('dp_appointments').select('id, client_phone');
   if (!appts) return NextResponse.json({ ok: true, deleted: 0 });
 
   const toDelete = appts
-    .filter(a => a.client_phone.replace(/\D/g, '').slice(-10) === normalized)
+    .filter(a => a.client_phone.replace(/\D/g, '').slice(-10) === phone_normalized)
     .map(a => a.id);
 
   if (toDelete.length > 0) {
