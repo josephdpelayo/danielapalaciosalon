@@ -192,6 +192,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   const [triggerResult, setTriggerResult]     = useState<{ count: number; pushed: boolean } | null>(null);
   const [sentReminderIds, setSentReminderIds] = useState<Set<string>>(new Set());
   const [topService, setTopService]           = useState<string | null>(null);
+  const [statsObj, setStatsObj]               = useState<{ top_service?: string; month_revenue?: number; week_upcoming?: number; total_confirmed?: number } | null>(null);
   // Modal nueva cita
   const [showNuevaCita, setShowNuevaCita]     = useState(false);
   const [nuevaCitaForm, setNuevaCitaForm]     = useState<NuevaCitaForm>(EMPTY_NUEVA_CITA);
@@ -218,6 +219,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
       setMsgConf(s.msg_confirmation);
       setMsgReminder(s.msg_reminder_24h);
       setTopService(statsData.stats?.top_service ?? null);
+      setStatsObj(statsData.stats ?? null);
     } catch { /* keep */ }
     finally { setLoading(false); }
   }, [adminSecret]);
@@ -284,7 +286,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
     setShowNuevaCita(true);
     if (serviceOptions.length === 0) {
       try {
-        const res = await fetch('/api/services');
+        const res = await fetch('/api/services', { headers: { 'x-admin-secret': adminSecret } });
         const data = await res.json();
         setServiceOptions((data.services ?? []).filter((s: ServiceOption & { active?: boolean }) => s.active !== false));
       } catch { /* keep existing */ }
@@ -308,12 +310,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   const todayKey    = format(startOfToday(), 'yyyy-MM-dd');
   const tomorrowKey = format(addDays(startOfToday(), 1), 'yyyy-MM-dd');
   const todayAppts    = appointments.filter((a) => a.appointment_date === todayKey    && a.status !== 'cancelled');
-  const tomorrowAppts = appointments.filter((a) => a.appointment_date === tomorrowKey && a.status === 'confirmed');
-
-  const monthKey = format(startOfToday(), 'yyyy-MM');
-  const monthRevenue = appointments
-    .filter((a) => a.status === 'confirmed' && a.appointment_date.startsWith(monthKey))
-    .reduce((sum, a) => sum + ((a as unknown as Record<string, number>).deposit_amount ?? 0), 0);
+  const tomorrowAppts = appointments.filter((a) => a.appointment_date === tomorrowKey && a.status !== 'cancelled');
 
   const upcoming = useMemo(() =>
     appointments
@@ -434,15 +431,15 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
           <div className="text-[9px] tracking-[0.15em] uppercase text-[#9A9590] mt-0.5">Próximas</div>
         </div>
         <div className="flex-1 py-3 text-center">
-          <div className="font-[family-name:var(--font-display)] text-2xl font-light" style={{ color: '#81807F' }}>${monthRevenue.toLocaleString('es-MX')}</div>
+          <div className="font-[family-name:var(--font-display)] text-2xl font-light" style={{ color: '#81807F' }}>${(statsObj?.month_revenue ?? 0).toLocaleString('es-MX')}</div>
           <div className="text-[9px] tracking-[0.15em] uppercase text-[#9A9590] mt-0.5">Anticipos</div>
           <div className="text-[8px] text-[#B0AAA5] leading-tight">(depósitos recibidos)</div>
         </div>
       </div>
 
       {/* ── Servicio más popular ── */}
-      {topService && (
-        <p className="text-[10px] text-[#9A9590] px-0.5">Servicio más pedido: <span className="text-[#6B6560]">{topService}</span></p>
+      {(statsObj?.top_service ?? topService) && (
+        <p className="text-[10px] text-[#9A9590] px-0.5">Servicio más pedido: <span className="text-[#6B6560]">{statsObj?.top_service ?? topService}</span></p>
       )}
 
       {/* ── Citas de hoy ── */}
@@ -486,7 +483,7 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                         <StatusBadge status={apt.status} />
                       </div>
                       <p className="text-[#6B6560] text-xs">{apt.dp_services?.name ?? '—'} · {dtStr} {formatTime(apt.start_time)}</p>
-                      <a href={`https://wa.me/52${apt.client_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                      <a href={waHref(apt.client_phone, '')} target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-1 text-[#9A9590] hover:text-[#25D366] transition-colors text-xs mt-1 w-fit">
                         <Phone size={10} /> {apt.client_phone}
                       </a>
@@ -597,14 +594,14 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                     className="text-emerald-600 hover:text-emerald-700 p-1 disabled:opacity-40 transition-colors">
                     <Check size={13} />
                   </button>
-                  <button title="Quitar"
+                  <button title="Quitar" disabled={updatingWaitlist === entry.id}
                     onClick={async () => {
                       setUpdatingWaitlist(entry.id);
                       await fetch('/api/waitlist', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret }, body: JSON.stringify({ id: entry.id, status: 'cancelled' }) });
                       setWaitlist((p) => p.filter((e) => e.id !== entry.id));
                       setUpdatingWaitlist(null);
                     }}
-                    className="text-[#B0AAA5] hover:text-red-400 p-1 transition-colors">
+                    className="text-[#B0AAA5] hover:text-red-400 p-1 transition-colors disabled:opacity-40">
                     <X size={13} />
                   </button>
                 </div>
@@ -612,6 +609,11 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
             ))}
           </div>
         </div>
+      )}
+
+      {/* ── Sin citas próximas ── */}
+      {todayAppts.length === 0 && needsAction.length === 0 && upcoming.length === 0 && !loading && (
+        <p style={{ color: '#686560', fontSize: '12px', textAlign: 'center', padding: '32px 0' }}>Sin citas próximas</p>
       )}
 
       {/* ── Próximas citas ── */}
@@ -685,9 +687,11 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
   const [editSaving, setEditSaving] = useState(false);
 
   const [msgReminder, setMsgReminder] = useState(DEFAULT_SETTINGS.msg_reminder_24h);
+  const [agendaError, setAgendaError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setAgendaError(null);
     try {
       const [apptRes, blockRes, settingsRes] = await Promise.all([
         fetch('/api/appointments', { headers: { 'x-admin-secret': adminSecret } }),
@@ -701,7 +705,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
       setBlocks(blockData.blocks ?? []);
       const s = { ...DEFAULT_SETTINGS, ...settingsData.settings };
       setMsgReminder(s.msg_reminder_24h);
-    } catch { /* keep */ }
+    } catch { setAgendaError('Error al cargar datos'); }
     finally { setLoading(false); }
   }, [adminSecret]);
 
@@ -785,10 +789,14 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
   const updateStatus = async (id: string, status: 'confirmed' | 'cancelled') => {
     setUpdating(id);
     try {
-      await fetch('/api/admin', {
+      const res = await fetch('/api/admin', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
         body: JSON.stringify({ id, status }),
       });
+      if (!res.ok) {
+        alert('Error al actualizar el estado');
+        return;
+      }
       setAppointments((prev) => prev.map((a) => a.id === id ? { ...a, status } : a));
     } finally { setUpdating(null); }
   };
@@ -855,6 +863,10 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
         timeToMinutes(apt.end_time) - timeToMinutes(apt.start_time);
       const newStartMinutes = timeToMinutes(editForm.startTime);
       const newEndMinutes   = newStartMinutes + durationMinutes;
+      if (newEndMinutes >= 24 * 60) {
+        alert('La hora de fin supera la medianoche. Ajusta la hora de inicio.');
+        return;
+      }
       const newEndTime      = minutesToTime(newEndMinutes);
 
       const res = await fetch('/api/appointments', {
@@ -901,6 +913,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
 
   return (
     <div>
+      {agendaError && <p style={{ color: '#ef4444', fontSize: '11px', marginBottom: 8 }}>{agendaError}</p>}
       {/* Stats bar */}
       <div className="grid grid-cols-3 gap-px border border-black/8 mb-6">
         {[
@@ -1027,7 +1040,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                       const isEditingThis = editingApptId === apt.id;
                       return (
                         <div
-                          key={i}
+                          key={row.time + (row.appt?.id ?? row.block?.id ?? 'free-' + row.time)}
                           className="border-b border-black/5 py-3"
                           style={{ borderLeft: `3px solid ${color}`, paddingLeft: '12px' }}
                         >
@@ -1050,7 +1063,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                           </div>
                           <div className="flex items-center gap-3 flex-wrap mt-1">
                             <a
-                              href={`https://wa.me/52${apt.client_phone.replace(/\D/g, '')}`}
+                              href={waHref(apt.client_phone, '')}
                               target="_blank" rel="noopener noreferrer"
                               className="flex items-center gap-1 text-[#9A9590] hover:text-[#25D366] transition-colors text-xs"
                             >
@@ -1121,7 +1134,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                               </button>
                               <button onClick={() => updateStatus(apt.id, 'cancelled')} disabled={updating === apt.id}
                                 className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-red-300 text-red-500 px-2.5 py-1.5 hover:bg-red-50 transition-colors disabled:opacity-40">
-                                <X size={10} /> No aceptar
+                                <X size={10} /> Rechazar
                               </button>
                             </div>
                           )}
@@ -1142,7 +1155,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                     if (row.block && row.blockIsStart) {
                       const blk = row.block;
                       return (
-                        <div key={i} className="flex items-center justify-between py-2.5 border-b border-black/5"
+                        <div key={row.time + (row.appt?.id ?? row.block?.id ?? 'free-' + row.time)} className="flex items-center justify-between py-2.5 border-b border-black/5"
                           style={{ borderLeft: '3px solid rgba(239,68,68,0.5)', paddingLeft: '12px', background: 'rgba(239,68,68,0.03)' }}>
                           <div>
                             <span className="text-red-500/80 text-xs">
@@ -1168,7 +1181,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
 
                     /* ── Free slot ── */
                     return (
-                      <div key={i} className="flex items-center gap-3 py-2 border-b border-black/[0.03]"
+                      <div key={row.time + (row.appt?.id ?? row.block?.id ?? 'free-' + row.time)} className="flex items-center gap-3 py-2 border-b border-black/[0.03]"
                         style={{ paddingLeft: '15px' }}>
                         <span className="text-[#C0BBB6] text-[10px] w-16 shrink-0">{formatTime(row.time)}</span>
                         <div className="flex items-center gap-1.5">
