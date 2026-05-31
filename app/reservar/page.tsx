@@ -12,8 +12,8 @@ import { Service, TimeSlot } from '@/lib/types';
 import { formatTime, formatDuration, formatPrice } from '@/lib/slots';
 import 'react-day-picker/dist/style.css';
 
-type Step = 'info' | 'service' | 'date' | 'time' | 'confirm';
-const STEPS_LIST: Step[] = ['info', 'service', 'date', 'time', 'confirm'];
+type Step = 'date' | 'service' | 'time' | 'info' | 'confirm';
+const STEPS_LIST: Step[] = ['date', 'service', 'time', 'info', 'confirm'];
 
 function svcDotColor(name: string): string {
   const n = name.toLowerCase();
@@ -30,7 +30,7 @@ function svcDotColor(name: string): string {
 function BookingContent() {
   const searchParams = useSearchParams();
 
-  const [step, setStep] = useState<Step>('info');
+  const [step, setStep] = useState<Step>('date');
   const [services, setServices] = useState<Service[]>(MOCK_SERVICES);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -81,7 +81,7 @@ function BookingContent() {
     const sid = searchParams.get('service');
     if (sid) {
       const svc = services.find((s) => s.id === sid);
-      if (svc) { setSelectedService(svc); setStep('info'); }
+      if (svc) { setSelectedService(svc); setStep('date'); }
     }
   }, [searchParams, services]);
 
@@ -231,10 +231,10 @@ function BookingContent() {
 
   // Step label map for progress dots aria
   const stepLabels: Record<Step, string> = {
-    info: 'Datos',
-    service: 'Servicio',
     date: 'Fecha',
+    service: 'Servicio',
     time: 'Horario',
+    info: 'Datos',
     confirm: 'Confirmar',
   };
 
@@ -290,15 +290,28 @@ function BookingContent() {
 
       <div className="px-5 pb-8 max-w-xl mx-auto">
 
-        {/* ─── STEP 1: INFO ─── */}
+        {/* ─── STEP 4: INFO ─── */}
         {step === 'info' && (
           <div>
             <div className="mb-4">
+              <button
+                onClick={() => setStep('time')}
+                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-3"
+              >
+                <ArrowLeft size={13} /> Atrás
+              </button>
+              {selectedDate && selectedService && selectedSlot && (
+                <div className="mb-4 py-3 border-b border-white/8">
+                  <p className="text-[#81807F] text-[10px] tracking-[0.15em] uppercase mb-1">
+                    {selectedService.name} · {format(selectedDate, "d 'de' MMMM", { locale: es })} · {formatTime(selectedSlot.start)}
+                  </p>
+                </div>
+              )}
               <h2 className="font-[family-name:var(--font-display)] text-3xl font-light text-[#F0EDE8] leading-tight mb-1">
-                Cuéntame de ti
+                Tus datos
               </h2>
               <p className="text-[#666] text-xs tracking-[0.1em] uppercase">
-                Ingresa tus datos para comenzar
+                Último paso antes de confirmar
               </p>
             </div>
 
@@ -390,7 +403,7 @@ function BookingContent() {
               <div>
                 <button
                   disabled={!clientName.trim() || !clientPhone.trim()}
-                  onClick={() => setStep(selectedService ? 'date' : 'service')}
+                  onClick={() => setStep('confirm')}
                   className="w-full flex items-center justify-center gap-3 bg-[#F0EDE8] text-[#16181E] py-3 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Continuar <ArrowRight size={13} />
@@ -410,7 +423,7 @@ function BookingContent() {
             <div>
               <div className="mb-4">
                 <button
-                  onClick={() => setStep('info')}
+                  onClick={() => setStep('date')}
                   className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-3"
                 >
                   <ArrowLeft size={13} /> Atrás
@@ -449,7 +462,7 @@ function BookingContent() {
                 {visibleServices.map((svc) => (
                   <button
                     key={svc.id}
-                    onClick={() => { setSelectedService(svc); setSelectedDate(undefined); setSelectedSlot(null); setStep('date'); }}
+                    onClick={() => { setSelectedService(svc); setSelectedSlot(null); setStep('time'); }}
                     className="w-full text-left py-4 hover:bg-white/[0.02] transition-colors group"
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -478,30 +491,16 @@ function BookingContent() {
           );
         })()}
 
-        {/* ─── STEP 3: DATE ─── */}
-        {step === 'date' && selectedService && (
+        {/* ─── STEP 1: DATE ─── */}
+        {step === 'date' && (
           <div>
             <div className="mb-4">
-              <button
-                onClick={() => setStep('service')}
-                className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-3"
-              >
-                <ArrowLeft size={13} /> Atrás
-              </button>
               <h2 className="font-[family-name:var(--font-display)] text-3xl font-light text-[#F0EDE8] leading-tight mb-1">
-                Elige una fecha
+                ¿Qué día te queda bien?
               </h2>
-              <div className="flex items-center gap-3">
-                <p className="text-[#666] text-xs tracking-[0.1em] uppercase">
-                  {selectedService.name} · {formatDuration(selectedService.duration_minutes)}
-                </p>
-                <button
-                  onClick={() => setStep('service')}
-                  className="text-[10px] text-[#81807F] border border-white/10 px-2 py-1 hover:border-[#81807F]/40 transition-colors tracking-wider uppercase"
-                >
-                  Cambiar
-                </button>
-              </div>
+              <p className="text-[#666] text-xs tracking-[0.1em] uppercase">
+                Elige una fecha y te mostramos disponibilidad
+              </p>
             </div>
 
             <div className="border border-white/8 flex justify-center py-2 overflow-x-auto">
@@ -530,22 +529,22 @@ function BookingContent() {
             {selectedDate && (
               <div className="mt-8">
                 <button
-                  onClick={() => setStep('time')}
+                  onClick={() => setStep('service')}
                   className="w-full flex items-center justify-center gap-3 bg-[#F0EDE8] text-[#16181E] py-4 text-[11px] tracking-[0.25em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors"
                 >
-                  Ver horarios <ArrowRight size={13} />
+                  Elegir servicio <ArrowRight size={13} />
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* ─── STEP 4: TIME ─── */}
+        {/* ─── STEP 3: TIME ─── */}
         {step === 'time' && selectedService && selectedDate && (
           <div>
             <div className="mb-4">
               <button
-                onClick={() => setStep('date')}
+                onClick={() => setStep('service')}
                 className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-3"
               >
                 <ArrowLeft size={13} /> Atrás
@@ -675,7 +674,7 @@ function BookingContent() {
                     <button
                       key={slot.start}
                       disabled={!slot.available}
-                      onClick={() => { setSelectedSlot(slot); setStep('confirm'); }}
+                      onClick={() => { setSelectedSlot(slot); setStep('info'); }}
                       className={`py-4 px-2 text-xs tracking-wide transition-all border ${
                         !slot.available
                           ? 'border-white/5 text-white/15 cursor-not-allowed line-through'
@@ -701,7 +700,7 @@ function BookingContent() {
           <div>
             <div className="mb-5">
               <button
-                onClick={() => setStep('time')}
+                onClick={() => setStep('info')}
                 className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-4"
               >
                 <ArrowLeft size={13} /> Atrás
