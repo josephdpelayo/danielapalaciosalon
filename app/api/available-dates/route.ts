@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
   const serviceId = searchParams.get('service_id');
   const fromParam = searchParams.get('from') ?? format(new Date(), 'yyyy-MM-dd');
   const days      = Math.min(parseInt(searchParams.get('days') ?? '60'), 90);
+  const debug     = searchParams.get('debug') === '1';
 
   if (!serviceId) return NextResponse.json({ error: 'Missing service_id' }, { status: 400 });
 
@@ -20,7 +21,6 @@ export async function GET(req: NextRequest) {
   }
 
   if (!(await import('@/lib/supabase')).supabaseReady) {
-    // Mock fallback: block days not in global schedule
     const blocked = dateRange.filter((d) => {
       const dow = getDay(new Date(d + 'T12:00:00'));
       return !MOCK_SCHEDULE.find((s) => s.day_of_week === dow && s.is_active);
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
   const { supabase } = await import('@/lib/supabase');
 
-  // 1. Global schedule (which days of week are active)
+  // 1. Global schedule (which days of week the salon is open)
   const { data: scheduleRows } = await supabase.from('dp_schedule').select('day_of_week, is_active');
   const scheduleSource = scheduleRows?.length ? scheduleRows : MOCK_SCHEDULE;
   const activeDoW = new Set(scheduleSource.filter((s) => s.is_active).map((s) => s.day_of_week));
@@ -44,14 +44,14 @@ export async function GET(req: NextRequest) {
     .lte('block_date', dateRange[dateRange.length - 1]);
   const allDayBlockedSet = new Set((allDayBlocks ?? []).map((b) => b.block_date as string));
 
-  // 3. Staff capable of this service (from dp_staff_services assignments)
+  // 3. Staff capable of this service
   const { data: staffSvcRows } = await supabase
     .from('dp_staff_services')
     .select('staff_id')
     .eq('service_id', serviceId);
   let staffIds: string[] = (staffSvcRows ?? []).map((r) => r.staff_id as string);
 
-  // Fallback: if no service-staff assignments configured, use ALL active staff
+  // Fallback: if no assignments configured, use ALL active staff
   if (staffIds.length === 0) {
     const { data: allStaff } = await supabase
       .from('dp_staff')
@@ -60,8 +60,35 @@ export async function GET(req: NextRequest) {
     staffIds = (allStaff ?? []).map((r) => r.id as string);
   }
 
-  // 4. Absences for relevant staff in range
-  const absentMap = new Map<string, Set<string>>(); // date → Set<staff_id>
+  // 4. Per-staff weekly schedule: staff_id → Set of day_of_week they work
+  // If a staff has no schedule rows → treated as working all days the salon is open
+  const staffWorkDays = new Map<string, Set<number> | 'all'>(); // 'all' = follows global schedule
+  if (staffIds.length > 0) {
+    const { data: staffSchedRows } = await supabase
+      .from('dp_staff_schedule')
+      .select('staff_id, day_of_week, is_active')
+      .in('staff_id', staffIds);
+
+    // Group by staff_id
+    const byStaff = new Map<string, Array<{ day_of_week: number; is_active: boolean }>>();
+    for (const row of staffSchedRows ?? []) {
+      if (!byStaff.has(row.staff_id)) byStaff.set(row.staff_id, []);
+      byStaff.get(row.staff_id)!.push({ day_of_week: row.day_of_week, is_active: row.is_active });
+    }
+
+    for (const sid of staffIds) {
+      const rows = byStaff.get(sid);
+      if (!rows || rows.length === 0) {
+        staffWorkDays.set(sid, 'all'); // no schedule configured → follows salon hours
+      } else {
+        const workDays = new Set(rows.filter((r) => r.is_active).map((r) => r.day_of_week));
+        staffWorkDays.set(sid, workDays);
+      }
+    }
+  }
+
+  // 5. Specific-date absences: date → Set<staff_id>
+  const absentMap = new Map<string, Set<string>>();
   if (staffIds.length > 0) {
     const { data: absRows } = await supabase
       .from('dp_staff_absences')
@@ -76,7 +103,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // 5. For each date: block if salon closed OR all relevant staff absent
+  // 6. For each date: block if salon closed OR no staff available
   const blocked_dates: string[] = [];
 
   for (const d of dateRange) {
@@ -88,16 +115,21 @@ export async function GET(req: NextRequest) {
     // All-day admin block
     if (allDayBlockedSet.has(d)) { blocked_dates.push(d); continue; }
 
-    // No staff at all → rely on business schedule only
+    // No staff configured at all → rely on business schedule only
     if (staffIds.length === 0) continue;
 
-    // Block if ALL relevant staff are absent this day
     const absentToday = absentMap.get(d) ?? new Set<string>();
-    const anyPresent = staffIds.some((id) => !absentToday.has(id));
-    if (!anyPresent) { blocked_dates.push(d); continue; }
+
+    // A staff member is available if: works this day of week AND not absent today
+    const anyAvailable = staffIds.some((sid) => {
+      const workDays = staffWorkDays.get(sid);
+      const worksToday = workDays === 'all' ? true : (workDays?.has(dow) ?? false);
+      return worksToday && !absentToday.has(sid);
+    });
+
+    if (!anyAvailable) { blocked_dates.push(d); continue; }
   }
 
-  const debug = searchParams.get('debug') === '1';
   if (debug) {
     return NextResponse.json({
       blocked_dates,
@@ -105,6 +137,9 @@ export async function GET(req: NextRequest) {
         activeDoW: [...activeDoW],
         allDayBlockedSet: [...allDayBlockedSet],
         staffIds,
+        staffWorkDays: Object.fromEntries(
+          [...staffWorkDays.entries()].map(([k, v]) => [k, v === 'all' ? 'all' : [...v]])
+        ),
         absentMap: Object.fromEntries([...absentMap.entries()].map(([k, v]) => [k, [...v]])),
         dateRange: dateRange.slice(0, 14),
       },
