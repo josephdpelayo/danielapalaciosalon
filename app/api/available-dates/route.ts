@@ -99,9 +99,13 @@ export async function GET(req: NextRequest) {
 
     // Check if at least one capable staff is present AND working this day
     const absentToday = absentMap.get(d) ?? new Set<string>();
-    const hasAvailableStaff = capableIds.some(
-      (id) => !absentToday.has(id) && (staffActiveDoW.get(id)?.has(dow) ?? false)
-    );
+    const hasAvailableStaff = capableIds.some((id) => {
+      if (absentToday.has(id)) return false;
+      const staffDays = staffActiveDoW.get(id);
+      // No staff schedule configured → fall back to global schedule (already checked above)
+      if (!staffDays || staffDays.size === 0) return true;
+      return staffDays.has(dow);
+    });
 
     if (!hasAvailableStaff) { blocked_dates.push(d); continue; }
   }
