@@ -1587,6 +1587,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
   const [editSaving, setEditSaving]       = useState(false);
   const [editingInFicha, setEditingInFicha] = useState(false);
   // add form
+  const [loadError, setLoadError]         = useState<string | null>(null);
   const [showForm, setShowForm]           = useState(false);
   const [formSaving, setFormSaving]       = useState(false);
   const [name, setName]                   = useState('');
@@ -1597,6 +1598,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [apptRes, trustedRes, clientsRes] = await Promise.all([
         fetch('/api/appointments', { headers: { 'x-admin-secret': adminSecret } }),
@@ -1632,7 +1634,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         appt_count: visitMap.get(c.phone_normalized)?.count ?? 0,
         last_appt: visitMap.get(c.phone_normalized)?.last ?? null,
       })).sort((a, b) => a.name.localeCompare(b.name)));
-    } catch { /* */ }
+    } catch { setLoadError('Error al cargar clientes. Intenta de nuevo.'); }
     finally { setLoading(false); }
   }, [adminSecret]);
 
@@ -1652,7 +1654,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
       } else {
         const res = await fetch('/api/trusted-clients', {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-          body: JSON.stringify({ name: c.name, phone: c.phone, notes: c.notes ?? null }),
+          body: JSON.stringify({ name: c.name, phone: c.phone, email: c.email ?? null, notes: c.notes ?? null }),
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
@@ -1724,13 +1726,14 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
     setDeletingPhone(c.phone_normalized);
     try {
       const headers = { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret };
-      await Promise.all([
-        fetch('/api/appointments', { method: 'DELETE', headers, body: JSON.stringify({ phone: c.phone_normalized }) }),
-        fetch('/api/clients',      { method: 'DELETE', headers, body: JSON.stringify({ phone_normalized: c.phone_normalized }) }),
-        c.trusted_id
-          ? fetch('/api/trusted-clients', { method: 'DELETE', headers, body: JSON.stringify({ id: c.trusted_id }) })
-          : Promise.resolve(),
-      ]);
+      const r1 = await fetch('/api/appointments', { method: 'DELETE', headers, body: JSON.stringify({ phone: c.phone_normalized }) });
+      if (!r1.ok) { alert('Error al eliminar cliente'); return; }
+      const r2 = await fetch('/api/clients', { method: 'DELETE', headers, body: JSON.stringify({ phone_normalized: c.phone_normalized }) });
+      if (!r2.ok) { alert('Error al eliminar cliente'); return; }
+      if (c.trusted_id) {
+        const r3 = await fetch('/api/trusted-clients', { method: 'DELETE', headers, body: JSON.stringify({ id: c.trusted_id }) });
+        if (!r3.ok) { alert('Error al eliminar cliente'); return; }
+      }
       setAllClients(prev => prev.filter(x => x.phone_normalized !== c.phone_normalized));
       setTrustedClients(prev => prev.filter(x => x.id !== c.trusted_id));
       setSelectedClient(null);
@@ -1826,12 +1829,20 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
 
   return (
     <div className="space-y-4">
+      {loadError && <p style={{color:'#ef4444',fontSize:'11px',marginBottom:12,textAlign:'center'}}>{loadError}</p>}
       {/* ── Ficha panel (slide-in) ── */}
       {selectedClient && clientFicha && (
         <div className="fixed inset-0 z-50 flex" style={{ background: 'rgba(0,0,0,0.35)' }} onClick={() => { setSelectedClient(null); setEditingInFicha(false); }}>
           <div
             className="ml-auto h-full overflow-y-auto flex flex-col"
-            style={{ width: 'min(480px, 100vw)', background: '#FAF8F5', boxShadow: '-4px 0 40px rgba(0,0,0,0.15)' }}
+            style={{
+              width: 'min(480px, 100vw)',
+              background: '#FAF8F5',
+              boxShadow: '-4px 0 40px rgba(0,0,0,0.15)',
+              transform: 'translateX(0)',
+              transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+              animation: 'slideInRight 0.3s cubic-bezier(0.4,0,0.2,1)',
+            }}
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -1854,7 +1865,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                       : <Star size={15} className="text-black/25 hover:text-amber-300 transition-colors" />
                   }
                 </button>
-                <a href={waHrefClient(selectedClient)} target="_blank" rel="noopener noreferrer"
+                <a href={waHref(selectedClient.phone, `Hola ${selectedClient.name}, te contacta el salón Daniela Palacio.`)} target="_blank" rel="noopener noreferrer"
                   className="p-1.5 text-[#9A9590] hover:text-emerald-600 transition-colors" title="WhatsApp">
                   <MessageCircle size={15} />
                 </a>
@@ -1888,8 +1899,8 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                     </div>
                     <div>
                       <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Notas (opcional)</label>
-                      <input type="text" value={editNotes} onChange={e => setEditNotes(e.target.value)}
-                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
+                      <textarea rows={2} value={editNotes} onChange={e => setEditNotes(e.target.value)}
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px', width: '100%', resize: 'vertical' }} />
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -1921,14 +1932,20 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                             } else { alert(`No se pudo guardar: ${(data as { error?: string }).error ?? 'Error desconocido'}`); }
                           }
                           if (saved) {
+                            const edited = { name: editName.trim(), phone: editPhone.trim(), email: editEmail.trim() || null };
                             setSelectedClient(prev => prev ? {
                               ...prev,
-                              name: editName.trim(),
-                              phone: editPhone.trim(),
-                              email: editEmail.trim() || null,
+                              name: edited.name,
+                              phone: edited.phone,
+                              email: edited.email,
                               notes: editNotes.trim() || null,
                               trusted_id: saved!.id,
                             } : null);
+                            setAllClients(prev => prev.map(x =>
+                              x.phone_normalized === editingPhone
+                                ? { ...x, name: edited.name, email: edited.email }
+                                : x
+                            ));
                             setEditingInFicha(false);
                             closeEdit();
                           }
@@ -1947,7 +1964,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-lg font-light"
                   style={{ background: selectedClient.trusted_id ? '#fef3c7' : '#EDEBE7', color: selectedClient.trusted_id ? '#d97706' : '#6B6560' }}>
-                  {selectedClient.name.charAt(0).toUpperCase()}
+                  {selectedClient.name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -2200,7 +2217,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                 {/* Avatar */}
                 <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-light"
                   style={{ background: c.trusted_id ? '#fef3c7' : '#EDEBE7', color: c.trusted_id ? '#d97706' : '#6B6560' }}>
-                  {c.name.charAt(0).toUpperCase()}
+                  {c.name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')}
                 </div>
 
                 {/* Info */}
@@ -2255,8 +2272,8 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                     </div>
                     <div>
                       <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Notas (opcional)</label>
-                      <input type="text" value={editNotes} onChange={e => setEditNotes(e.target.value)}
-                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
+                      <textarea rows={2} value={editNotes} onChange={e => setEditNotes(e.target.value)}
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px', width: '100%', resize: 'vertical' }} />
                     </div>
                   </div>
                   <div className="flex gap-2">
