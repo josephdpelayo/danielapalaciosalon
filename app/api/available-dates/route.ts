@@ -32,9 +32,8 @@ export async function GET(req: NextRequest) {
 
   // 1. Global schedule (which days of week are active)
   const { data: scheduleRows } = await supabase.from('dp_schedule').select('day_of_week, is_active');
-  const activeDoW = new Set(
-    (scheduleRows ?? MOCK_SCHEDULE).filter((s) => s.is_active).map((s) => s.day_of_week)
-  );
+  const scheduleSource = scheduleRows?.length ? scheduleRows : MOCK_SCHEDULE;
+  const activeDoW = new Set(scheduleSource.filter((s) => s.is_active).map((s) => s.day_of_week));
 
   // 2. All-day global blocks in range
   const { data: allDayBlocks } = await supabase
