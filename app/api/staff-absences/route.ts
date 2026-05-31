@@ -35,6 +35,29 @@ export async function POST(req: NextRequest) {
   if (!staff_id || !absence_date) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
 
   const { supabaseAdmin: supabase } = await import('@/lib/supabase');
+
+  // Check for existing appointments on this day before marking as absent
+  const { data: conflicting, error: conflictError } = await supabase
+    .from('dp_appointments')
+    .select('id')
+    .eq('staff_id', staff_id)
+    .eq('appointment_date', absence_date)
+    .in('status', ['confirmed', 'pending']);
+
+  if (conflictError) return NextResponse.json({ error: conflictError.message }, { status: 500 });
+
+  if (conflicting && conflicting.length > 0) {
+    const count = conflicting.length;
+    return NextResponse.json(
+      {
+        conflict: true,
+        count,
+        error: `Este staff tiene ${count} cita(s) confirmadas ese día. Cancélalas primero o procede con precaución.`,
+      },
+      { status: 409 }
+    );
+  }
+
   const { data, error } = await supabase
     .from('dp_staff_absences')
     .insert({ staff_id, absence_date })
