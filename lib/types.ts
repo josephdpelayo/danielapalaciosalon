@@ -33,6 +33,7 @@ export interface BlockedSlot {
 export interface Appointment {
   id: string;
   service_id: string;
+  staff_id?: string | null;
   client_name: string;
   client_phone: string;
   client_email: string | null;
@@ -46,6 +47,15 @@ export interface Appointment {
   notes: string | null;
   created_at: string;
   dp_services?: Service;
+}
+
+export interface ScheduleDay {
+  day_of_week: number;   // 0=Sun … 6=Sat
+  active: boolean;
+  start_time: string;    // "HH:MM"
+  end_time: string;
+  break_start?: string | null;
+  break_end?: string | null;
 }
 
 export interface TimeSlot {

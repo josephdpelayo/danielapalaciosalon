@@ -255,7 +255,7 @@ export async function GET(req: NextRequest) {
   const { supabase } = await import('@/lib/supabase');
   const { data, error } = await supabase
     .from('dp_appointments')
-    .select('*, dp_services(name, duration_minutes)')
+    .select('*, staff_id, dp_services(name, duration_minutes)')
     .order('appointment_date', { ascending: true })
     .order('start_time', { ascending: true });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

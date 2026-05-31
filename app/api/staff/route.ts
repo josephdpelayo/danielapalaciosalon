@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   const { data: staffRows, error } = await supabase
     .from('dp_staff')
-    .select('id, name, is_active, created_at')
+    .select('id, name, phone, is_active, created_at')
     .order('created_at', { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -60,13 +60,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'DB not configured' }, { status: 503 });
   }
 
-  const { name } = await req.json();
+  const body = await req.json();
+  const { name, phone } = body;
   if (!name?.trim()) return NextResponse.json({ error: 'Name required' }, { status: 400 });
 
   const { supabaseAdmin: supabase } = await import('@/lib/supabase');
   const { data, error } = await supabase
     .from('dp_staff')
-    .insert({ name: name.trim(), is_active: true })
+    .insert({ name: name.trim(), is_active: true, phone: phone ?? null })
     .select()
     .single();
 
@@ -83,16 +84,17 @@ export async function PATCH(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { id, name, is_active, schedule, service_ids } = body;
+  const { id, name, is_active, phone, schedule, service_ids } = body;
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
   const { supabaseAdmin: supabase } = await import('@/lib/supabase');
 
   // Update core fields
-  if (name !== undefined || is_active !== undefined) {
+  if (name !== undefined || is_active !== undefined || phone !== undefined) {
     const patch: Record<string, unknown> = {};
     if (name      !== undefined) patch.name      = name;
     if (is_active !== undefined) patch.is_active = is_active;
+    if (phone     !== undefined) patch.phone     = phone;
     await supabase.from('dp_staff').update(patch).eq('id', id);
   }
 
