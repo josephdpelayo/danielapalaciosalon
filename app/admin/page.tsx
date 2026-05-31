@@ -165,13 +165,24 @@ function AuthScreen({ onAuth }: { onAuth: (password: string) => void }) {
 }
 
 // ── Inicio / Bitácora ─────────────────────────────────────────────
+interface NuevaCitaForm {
+  service_id: string;
+  appointment_date: string;
+  start_time: string;
+  client_name: string;
+  client_phone: string;
+  notes: string;
+}
+interface ServiceOption { id: string; name: string; duration_minutes: number; }
+const EMPTY_NUEVA_CITA: NuevaCitaForm = { service_id: '', appointment_date: '', start_time: '', client_name: '', client_phone: '', notes: '' };
+
 function InicioTab({ adminSecret }: { adminSecret: string }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading]           = useState(false);
   const [updating, setUpdating]         = useState<string | null>(null);
   const [msgConf, setMsgConf]           = useState(DEFAULT_SETTINGS.msg_confirmation);
   const [msgReminder, setMsgReminder]   = useState(DEFAULT_SETTINGS.msg_reminder_24h);
-  const [search, setSearch]             = useState('');
+
   const [openProximas, setOpenProximas]           = useState(false);
   const [openRecordatorios, setOpenRecordatorios] = useState(false);
   const [openBitacora, setOpenBitacora]           = useState(false);
@@ -180,23 +191,33 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   const [triggeringReminders, setTriggeringReminders] = useState(false);
   const [triggerResult, setTriggerResult]     = useState<{ count: number; pushed: boolean } | null>(null);
   const [sentReminderIds, setSentReminderIds] = useState<Set<string>>(new Set());
+  const [topService, setTopService]           = useState<string | null>(null);
+  // Modal nueva cita
+  const [showNuevaCita, setShowNuevaCita]     = useState(false);
+  const [nuevaCitaForm, setNuevaCitaForm]     = useState<NuevaCitaForm>(EMPTY_NUEVA_CITA);
+  const [serviceOptions, setServiceOptions]   = useState<ServiceOption[]>([]);
+  const [savingCita, setSavingCita]           = useState(false);
+  const [nuevaCitaError, setNuevaCitaError]   = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [apptRes, settingsRes, waitlistRes] = await Promise.all([
+      const [apptRes, settingsRes, waitlistRes, statsRes] = await Promise.all([
         fetch('/api/appointments', { headers: { 'x-admin-secret': adminSecret } }),
         fetch('/api/settings', { headers: { 'x-admin-secret': adminSecret } }),
         fetch('/api/waitlist?status=waiting', { headers: { 'x-admin-secret': adminSecret } }),
+        fetch('/api/admin/stats', { headers: { 'x-admin-secret': adminSecret } }),
       ]);
       const apptData     = await apptRes.json();
       const settingsData = await settingsRes.json();
       const waitlistData = await waitlistRes.json();
+      const statsData    = await statsRes.json();
       setAppointments(apptData.appointments ?? []);
       setWaitlist(waitlistData.entries ?? []);
       const s = { ...DEFAULT_SETTINGS, ...settingsData.settings };
       setMsgConf(s.msg_confirmation);
       setMsgReminder(s.msg_reminder_24h);
+      setTopService(statsData.stats?.top_service ?? null);
     } catch { /* keep */ }
     finally { setLoading(false); }
   }, [adminSecret]);
@@ -213,6 +234,61 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
       });
       setAppointments((prev) => prev.map((a) => a.id === id ? { ...a, status } : a));
     } finally { setUpdating(null); }
+  };
+
+  const handleNuevaCita = async () => {
+    const { service_id, appointment_date, start_time, client_name, client_phone } = nuevaCitaForm;
+    if (!service_id || !appointment_date || !start_time || !client_name.trim() || !client_phone.trim()) {
+      setNuevaCitaError('Completa todos los campos requeridos.');
+      return;
+    }
+    const svc = serviceOptions.find(s => s.id === service_id);
+    if (!svc) { setNuevaCitaError('Selecciona un servicio válido.'); return; }
+    const [h, m] = start_time.split(':').map(Number);
+    const endMinutes = h * 60 + m + svc.duration_minutes;
+    const end_time = `${String(Math.floor(endMinutes / 60)).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}`;
+    setNuevaCitaError('');
+    setSavingCita(true);
+    try {
+      const res = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({
+          service_id,
+          appointment_date,
+          start_time,
+          end_time,
+          client_name: client_name.trim(),
+          client_phone: client_phone.trim(),
+          notes: nuevaCitaForm.notes.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        setShowNuevaCita(false);
+        setNuevaCitaForm(EMPTY_NUEVA_CITA);
+        load();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setNuevaCitaError((err as { error?: string }).error ?? 'Error al guardar la cita.');
+      }
+    } catch {
+      setNuevaCitaError('Error de conexión. Intenta de nuevo.');
+    } finally {
+      setSavingCita(false);
+    }
+  };
+
+  const openNuevaCita = async () => {
+    setNuevaCitaForm(EMPTY_NUEVA_CITA);
+    setNuevaCitaError('');
+    setShowNuevaCita(true);
+    if (serviceOptions.length === 0) {
+      try {
+        const res = await fetch('/api/services');
+        const data = await res.json();
+        setServiceOptions((data.services ?? []).filter((s: ServiceOption & { active?: boolean }) => s.active !== false));
+      } catch { /* keep existing */ }
+    }
   };
 
   const needsAction = useMemo(() =>
@@ -264,20 +340,110 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
   return (
     <div className="space-y-4">
 
+      {/* ── Modal Nueva cita ── */}
+      {showNuevaCita && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.4)' }}
+          onClick={() => { setShowNuevaCita(false); setNuevaCitaForm(EMPTY_NUEVA_CITA); setNuevaCitaError(''); }}>
+          <div className="w-full max-w-sm border border-black/10 p-6 relative" style={{ background: '#F7F5F2' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#6B6560]">Nueva cita</p>
+              <button onClick={() => { setShowNuevaCita(false); setNuevaCitaForm(EMPTY_NUEVA_CITA); setNuevaCitaError(''); }}
+                className="text-[#9A9590] hover:text-[#1C1A19] transition-colors"><X size={15} /></button>
+            </div>
+            <div className="mb-3">
+              <label className="block text-[9px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Servicio *</label>
+              <select value={nuevaCitaForm.service_id}
+                onChange={e => setNuevaCitaForm(p => ({ ...p, service_id: e.target.value }))}
+                className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 text-sm appearance-none"
+                style={{ fontSize: '16px' }}>
+                <option value="">Selecciona servicio…</option>
+                {serviceOptions.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-3">
+              <label className="block text-[9px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Fecha *</label>
+              <input type="date" value={nuevaCitaForm.appointment_date} min={todayKey}
+                onChange={e => setNuevaCitaForm(p => ({ ...p, appointment_date: e.target.value }))}
+                className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50"
+                style={{ fontSize: '16px' }} />
+            </div>
+            <div className="mb-3">
+              <label className="block text-[9px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Hora inicio *</label>
+              <input type="time" value={nuevaCitaForm.start_time}
+                onChange={e => setNuevaCitaForm(p => ({ ...p, start_time: e.target.value }))}
+                className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50"
+                style={{ fontSize: '16px' }} />
+            </div>
+            <div className="mb-3">
+              <label className="block text-[9px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Nombre de clienta *</label>
+              <input type="text" value={nuevaCitaForm.client_name} placeholder="Nombre completo"
+                onChange={e => setNuevaCitaForm(p => ({ ...p, client_name: e.target.value }))}
+                className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25"
+                style={{ fontSize: '16px' }} />
+            </div>
+            <div className="mb-3">
+              <label className="block text-[9px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Teléfono *</label>
+              <input type="tel" value={nuevaCitaForm.client_phone} placeholder="10 dígitos"
+                onChange={e => setNuevaCitaForm(p => ({ ...p, client_phone: e.target.value }))}
+                className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25"
+                style={{ fontSize: '16px' }} />
+            </div>
+            <div className="mb-5">
+              <label className="block text-[9px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Notas <span className="normal-case tracking-normal text-[#B0AAA5]">— opcional</span></label>
+              <input type="text" value={nuevaCitaForm.notes} placeholder="Alergias, preferencias…"
+                onChange={e => setNuevaCitaForm(p => ({ ...p, notes: e.target.value }))}
+                className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25"
+                style={{ fontSize: '16px' }} />
+            </div>
+            {nuevaCitaError && (
+              <p className="text-red-400 text-xs mb-3">{nuevaCitaError}</p>
+            )}
+            <button onClick={handleNuevaCita} disabled={savingCita}
+              className="w-full flex items-center justify-center gap-2 bg-[#1C1A19] text-[#F7F5F2] py-3 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#2a2826] transition-colors disabled:opacity-50">
+              {savingCita ? <div className="w-3.5 h-3.5 border border-[#F7F5F2] border-t-transparent rounded-full animate-spin" /> : <Plus size={12} />}
+              {savingCita ? 'Guardando...' : 'Crear cita'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Header con botón Nueva cita ── */}
+      <div className="flex items-center justify-between">
+        <p className="text-[9px] tracking-[0.3em] uppercase text-[#9A9590]">Dashboard</p>
+        <button onClick={openNuevaCita}
+          className="flex items-center gap-1.5 text-[9px] tracking-[0.15em] uppercase border border-black/15 text-[#6B6560] px-3 py-1.5 hover:bg-black/5 transition-colors">
+          <Plus size={10} /> Nueva cita
+        </button>
+      </div>
+
       {/* ── Stats compactas ── */}
       <div className="flex border border-black/8 bg-white">
-        {[
-          { label: 'Hoy',          val: todayAppts.length,  color: todayAppts.length > 0 ? '#1C1A19' : '#9A9590' },
-          { label: 'Pendientes',   val: needsAction.length, color: needsAction.length > 0 ? '#fb923c' : '#9A9590' },
-          { label: 'Próximas',     val: upcoming.length,    color: '#81807F' },
-          { label: 'Este mes',     val: `$${monthRevenue.toLocaleString('es-MX')}`, color: '#81807F' },
-        ].map((s, i) => (
-          <div key={s.label} className={`flex-1 py-3 text-center ${i < 3 ? 'border-r border-black/8' : ''}`}>
-            <div className="font-[family-name:var(--font-display)] text-2xl font-light" style={{ color: s.color }}>{s.val}</div>
-            <div className="text-[9px] tracking-[0.15em] uppercase text-[#9A9590] mt-0.5">{s.label}</div>
-          </div>
-        ))}
+        <div className="flex-1 py-3 text-center border-r border-black/8">
+          <div className="font-[family-name:var(--font-display)] text-2xl font-light" style={{ color: todayAppts.length > 0 ? '#1C1A19' : '#9A9590' }}>{todayAppts.length}</div>
+          <div className="text-[9px] tracking-[0.15em] uppercase text-[#9A9590] mt-0.5">Hoy</div>
+        </div>
+        <div className="flex-1 py-3 text-center border-r border-black/8">
+          <div className="font-[family-name:var(--font-display)] text-2xl font-light" style={{ color: needsAction.length > 0 ? '#fb923c' : '#9A9590' }}>{needsAction.length}</div>
+          <div className="text-[9px] tracking-[0.15em] uppercase text-[#9A9590] mt-0.5">Pendientes</div>
+        </div>
+        <div className="flex-1 py-3 text-center border-r border-black/8">
+          <div className="font-[family-name:var(--font-display)] text-2xl font-light" style={{ color: '#81807F' }}>{upcoming.length}</div>
+          <div className="text-[9px] tracking-[0.15em] uppercase text-[#9A9590] mt-0.5">Próximas</div>
+        </div>
+        <div className="flex-1 py-3 text-center">
+          <div className="font-[family-name:var(--font-display)] text-2xl font-light" style={{ color: '#81807F' }}>${monthRevenue.toLocaleString('es-MX')}</div>
+          <div className="text-[9px] tracking-[0.15em] uppercase text-[#9A9590] mt-0.5">Anticipos</div>
+          <div className="text-[8px] text-[#B0AAA5] leading-tight">(depósitos recibidos)</div>
+        </div>
       </div>
+
+      {/* ── Servicio más popular ── */}
+      {topService && (
+        <p className="text-[10px] text-[#9A9590] px-0.5">Servicio más pedido: <span className="text-[#6B6560]">{topService}</span></p>
+      )}
 
       {/* ── Citas de hoy ── */}
       {todayAppts.length > 0 && (
@@ -511,6 +677,12 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
   const [blockStart, setBlockStart] = useState('10:00');
   const [blockEnd, setBlockEnd]     = useState('14:00');
   const [blockReason, setBlockReason] = useState('');
+  const [blockRangeError, setBlockRangeError] = useState('');
+
+  // Edit appointment inline form
+  const [editingApptId, setEditingApptId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ date: string; startTime: string; notes: string }>({ date: '', startTime: '', notes: '' });
+  const [editSaving, setEditSaving] = useState(false);
 
   const [msgReminder, setMsgReminder] = useState(DEFAULT_SETTINGS.msg_reminder_24h);
 
@@ -623,6 +795,14 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
 
   const handleBlock = async () => {
     if (!selectedDate) return;
+    // Validate range when not all-day
+    if (!allDay) {
+      if (!blockStart || !blockEnd || blockEnd <= blockStart) {
+        setBlockRangeError('La hora de fin debe ser mayor que la de inicio');
+        return;
+      }
+    }
+    setBlockRangeError('');
     setSaving(true);
     try {
       const res = await fetch('/api/blocked-slots', {
@@ -652,6 +832,59 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
       });
       setBlocks((prev) => prev.filter((b) => b.id !== id));
     } finally { setDeleting(null); }
+  };
+
+  const openEditForm = (apt: Appointment) => {
+    setEditingApptId(apt.id);
+    setEditForm({
+      date: apt.appointment_date,
+      startTime: apt.start_time.slice(0, 5),
+      notes: apt.notes ?? '',
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingApptId(null);
+    setEditForm({ date: '', startTime: '', notes: '' });
+  };
+
+  const handleEditSave = async (apt: Appointment) => {
+    setEditSaving(true);
+    try {
+      const durationMinutes =
+        timeToMinutes(apt.end_time) - timeToMinutes(apt.start_time);
+      const newStartMinutes = timeToMinutes(editForm.startTime);
+      const newEndMinutes   = newStartMinutes + durationMinutes;
+      const newEndTime      = minutesToTime(newEndMinutes);
+
+      const res = await fetch('/api/appointments', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({
+          id:               apt.id,
+          appointment_date: editForm.date,
+          start_time:       editForm.startTime,
+          end_time:         newEndTime,
+          notes:            editForm.notes.trim() || null,
+        }),
+      });
+
+      if (res.ok) {
+        setAppointments((prev) =>
+          prev.map((a) =>
+            a.id === apt.id
+              ? { ...a, appointment_date: editForm.date, start_time: editForm.startTime, end_time: newEndTime, notes: editForm.notes.trim() || null }
+              : a
+          )
+        );
+        cancelEdit();
+      } else {
+        const data = await res.json();
+        alert(data.error ?? 'Error al guardar');
+      }
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   const dayLabel = (dateStr: string) => {
@@ -791,6 +1024,7 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                     /* ── Appointment start ── */
                     if (row.appt && row.apptIsStart) {
                       const apt = row.appt;
+                      const isEditingThis = editingApptId === apt.id;
                       return (
                         <div
                           key={i}
@@ -801,6 +1035,13 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                             <span className="text-[#81807F] text-xs font-medium">{formatTime(row.time)}</span>
                             <span className="text-[#9A9590] text-xs">→ {formatTime(apt.end_time)}</span>
                             <StatusBadge status={apt.status} />
+                            <button
+                              onClick={() => isEditingThis ? cancelEdit() : openEditForm(apt)}
+                              className={`ml-auto p-1 transition-colors ${isEditingThis ? 'text-[#81807F]' : 'text-[#C0BBB6] hover:text-[#81807F]'}`}
+                              title="Editar cita"
+                            >
+                              <Pencil size={12} />
+                            </button>
                           </div>
                           <p className="text-[#1C1A19] text-sm mb-0.5">{apt.client_name}</p>
                           <div className="flex items-center gap-1.5 mb-1">
@@ -817,7 +1058,61 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                             </a>
                             <WaButton href={waHref(apt.client_phone, fillTemplate(msgReminder, apt))} label="Recordatorio WA" />
                           </div>
-                          {apt.notes && <p className="text-[#9A9590] text-[11px] italic mt-1">{apt.notes}</p>}
+                          {apt.notes && !isEditingThis && <p className="text-[#9A9590] text-[11px] italic mt-1">{apt.notes}</p>}
+                          {/* ── Inline edit form ── */}
+                          {isEditingThis && (
+                            <div className="mt-3 border border-black/8 p-3 bg-[#FAFAF9]">
+                              <p className="text-[9px] tracking-[0.2em] uppercase text-[#6B6560] mb-3">Editar cita</p>
+                              <div className="grid grid-cols-2 gap-2 mb-2">
+                                <div>
+                                  <label className="block text-[9px] tracking-[0.12em] uppercase text-[#6B6560] mb-1">Fecha</label>
+                                  <input
+                                    type="date" value={editForm.date}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, date: e.target.value }))}
+                                    className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-2 py-1.5 text-sm focus:outline-none focus:border-[#81807F]/50"
+                                    style={{ fontSize: '16px' }}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[9px] tracking-[0.12em] uppercase text-[#6B6560] mb-1">Hora inicio</label>
+                                  <input
+                                    type="time" value={editForm.startTime}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, startTime: e.target.value }))}
+                                    className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-2 py-1.5 text-sm focus:outline-none focus:border-[#81807F]/50"
+                                    style={{ fontSize: '16px' }}
+                                  />
+                                </div>
+                              </div>
+                              <div className="mb-3">
+                                <label className="block text-[9px] tracking-[0.12em] uppercase text-[#6B6560] mb-1">Notas internas</label>
+                                <input
+                                  type="text" value={editForm.notes}
+                                  onChange={(e) => setEditForm((p) => ({ ...p, notes: e.target.value }))}
+                                  placeholder="Notas opcionales…"
+                                  className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-2 py-1.5 text-sm focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/20"
+                                  style={{ fontSize: '16px' }}
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditSave(apt)}
+                                  disabled={editSaving}
+                                  className="flex items-center gap-1.5 text-[9px] tracking-[0.12em] uppercase border border-[#81807F]/40 text-[#81807F] px-3 py-1.5 hover:bg-[#81807F]/5 transition-colors disabled:opacity-40"
+                                >
+                                  {editSaving
+                                    ? <div className="w-3 h-3 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
+                                    : <Check size={10} />}
+                                  {editSaving ? 'Guardando…' : 'Guardar'}
+                                </button>
+                                <button
+                                  onClick={cancelEdit}
+                                  className="text-[9px] tracking-[0.12em] uppercase border border-black/8 text-[#9A9590] px-3 py-1.5 hover:text-[#1C1A19] transition-colors"
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            </div>
+                          )}
                           {(apt.status === 'pending' || apt.status === 'pending_payment') && (
                             <div className="flex gap-2 mt-3">
                               <button onClick={() => updateStatus(apt.id, 'confirmed')} disabled={updating === apt.id}
@@ -911,15 +1206,20 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                     ))}
                   </div>
                   {!allDay && (
-                    <div className="grid grid-cols-2 gap-2 mb-4">
+                    <div className="grid grid-cols-2 gap-2 mb-2">
                       {[{ label: 'Desde', val: blockStart, set: setBlockStart }, { label: 'Hasta', val: blockEnd, set: setBlockEnd }].map(({ label, val, set }) => (
                         <div key={label}>
                           <label className="block text-[9px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">{label}</label>
-                          <input type="time" value={val} onChange={(e) => set(e.target.value)}
+                          <input
+                            type="time" value={val}
+                            onChange={(e) => { set(e.target.value); setBlockRangeError(''); }}
                             className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 text-sm focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
                         </div>
                       ))}
                     </div>
+                  )}
+                  {blockRangeError && (
+                    <p className="text-red-500 text-[10px] mb-2">{blockRangeError}</p>
                   )}
                   <input type="text" value={blockReason} onChange={(e) => setBlockReason(e.target.value)}
                     placeholder="Motivo (opcional)"
@@ -1264,7 +1564,7 @@ interface ClientRecord {
 type ClientFilter = 'todos' | 'nuevos' | 'frecuentes';
 type ClientSort   = 'az' | 'za' | 'visitas' | 'ultima';
 
-type ClientRow = ClientRecord & { trusted_id: string | null; notes: string | null };
+type ClientRow = ClientRecord & { trusted_id: string | null; notes: string | null; next_appt_date?: string | null };
 
 function ClientesTab({ adminSecret }: { adminSecret: string }) {
   const [filter, setFilter]               = useState<ClientFilter>('todos');
@@ -1285,6 +1585,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
   const [editEmail, setEditEmail]         = useState('');
   const [editNotes, setEditNotes]         = useState('');
   const [editSaving, setEditSaving]       = useState(false);
+  const [editingInFicha, setEditingInFicha] = useState(false);
   // add form
   const [showForm, setShowForm]           = useState(false);
   const [formSaving, setFormSaving]       = useState(false);
@@ -1437,6 +1738,13 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
   };
 
   const displayed = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const getNextAppt = (norm: string): string | null => {
+      const future = allAppts
+        .filter(a => a.client_phone.replace(/\D/g, '').slice(-10) === norm && a.status !== 'cancelled' && a.appointment_date >= today)
+        .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date));
+      return future[0]?.appointment_date ?? null;
+    };
     const trustedNorms = new Map(trustedClients.map(tc => [tc.phone.replace(/\D/g, '').slice(-10), tc]));
     const q = clientSearch.trim().toLowerCase();
     const applySearch = <T extends { name: string; phone: string }>(list: T[]) =>
@@ -1453,25 +1761,25 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
       const list = trustedClients.map(tc => {
         const norm = tc.phone.replace(/\D/g, '').slice(-10);
         const fromAppts = allClients.find(c => c.phone_normalized === norm);
-        return { name: tc.name, phone: tc.phone, phone_normalized: norm, email: tc.email, appt_count: fromAppts?.appt_count ?? 0, last_appt: fromAppts?.last_appt ?? null, trusted_id: tc.id, notes: tc.notes };
+        return { name: tc.name, phone: tc.phone, phone_normalized: norm, email: tc.email, appt_count: fromAppts?.appt_count ?? 0, last_appt: fromAppts?.last_appt ?? null, trusted_id: tc.id, notes: tc.notes, next_appt_date: getNextAppt(norm) };
       });
       return applySearch(applySort(list));
     }
     if (filter === 'nuevos') {
-      const list = allClients.filter(c => !trustedNorms.has(c.phone_normalized)).map(c => ({ ...c, trusted_id: null as string | null, notes: null as string | null }));
+      const list = allClients.filter(c => !trustedNorms.has(c.phone_normalized)).map(c => ({ ...c, trusted_id: null as string | null, notes: null as string | null, next_appt_date: getNextAppt(c.phone_normalized) }));
       return applySearch(applySort(list));
     }
     const result: ClientRow[] = allClients.map(c => {
       const tc = trustedNorms.get(c.phone_normalized);
-      return { ...c, trusted_id: tc?.id ?? null, notes: tc?.notes ?? null, email: c.email ?? tc?.email ?? null };
+      return { ...c, trusted_id: tc?.id ?? null, notes: tc?.notes ?? null, email: c.email ?? tc?.email ?? null, next_appt_date: getNextAppt(c.phone_normalized) };
     });
     for (const tc of trustedClients) {
       const norm = tc.phone.replace(/\D/g, '').slice(-10);
       if (!allClients.find(c => c.phone_normalized === norm))
-        result.push({ name: tc.name, phone: tc.phone, phone_normalized: norm, email: tc.email, appt_count: 0, last_appt: null, trusted_id: tc.id, notes: tc.notes });
+        result.push({ name: tc.name, phone: tc.phone, phone_normalized: norm, email: tc.email, appt_count: 0, last_appt: null, trusted_id: tc.id, notes: tc.notes, next_appt_date: getNextAppt(norm) });
     }
     return applySearch(applySort(result));
-  }, [filter, sort, clientSearch, allClients, trustedClients]);
+  }, [filter, sort, clientSearch, allClients, trustedClients, allAppts]);
 
   const counts = useMemo(() => {
     const trustedNorms = new Set(trustedClients.map(tc => tc.phone.replace(/\D/g, '').slice(-10)));
@@ -1520,7 +1828,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
     <div className="space-y-4">
       {/* ── Ficha panel (slide-in) ── */}
       {selectedClient && clientFicha && (
-        <div className="fixed inset-0 z-50 flex" style={{ background: 'rgba(0,0,0,0.35)' }} onClick={() => setSelectedClient(null)}>
+        <div className="fixed inset-0 z-50 flex" style={{ background: 'rgba(0,0,0,0.35)' }} onClick={() => { setSelectedClient(null); setEditingInFicha(false); }}>
           <div
             className="ml-auto h-full overflow-y-auto flex flex-col"
             style={{ width: 'min(480px, 100vw)', background: '#FAF8F5', boxShadow: '-4px 0 40px rgba(0,0,0,0.15)' }}
@@ -1528,7 +1836,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
           >
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-black/8" style={{ background: '#FAF8F5' }}>
-              <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-[#6B6560] hover:text-[#1C1A19] transition-colors">
+              <button onClick={() => { setSelectedClient(null); setEditingInFicha(false); }} className="flex items-center gap-2 text-[#6B6560] hover:text-[#1C1A19] transition-colors">
                 <ArrowLeft size={15} />
                 <span className="text-[10px] tracking-[0.2em] uppercase">Clientes</span>
               </button>
@@ -1550,7 +1858,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                   className="p-1.5 text-[#9A9590] hover:text-emerald-600 transition-colors" title="WhatsApp">
                   <MessageCircle size={15} />
                 </a>
-                <button onClick={() => { startEdit(selectedClient); setSelectedClient(null); }}
+                <button onClick={() => { startEdit(selectedClient); setEditingInFicha(true); }}
                   className="p-1.5 text-[#9A9590] hover:text-[#6B6560] transition-colors" title="Editar">
                   <Pencil size={14} />
                 </button>
@@ -1558,7 +1866,84 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
             </div>
 
             <div className="flex-1 px-5 py-5 space-y-6">
-              {/* Identity */}
+              {/* ── Inline edit form (editingInFicha) ── */}
+              {editingInFicha ? (
+                <div>
+                  <p className="text-[10px] tracking-[0.3em] uppercase text-[#6B6560] mb-4">Editar clienta</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Nombre</label>
+                      <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Teléfono</label>
+                      <input type="text" value={editPhone} onChange={e => setEditPhone(e.target.value)}
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Correo (opcional)</label>
+                      <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)}
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] tracking-[0.15em] uppercase text-[#6B6560] mb-1.5">Notas (opcional)</label>
+                      <input type="text" value={editNotes} onChange={e => setEditNotes(e.target.value)}
+                        className="w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2 focus:outline-none focus:border-[#81807F]/50" style={{ fontSize: '16px' }} />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        if (!editingPhone || !editName.trim() || !editPhone.trim()) return;
+                        setEditSaving(true);
+                        try {
+                          let saved: TrustedClient | null = null;
+                          if (editingId) {
+                            const res = await fetch('/api/trusted-clients', {
+                              method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+                              body: JSON.stringify({ id: editingId, name: editName.trim(), phone: editPhone.trim(), email: editEmail.trim() || null, notes: editNotes.trim() || null }),
+                            });
+                            const data = await res.json().catch(() => ({}));
+                            if (res.ok) {
+                              saved = data as TrustedClient;
+                              setTrustedClients(prev => prev.map(c => c.id === editingId ? saved! : c).sort((a, b) => a.name.localeCompare(b.name)));
+                            } else { alert(`No se pudo guardar: ${(data as { error?: string }).error ?? 'Error desconocido'}`); }
+                          } else {
+                            const res = await fetch('/api/trusted-clients', {
+                              method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+                              body: JSON.stringify({ name: editName.trim(), phone: editPhone.trim(), email: editEmail.trim() || null, notes: editNotes.trim() || null }),
+                            });
+                            const data = await res.json().catch(() => ({}));
+                            if (res.ok) {
+                              saved = data as TrustedClient;
+                              setTrustedClients(prev => [...prev, saved!].sort((a, b) => a.name.localeCompare(b.name)));
+                            } else { alert(`No se pudo guardar: ${(data as { error?: string }).error ?? 'Error desconocido'}`); }
+                          }
+                          if (saved) {
+                            setSelectedClient(prev => prev ? {
+                              ...prev,
+                              name: editName.trim(),
+                              phone: editPhone.trim(),
+                              email: editEmail.trim() || null,
+                              notes: editNotes.trim() || null,
+                              trusted_id: saved!.id,
+                            } : null);
+                            setEditingInFicha(false);
+                            closeEdit();
+                          }
+                        } finally { setEditSaving(false); }
+                      }}
+                      disabled={editSaving || !editName.trim() || !editPhone.trim()}
+                      className="flex items-center gap-2 bg-[#F0EDE8] text-[#16181E] px-4 py-2 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-30">
+                      {editSaving ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={11} />}
+                      Guardar
+                    </button>
+                    <button onClick={() => setEditingInFicha(false)} className="px-3 py-2 text-[10px] tracking-[0.15em] uppercase text-[#9A9590] border border-black/8 hover:border-black/20 transition-colors">Cancelar</button>
+                  </div>
+                </div>
+              ) : (
+              <>{/* Identity */}
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-lg font-light"
                   style={{ background: selectedClient.trusted_id ? '#fef3c7' : '#EDEBE7', color: selectedClient.trusted_id ? '#d97706' : '#6B6560' }}>
@@ -1686,6 +2071,8 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                   Eliminar cliente
                 </button>
               </div>
+            </>
+            )}
             </div>
           </div>
         </div>
@@ -1823,6 +2210,12 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                     {c.trusted_id && <Star size={10} className="text-amber-400 shrink-0" fill="#fbbf24" />}
                   </div>
                   <p className="text-[#9A9590] text-xs mt-0.5 truncate">{c.phone}</p>
+                  {c.next_appt_date && (
+                    <p className="flex items-center gap-1 mt-0.5 text-[9px]" style={{ color: '#6B9FBF' }}>
+                      <Calendar size={9} />
+                      Próx: {format(parseISO(c.next_appt_date), "d MMM", { locale: es })}
+                    </p>
+                  )}
                 </div>
 
                 {/* Stats + arrow */}
