@@ -2631,7 +2631,7 @@ async function registerPush(secret: string): Promise<boolean> {
 interface SvcRow { id: string; name: string; category?: string; }
 
 function StaffCard({
-  member, services, expanded, onToggle, onSave, saving, adminSecret,
+  member, services, expanded, onToggle, onSave, saving, adminSecret, onDeleted,
 }: {
   member: StaffWithDetails;
   services: SvcRow[];
@@ -2640,34 +2640,93 @@ function StaffCard({
   onSave: (patch: Partial<StaffWithDetails & { is_active: boolean }>) => void;
   saving: boolean;
   adminSecret: string;
+  onDeleted: (id: string) => void;
 }) {
   const [localName, setLocalName]         = useState(member.name);
+  const [localPhone, setLocalPhone]       = useState(member.phone ?? '');
   const [localSvcs, setLocalSvcs]         = useState<string[]>(member.service_ids);
   const [localSched, setLocalSched]       = useState<ScheduleDay[]>(member.schedule as ScheduleDay[]);
   const [dirty, setDirty]                 = useState(false);
   const [absences, setAbsences]           = useState<string[]>([]);
+  const [absenceError, setAbsenceError]   = useState('');
   const [newAbsenceDate, setNewAbsenceDate] = useState('');
+  const [absenceRangeMode, setAbsenceRangeMode] = useState(false);
+  const [newAbsenceEndDate, setNewAbsenceEndDate] = useState('');
   const [addingAbsence, setAddingAbsence] = useState(false);
+  const [toggling, setToggling]           = useState(false);
+  const [deleting, setDeleting]           = useState(false);
+  const [staffAppts, setStaffAppts]       = useState<(Appointment & { staff_id?: string | null })[]>([]);
+  const [loadingAppts, setLoadingAppts]   = useState(false);
 
   useEffect(() => {
     if (!expanded) return;
+    setAbsenceError('');
     fetch(`/api/staff-absences?staff_id=${member.id}`, { headers: { 'x-admin-secret': adminSecret } })
       .then((r) => r.json())
       .then((d) => setAbsences((d.absences ?? []).map((a: { absence_date: string }) => a.absence_date)))
-      .catch(() => {});
+      .catch(() => { setAbsenceError('Error al cargar ausencias'); });
   }, [expanded, member.id, adminSecret]);
+
+  useEffect(() => {
+    if (!expanded) return;
+    setLoadingAppts(true);
+    const today = format(new Date(), 'yyyy-MM-dd');
+    fetch('/api/appointments', { headers: { 'x-admin-secret': adminSecret } })
+      .then((r) => r.json())
+      .then((d) => {
+        const all: (Appointment & { staff_id?: string | null })[] = d.appointments ?? [];
+        const filtered = all.filter(
+          (apt) =>
+            (apt as Appointment & { staff_id?: string | null }).staff_id === member.id &&
+            apt.status !== 'cancelled' &&
+            apt.appointment_date >= today,
+        );
+        filtered.sort((a, b) => (a.appointment_date + a.start_time).localeCompare(b.appointment_date + b.start_time));
+        setStaffAppts(filtered.slice(0, 5));
+      })
+      .catch(() => {})
+      .finally(() => setLoadingAppts(false));
+  }, [expanded, member.id, adminSecret]);
+
+  // date range helper
+  const datesBetween = (start: string, end: string): string[] => {
+    const result: string[] = [];
+    const cur = new Date(start + 'T12:00:00');
+    const last = new Date(end + 'T12:00:00');
+    while (cur <= last) {
+      result.push(format(cur, 'yyyy-MM-dd'));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return result;
+  };
 
   const addAbsence = async () => {
     if (!newAbsenceDate || addingAbsence) return;
     setAddingAbsence(true);
     try {
-      const res = await fetch('/api/staff-absences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-        body: JSON.stringify({ staff_id: member.id, absence_date: newAbsenceDate }),
-      });
-      const data = await res.json();
-      if (res.ok && data.absence) { setAbsences((p) => [...p, newAbsenceDate].sort()); setNewAbsenceDate(''); }
+      if (absenceRangeMode && newAbsenceEndDate && newAbsenceEndDate >= newAbsenceDate) {
+        const range = datesBetween(newAbsenceDate, newAbsenceEndDate).filter((d) => !absences.includes(d));
+        await Promise.all(
+          range.map((d) =>
+            fetch('/api/staff-absences', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+              body: JSON.stringify({ staff_id: member.id, absence_date: d }),
+            }),
+          ),
+        );
+        setAbsences((p) => [...new Set([...p, ...range])].sort());
+        setNewAbsenceDate('');
+        setNewAbsenceEndDate('');
+      } else {
+        const res = await fetch('/api/staff-absences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+          body: JSON.stringify({ staff_id: member.id, absence_date: newAbsenceDate }),
+        });
+        const data = await res.json();
+        if (res.ok && data.absence) { setAbsences((p) => [...p, newAbsenceDate].sort()); setNewAbsenceDate(''); }
+      }
     } finally { setAddingAbsence(false); }
   };
 
@@ -2687,18 +2746,56 @@ function StaffCard({
     }
   };
 
+  const handleToggleActive = async () => {
+    const newActive = !member.is_active;
+    if (!newActive) {
+      const confirmed = window.confirm(
+        `¿Desactivar a ${member.name}? Las citas futuras asignadas no se reasignarán automáticamente.`,
+      );
+      if (!confirmed) return;
+    }
+    setToggling(true);
+    try {
+      await onSave({ is_active: newActive });
+    } finally {
+      setToggling(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(`¿Eliminar a ${member.name}? Esta acción no se puede deshacer.`);
+    if (!confirmed) return;
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/staff', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ id: member.id }),
+      });
+      if (res.ok) {
+        onDeleted(member.id);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        alert((d as { error?: string }).error ?? 'Error al eliminar');
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   useEffect(() => {
     setLocalName(member.name);
+    setLocalPhone(member.phone ?? '');
     setLocalSvcs(member.service_ids);
     setLocalSched(member.schedule as ScheduleDay[]);
     setDirty(false);
   }, [member]);
 
-  const getDay = (dow: number): ScheduleDay =>
+  const getDaySchedule = (dow: number): ScheduleDay =>
     localSched.find((d) => d.day_of_week === dow) ?? { day_of_week: dow, is_active: false, start_time: '10:00', end_time: '19:00' };
 
   const updateDay = (dow: number, patch: Partial<ScheduleDay>) => {
-    const cur = getDay(dow);
+    const cur = getDaySchedule(dow);
     const upd = { ...cur, ...patch };
     setLocalSched((p) => p.some((d) => d.day_of_week === dow) ? p.map((d) => d.day_of_week === dow ? upd : d) : [...p, upd]);
     setDirty(true);
@@ -2720,6 +2817,20 @@ function StaffCard({
             <p className="text-sm text-[#1C1A19] font-medium">{member.name}</p>
             <p className="text-[10px] text-[#9A9590] mt-0.5">
               {member.service_ids.length} servicios · {(member.schedule as ScheduleDay[]).filter((d) => d.is_active).length} días activos
+              {member.phone && (
+                <>
+                  {' · '}
+                  <a
+                    href={waHref(member.phone, 'Hola ' + member.name)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-emerald-700 hover:underline"
+                  >
+                    {member.phone}
+                  </a>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -2741,18 +2852,33 @@ function StaffCard({
             />
           </div>
 
+          {/* Phone */}
+          <div>
+            <label className="text-[9px] tracking-[0.25em] uppercase text-[#9A9590] block mb-2">Teléfono (WhatsApp)</label>
+            <input
+              value={localPhone}
+              onChange={(e) => { setLocalPhone(e.target.value); setDirty(true); }}
+              placeholder="Ej. 6691234567"
+              className="w-full max-w-xs border border-black/10 px-3 py-2 text-sm text-[#1C1A19] focus:outline-none focus:border-[#81807F]/50"
+            />
+          </div>
+
           {/* Active toggle */}
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-[#1C1A19]">Activa</p>
               <p className="text-[11px] text-[#9A9590] mt-0.5">Aparece en el sistema de reservas</p>
             </div>
-            <button
-              onClick={() => onSave({ is_active: !member.is_active })}
-              className={`relative w-10 h-5 rounded-full transition-colors ${member.is_active ? 'bg-[#81807F]' : 'bg-black/15'}`}
-            >
-              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${member.is_active ? 'translate-x-5' : 'translate-x-0.5'}`} />
-            </button>
+            <div className="flex items-center gap-2">
+              {toggling && <div className="w-3 h-3 border border-[#81807F] border-t-transparent rounded-full animate-spin" />}
+              <button
+                onClick={handleToggleActive}
+                disabled={toggling}
+                className={`relative w-10 h-5 rounded-full transition-colors disabled:opacity-40 ${member.is_active ? 'bg-[#81807F]' : 'bg-black/15'}`}
+              >
+                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${member.is_active ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              </button>
+            </div>
           </div>
 
           {/* Services */}
@@ -2776,7 +2902,7 @@ function StaffCard({
             <label className="text-[9px] tracking-[0.25em] uppercase text-[#9A9590] block mb-3">Horario semanal</label>
             <div className="space-y-2">
               {DAYS_ORDER.map((dow) => {
-                const d = getDay(dow);
+                const d = getDaySchedule(dow);
                 return (
                   <div key={dow} className="flex items-center gap-3 flex-wrap">
                     <button
@@ -2806,6 +2932,7 @@ function StaffCard({
           {/* Ausencias */}
           <div>
             <label className="text-[9px] tracking-[0.25em] uppercase text-[#9A9590] block mb-3">Días de ausencia</label>
+            {absenceError && <p style={{ color: '#ef4444', fontSize: '11px' }}>{absenceError}</p>}
             {absences.length > 0 ? (
               <div className="flex flex-wrap gap-2 mb-3">
                 {absences.map((d) => (
@@ -2816,29 +2943,79 @@ function StaffCard({
                 ))}
               </div>
             ) : (
-              <p style={{ fontSize: '11px', color: '#686560', padding: '8px 0' }}>Sin ausencias programadas.</p>
+              !absenceError && <p style={{ fontSize: '11px', color: '#686560', padding: '8px 0' }}>Sin ausencias programadas.</p>
             )}
-            <div className="flex gap-2">
-              <input
-                type="date"
-                value={newAbsenceDate}
-                min={format(new Date(), 'yyyy-MM-dd')}
-                onChange={(e) => setNewAbsenceDate(e.target.value)}
-                className="border border-black/10 px-2 py-1.5 text-xs text-[#1C1A19] focus:outline-none focus:border-[#81807F]/50"
-              />
-              <button
-                onClick={addAbsence}
-                disabled={!newAbsenceDate || addingAbsence}
-                className="flex items-center gap-1 border border-black/10 px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase text-[#1C1A19] hover:bg-black/[0.03] transition-colors disabled:opacity-40"
-              >
-                <Plus size={11} /> Agregar
-              </button>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs text-[#6B6560] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={absenceRangeMode}
+                  onChange={(e) => { setAbsenceRangeMode(e.target.checked); setNewAbsenceEndDate(''); }}
+                  className="accent-[#1C1A19]"
+                />
+                Rango de fechas
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                <input
+                  type="date"
+                  value={newAbsenceDate}
+                  onChange={(e) => setNewAbsenceDate(e.target.value)}
+                  className="border border-black/10 px-2 py-1.5 text-xs text-[#1C1A19] focus:outline-none focus:border-[#81807F]/50"
+                />
+                {absenceRangeMode && (
+                  <>
+                    <span className="text-xs text-[#9A9590] self-center">Hasta</span>
+                    <input
+                      type="date"
+                      value={newAbsenceEndDate}
+                      min={newAbsenceDate || undefined}
+                      onChange={(e) => setNewAbsenceEndDate(e.target.value)}
+                      className="border border-black/10 px-2 py-1.5 text-xs text-[#1C1A19] focus:outline-none focus:border-[#81807F]/50"
+                    />
+                  </>
+                )}
+                <button
+                  onClick={addAbsence}
+                  disabled={!newAbsenceDate || addingAbsence || (absenceRangeMode && !newAbsenceEndDate)}
+                  className="flex items-center gap-1 border border-black/10 px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase text-[#1C1A19] hover:bg-black/[0.03] transition-colors disabled:opacity-40"
+                >
+                  {addingAbsence ? <div className="w-3 h-3 border border-black border-t-transparent rounded-full animate-spin" /> : <Plus size={11} />}
+                  Agregar
+                </button>
+              </div>
             </div>
+          </div>
+
+          {/* Próximas citas */}
+          <div>
+            <label className="text-[9px] tracking-[0.25em] uppercase text-[#9A9590] block mb-3">Próximas citas</label>
+            {loadingAppts ? (
+              <div className="flex items-center gap-2 py-2">
+                <div className="w-3 h-3 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs text-[#9A9590]">Cargando…</span>
+              </div>
+            ) : staffAppts.length === 0 ? (
+              <p style={{ fontSize: '11px', color: '#686560', padding: '8px 0' }}>Sin citas próximas asignadas.</p>
+            ) : (
+              <div className="space-y-2">
+                {staffAppts.map((apt) => (
+                  <div key={apt.id} className="flex items-start gap-3 border border-black/6 px-3 py-2 bg-[#FAFAF9]">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-[#1C1A19] font-medium">{apt.client_name}</p>
+                      <p className="text-[10px] text-[#9A9590] mt-0.5">
+                        {format(parseISO(apt.appointment_date + 'T12:00:00'), "d MMM", { locale: es })} · {formatTime(apt.start_time)} · {apt.dp_services?.name ?? '—'}
+                      </p>
+                    </div>
+                    <StatusBadge status={apt.status} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {dirty && (
             <button
-              onClick={() => { onSave({ name: localName, schedule: localSched as StaffWithDetails['schedule'], service_ids: localSvcs }); setDirty(false); }}
+              onClick={() => { onSave({ name: localName, phone: localPhone || null, schedule: localSched as StaffWithDetails['schedule'], service_ids: localSvcs }); setDirty(false); }}
               disabled={saving}
               className="flex items-center gap-2 bg-[#F0EDE8] text-[#16181E] px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-40"
             >
@@ -2846,6 +3023,21 @@ function StaffCard({
               {saving ? 'Guardando…' : 'Guardar cambios'}
             </button>
           )}
+
+          {/* Danger zone */}
+          <div className="pt-2 border-t border-black/6">
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-2 text-red-400 hover:text-red-600 transition-colors text-[10px] tracking-[0.15em] uppercase disabled:opacity-40"
+            >
+              {deleting
+                ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                : <Trash2 size={11} />
+              }
+              Eliminar estilista
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -2911,6 +3103,11 @@ function StaffTab({ adminSecret }: { adminSecret: string }) {
     } finally { setAdding(false); }
   };
 
+  const handleDeleted = (id: string) => {
+    setStaff((p) => p.filter((s) => s.id !== id));
+    if (expanded === id) setExpanded(null);
+  };
+
   if (loading) return (
     <div className="flex justify-center py-24">
       <div className="w-4 h-4 border border-[#81807F] border-t-transparent rounded-full animate-spin" />
@@ -2938,6 +3135,7 @@ function StaffTab({ adminSecret }: { adminSecret: string }) {
           onSave={(patch) => save(member.id, patch)}
           saving={saving === member.id}
           adminSecret={adminSecret}
+          onDeleted={handleDeleted}
         />
       ))}
 
@@ -2947,7 +3145,7 @@ function StaffTab({ adminSecret }: { adminSecret: string }) {
         <div className="flex gap-2">
           <input
             value={newName}
-            onChange={(e) => setNewName(e.target.value)}
+            onChange={(e) => { setNewName(e.target.value); setAddError(''); }}
             placeholder="Nombre"
             onKeyDown={(e) => { if (e.key === 'Enter') addStaff(); }}
             className="flex-1 border border-black/10 px-3 py-2 text-sm text-[#1C1A19] placeholder:text-black/25 focus:outline-none focus:border-[#81807F]/50"
