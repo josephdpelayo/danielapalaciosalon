@@ -97,5 +97,19 @@ export async function GET(req: NextRequest) {
     if (!anyPresent) { blocked_dates.push(d); continue; }
   }
 
+  const debug = searchParams.get('debug') === '1';
+  if (debug) {
+    return NextResponse.json({
+      blocked_dates,
+      _debug: {
+        activeDoW: [...activeDoW],
+        allDayBlockedSet: [...allDayBlockedSet],
+        staffIds,
+        absentMap: Object.fromEntries([...absentMap.entries()].map(([k, v]) => [k, [...v]])),
+        dateRange: dateRange.slice(0, 14),
+      },
+    });
+  }
+
   return NextResponse.json({ blocked_dates });
 }
