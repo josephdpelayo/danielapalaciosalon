@@ -59,6 +59,8 @@ function BookingContent() {
   const [waitlistDone, setWaitlistDone] = useState(false);
   const [waitlistName, setWaitlistName] = useState('');
   const [waitlistPhone, setWaitlistPhone] = useState('');
+  const [checkingAvail, setCheckingAvail] = useState(false);
+  const [serviceNoAvail, setServiceNoAvail] = useState<{ reason: string; svc: Service } | null>(null);
 
   useEffect(() => {
     fetch('/api/services')
@@ -224,6 +226,34 @@ function BookingContent() {
           : 'Hubo un error al procesar tu solicitud. Por favor intenta de nuevo o contáctanos por WhatsApp.'
       );
       setSubmitting(false);
+    }
+  };
+
+  const handleServiceSelect = async (svc: Service) => {
+    if (!selectedDate) return;
+    setCheckingAvail(true);
+    setServiceNoAvail(null);
+    try {
+      const res = await fetch(
+        `/api/available-slots?date=${format(selectedDate, 'yyyy-MM-dd')}&service_id=${svc.id}&duration=${svc.duration_minutes}&active_minutes=${svc.active_minutes ?? svc.duration_minutes}`
+      );
+      const data = await res.json();
+      const hasSlots = (data.slots ?? []).some((s: TimeSlot) => s.available);
+      if (hasSlots) {
+        setSelectedService(svc);
+        setSelectedSlot(null);
+        setSlots(data.slots);
+        setStep('time');
+      } else {
+        setServiceNoAvail({ reason: data.reason ?? 'no_slots', svc });
+      }
+    } catch {
+      // On network error, let them proceed and discover in time step
+      setSelectedService(svc);
+      setSelectedSlot(null);
+      setStep('time');
+    } finally {
+      setCheckingAvail(false);
     }
   };
 
@@ -436,6 +466,28 @@ function BookingContent() {
                 </p>
               </div>
 
+              {/* Sin disponibilidad para el servicio en la fecha elegida */}
+              {serviceNoAvail && (
+                <div className="mb-4 border border-white/10 px-4 py-4 space-y-3">
+                  <p className="text-[#F0EDE8] text-sm leading-snug">
+                    <span className="text-[#81807F]">{serviceNoAvail.svc.name}</span> no tiene disponibilidad el{' '}
+                    <span className="capitalize">{format(selectedDate!, "EEEE d 'de' MMMM", { locale: es })}</span>.
+                  </p>
+                  <p className="text-[#666] text-xs">
+                    {serviceNoAvail.reason === 'staff_absent' ? 'La estilista que realiza este servicio no trabaja ese día.' :
+                     serviceNoAvail.reason === 'blocked'      ? 'El salón estará cerrado ese día.' :
+                     serviceNoAvail.reason === 'full'         ? 'No quedan horarios disponibles para ese día.' :
+                     'Elige otro servicio o regresa para cambiar la fecha.'}
+                  </p>
+                  <button
+                    onClick={() => { setServiceNoAvail(null); setSelectedDate(undefined); setStep('date'); }}
+                    className="flex items-center gap-2 text-[10px] tracking-[0.2em] uppercase text-[#81807F] border border-[#81807F]/30 px-3 py-2 hover:border-[#81807F]/60 transition-colors"
+                  >
+                    <ArrowLeft size={11} /> Cambiar fecha
+                  </button>
+                </div>
+              )}
+
               {/* Category pills — single row */}
               <div className="flex justify-center gap-2 pb-1 mb-4 overflow-x-auto scrollbar-none">
                 {categories.map((cat) => {
@@ -462,7 +514,7 @@ function BookingContent() {
                 {visibleServices.map((svc) => (
                   <button
                     key={svc.id}
-                    onClick={() => { setSelectedService(svc); setSelectedSlot(null); setStep('time'); }}
+                    onClick={() => { if (!checkingAvail) handleServiceSelect(svc); }}
                     className="w-full text-left py-4 hover:bg-white/[0.02] transition-colors group"
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -482,7 +534,10 @@ function BookingContent() {
                         <p className="text-[#666] text-xs leading-relaxed">{svc.description}</p>
                         <p className="text-[#444] text-[10px] mt-2 tracking-[0.1em] uppercase">{formatDuration(svc.duration_minutes)}</p>
                       </div>
-                      <ArrowRight size={14} className="text-[#333] group-hover:text-[#81807F] transition-colors mt-1 shrink-0" />
+                      {checkingAvail
+                        ? <div className="w-3.5 h-3.5 border border-[#81807F] border-t-transparent rounded-full animate-spin mt-1 shrink-0" />
+                        : <ArrowRight size={14} className="text-[#333] group-hover:text-[#81807F] transition-colors mt-1 shrink-0" />
+                      }
                     </div>
                   </button>
                 ))}
