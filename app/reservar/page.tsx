@@ -61,6 +61,7 @@ function BookingContent() {
   const [waitlistPhone, setWaitlistPhone] = useState('');
   const [checkingAvail, setCheckingAvail] = useState(false);
   const [serviceNoAvail, setServiceNoAvail] = useState<{ reason: string; svc: Service } | null>(null);
+  const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch('/api/services')
@@ -123,7 +124,12 @@ function BookingContent() {
     if (isBefore(date, startOfToday())) return true;
     const dow = getDay(date);
     const daySchedule = scheduleList.find((s) => s.day_of_week === dow);
-    return !daySchedule?.is_active;
+    if (!daySchedule?.is_active) return true;
+    // If we have service-specific blocked dates loaded, apply them
+    if (blockedDates.size > 0) {
+      return blockedDates.has(format(date, 'yyyy-MM-dd'));
+    }
+    return false;
   };
 
   const checkTrustedPhone = async (phone: string) => {
@@ -229,6 +235,15 @@ function BookingContent() {
     }
   };
 
+  const loadBlockedDates = async (svc: Service) => {
+    try {
+      const from = format(new Date(), 'yyyy-MM-dd');
+      const res  = await fetch(`/api/available-dates?service_id=${svc.id}&from=${from}&days=60`);
+      const data = await res.json();
+      setBlockedDates(new Set(data.blocked_dates ?? []));
+    } catch { /* keep existing set */ }
+  };
+
   const handleServiceSelect = async (svc: Service) => {
     if (!selectedDate) return;
     setCheckingAvail(true);
@@ -245,10 +260,15 @@ function BookingContent() {
         setSlots(data.slots);
         setStep('time');
       } else {
+        // Load blocked dates for this service, then send back to calendar
+        await loadBlockedDates(svc);
+        setSelectedService(svc);
+        setSelectedDate(undefined);
+        setSelectedSlot(null);
         setServiceNoAvail({ reason: data.reason ?? 'no_slots', svc });
+        setStep('date');
       }
     } catch {
-      // On network error, let them proceed and discover in time step
       setSelectedService(svc);
       setSelectedSlot(null);
       setStep('time');
@@ -466,28 +486,6 @@ function BookingContent() {
                 </p>
               </div>
 
-              {/* Sin disponibilidad para el servicio en la fecha elegida */}
-              {serviceNoAvail && (
-                <div className="mb-4 border border-white/10 px-4 py-4 space-y-3">
-                  <p className="text-[#F0EDE8] text-sm leading-snug">
-                    <span className="text-[#81807F]">{serviceNoAvail.svc.name}</span> no tiene disponibilidad el{' '}
-                    <span className="capitalize">{format(selectedDate!, "EEEE d 'de' MMMM", { locale: es })}</span>.
-                  </p>
-                  <p className="text-[#666] text-xs">
-                    {serviceNoAvail.reason === 'staff_absent' ? 'La estilista que realiza este servicio no trabaja ese día.' :
-                     serviceNoAvail.reason === 'blocked'      ? 'El salón estará cerrado ese día.' :
-                     serviceNoAvail.reason === 'full'         ? 'No quedan horarios disponibles para ese día.' :
-                     'Elige otro servicio o regresa para cambiar la fecha.'}
-                  </p>
-                  <button
-                    onClick={() => { setServiceNoAvail(null); setSelectedDate(undefined); setStep('date'); }}
-                    className="flex items-center gap-2 text-[10px] tracking-[0.2em] uppercase text-[#81807F] border border-[#81807F]/30 px-3 py-2 hover:border-[#81807F]/60 transition-colors"
-                  >
-                    <ArrowLeft size={11} /> Cambiar fecha
-                  </button>
-                </div>
-              )}
-
               {/* Category pills — single row */}
               <div className="flex justify-center gap-2 pb-1 mb-4 overflow-x-auto scrollbar-none">
                 {categories.map((cat) => {
@@ -553,10 +551,39 @@ function BookingContent() {
               <h2 className="font-[family-name:var(--font-display)] text-3xl font-light text-[#F0EDE8] leading-tight mb-1">
                 ¿Qué día te queda bien?
               </h2>
-              <p className="text-[#666] text-xs tracking-[0.1em] uppercase">
-                Elige una fecha y te mostramos disponibilidad
-              </p>
+              {selectedService ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-[#81807F] text-xs tracking-[0.1em] uppercase">
+                    {selectedService.name}
+                  </p>
+                  <button
+                    onClick={() => { setSelectedService(null); setBlockedDates(new Set()); setServiceNoAvail(null); }}
+                    className="text-[10px] text-[#555] border border-white/8 px-2 py-0.5 hover:border-white/20 transition-colors tracking-wider uppercase"
+                  >
+                    Cambiar
+                  </button>
+                </div>
+              ) : (
+                <p className="text-[#666] text-xs tracking-[0.1em] uppercase">
+                  Elige una fecha y te mostramos disponibilidad
+                </p>
+              )}
             </div>
+
+            {/* Banner: fecha seleccionada no disponible para el servicio */}
+            {serviceNoAvail && (
+              <div className="mb-4 border border-white/8 px-4 py-3 space-y-1">
+                <p className="text-[#F0EDE8] text-xs leading-snug">
+                  {serviceNoAvail.reason === 'staff_absent' ? 'La estilista no trabaja ese día.' :
+                   serviceNoAvail.reason === 'blocked'      ? 'El salón estará cerrado ese día.' :
+                   serviceNoAvail.reason === 'full'         ? 'Ese día está completo.' :
+                   'Sin disponibilidad ese día.'}
+                </p>
+                <p className="text-[#555] text-[11px]">
+                  Los días disponibles para <span className="text-[#81807F]">{serviceNoAvail.svc.name}</span> están marcados en el calendario.
+                </p>
+              </div>
+            )}
 
             <div className="border border-white/8 flex justify-center py-2 overflow-x-auto">
               <DayPicker
