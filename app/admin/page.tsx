@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   format, parseISO, isToday, isTomorrow,
@@ -1436,13 +1436,13 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
     setSvcError('');
     const dur = parseInt(form.duration_minutes);
     const act = parseInt(form.active_minutes);
-    if (!form.name.trim() || !form.price || !dur || !act) return;
+    if (!form.name.trim() || !form.price || !dur || !act) { setSvcError('Completa todos los campos requeridos'); return; }
     if (act > dur) { setSvcError('El tiempo activo no puede superar la duración total'); return; }
     setSaving(true);
     try {
       const payload = { name: form.name.trim(), description: form.description.trim() || null,
         price: parseFloat(form.price), duration_minutes: dur, active_minutes: act,
-        deposit_amount: parseFloat(form.deposit_amount) || 200 };
+        deposit_amount: form.deposit_amount !== '' ? parseFloat(form.deposit_amount) : 200 };
       const res = await fetch('/api/services', {
         method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
         body: JSON.stringify(id ? { id, ...payload } : payload),
@@ -1458,8 +1458,9 @@ function ServicesTab({ adminSecret }: { adminSecret: string }) {
     setConfirmDeleteId(null);
     setDeleting(id);
     try {
-      await fetch('/api/services', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+      const res = await fetch('/api/services', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
         body: JSON.stringify({ id }) });
+      if (!res.ok) { setSvcError('Error al eliminar el servicio'); return; }
       setServices((prev) => prev.filter((s) => s.id !== id));
     } finally { setDeleting(null); }
   };
@@ -2353,6 +2354,8 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
   const [schedule, setSchedule]   = useState<ScheduleDay[]>([]);
   const [loading, setLoading]     = useState(true);
   const [savingSection, setSavingSection] = useState<string | null>(null);
+  const [savedSection, setSavedSection] = useState<string | null>(null);
+  const scheduleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // local editable copies per section
   const [identity, setIdentity]   = useState<AppSettings>({});
@@ -2379,24 +2382,34 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
   const saveSection = async (section: string, data: AppSettings) => {
     setSavingSection(section);
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
         body: JSON.stringify(data),
       });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error ?? 'Error al guardar');
+        return;
+      }
       setSettings(prev => ({ ...prev, ...data }));
+      setSavedSection(section);
+      setTimeout(() => setSavedSection(null), 2000);
     } finally { setSavingSection(null); }
   };
 
-  const updateDay = async (dow: number, patch: Partial<ScheduleDay>) => {
+  const updateDay = (dow: number, patch: Partial<ScheduleDay>) => {
     const current = schedule.find(d => d.day_of_week === dow) ?? { day_of_week: dow, is_active: false, start_time: '10:00', end_time: '19:00' };
     const updated = { ...current, ...patch };
     setSchedule(prev => prev.some(d => d.day_of_week === dow) ? prev.map(d => d.day_of_week === dow ? updated : d) : [...prev, updated]);
-    await fetch('/api/schedule', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-      body: JSON.stringify(updated),
-    });
+    if (scheduleDebounceRef.current) clearTimeout(scheduleDebounceRef.current);
+    scheduleDebounceRef.current = setTimeout(async () => {
+      await fetch('/api/schedule', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify(updated),
+      });
+    }, 500);
   };
 
   const inputCls = "w-full bg-transparent border border-black/10 text-[#1C1A19] px-3 py-2.5 focus:outline-none focus:border-[#81807F]/50 placeholder:text-black/25 text-sm";
@@ -2411,7 +2424,7 @@ function ConfigTab({ adminSecret }: { adminSecret: string }) {
       className="flex items-center gap-2 bg-[#F0EDE8] text-[#16181E] px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-40"
     >
       {savingSection === section ? <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" /> : <Check size={12} />}
-      {savingSection === section ? 'Guardando…' : 'Guardar'}
+      {savingSection === section ? 'Guardando…' : savedSection === section ? 'Guardado ✓' : 'Guardar'}
     </button>
   );
 
@@ -2654,17 +2667,24 @@ function StaffCard({
         body: JSON.stringify({ staff_id: member.id, absence_date: newAbsenceDate }),
       });
       const data = await res.json();
-      if (data.absence) { setAbsences((p) => [...p, newAbsenceDate].sort()); setNewAbsenceDate(''); }
+      if (res.ok && data.absence) { setAbsences((p) => [...p, newAbsenceDate].sort()); setNewAbsenceDate(''); }
     } finally { setAddingAbsence(false); }
   };
 
   const removeAbsence = async (dateStr: string) => {
-    await fetch('/api/staff-absences', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-      body: JSON.stringify({ staff_id: member.id, absence_date: dateStr }),
-    });
+    const removedDate = dateStr;
     setAbsences((p) => p.filter((d) => d !== dateStr));
+    try {
+      const res = await fetch('/api/staff-absences', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ staff_id: member.id, absence_date: dateStr }),
+      });
+      if (!res.ok) throw new Error('server error');
+    } catch {
+      setAbsences((prev) => [...prev, removedDate].sort());
+      alert('Error al eliminar la ausencia');
+    }
   };
 
   useEffect(() => {
@@ -2786,7 +2806,7 @@ function StaffCard({
           {/* Ausencias */}
           <div>
             <label className="text-[9px] tracking-[0.25em] uppercase text-[#9A9590] block mb-3">Días de ausencia</label>
-            {absences.length > 0 && (
+            {absences.length > 0 ? (
               <div className="flex flex-wrap gap-2 mb-3">
                 {absences.map((d) => (
                   <div key={d} className="flex items-center gap-1.5 border border-black/10 px-2 py-1 text-xs text-[#1C1A19]">
@@ -2795,6 +2815,8 @@ function StaffCard({
                   </div>
                 ))}
               </div>
+            ) : (
+              <p style={{ fontSize: '11px', color: '#686560', padding: '8px 0' }}>Sin ausencias programadas.</p>
             )}
             <div className="flex gap-2">
               <input
@@ -2859,11 +2881,16 @@ function StaffTab({ adminSecret }: { adminSecret: string }) {
   const save = async (id: string, patch: Partial<StaffWithDetails & { is_active: boolean }>) => {
     setSaving(id);
     try {
-      await fetch('/api/staff', {
+      const res = await fetch('/api/staff', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
         body: JSON.stringify({ id, ...patch }),
       });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error ?? 'Error al guardar');
+        return;
+      }
       setStaff((p) => p.map((s) => s.id === id ? { ...s, ...patch } : s));
     } finally { setSaving(null); }
   };
