@@ -43,9 +43,9 @@ function BokiLeadCapture() {
           <Image
             src="/boki-symbol.png"
             alt="boki"
-            width={24}
-            height={24}
-            style={{ filter: 'brightness(0) invert(1)', opacity: 0.3, flexShrink: 0 }}
+            width={28}
+            height={28}
+            style={{ filter: 'grayscale(1) invert(1) brightness(0.7)', opacity: 0.55, flexShrink: 0, borderRadius: '6px' }}
           />
           <div>
             <p style={{ fontSize: '12px', color: '#C0BEB8', marginBottom: '3px' }}>
@@ -64,11 +64,11 @@ function BokiLeadCapture() {
             display: 'inline-block',
             background: '#F0EDE8',
             color: '#16181E',
-            fontSize: '10px',
+            fontSize: '9px',
             letterSpacing: '0.3em',
             textTransform: 'uppercase',
             fontWeight: 600,
-            padding: '12px 28px',
+            padding: '9px 20px',
             textDecoration: 'none',
             whiteSpace: 'nowrap',
             transition: 'opacity 0.2s',
