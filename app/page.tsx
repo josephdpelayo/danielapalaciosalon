@@ -47,64 +47,89 @@ function BokiLeadCapture() {
     <section style={{
       background: '#0D0E10',
       borderTop: '1px solid rgba(255,255,255,0.07)',
-      padding: '52px 24px',
-      textAlign: 'center',
+      padding: '20px 24px',
     }}>
-      <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#505050', marginBottom: '10px' }}>
-        reservas por
-      </p>
-      <p style={{ fontSize: '14px', letterSpacing: '0.35em', color: '#888884', marginBottom: '32px', fontWeight: 300 }}>
-        boki.mx
-      </p>
+      <div style={{
+        maxWidth: '960px',
+        margin: '0 auto',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '20px',
+        flexWrap: 'wrap',
+      }}>
 
-      {done ? (
-        <p style={{ fontSize: '10px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#686560' }}>
-          te avisamos pronto
-        </p>
-      ) : (
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', maxWidth: '340px', margin: '0 auto' }}
-        >
-          <input
-            type="email"
-            required
-            placeholder="tu@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              borderBottom: '1px solid rgba(255,255,255,0.12)',
-              padding: '10px 0',
-              fontSize: '11px',
-              letterSpacing: '0.1em',
-              color: '#A0A09C',
-              outline: 'none',
-            }}
+        {/* Logo + copy */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Image
+            src="/boki-symbol.png"
+            alt="boki"
+            width={28}
+            height={28}
+            style={{ filter: 'brightness(0) invert(1)', opacity: 0.25, flexShrink: 0 }}
           />
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              background: 'none',
-              border: 'none',
-              borderBottom: '1px solid rgba(255,255,255,0.12)',
-              padding: '10px 0 10px 20px',
-              fontSize: '9px',
-              letterSpacing: '0.35em',
-              textTransform: 'uppercase',
-              color: loading ? '#404040' : '#686560',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              whiteSpace: 'nowrap',
-              transition: 'color 0.2s',
-            }}
+          <div>
+            <p style={{ fontSize: '12px', color: '#B0AFA9', lineHeight: 1.4, marginBottom: '2px' }}>
+              ¿Tienes un salón, estudio o negocio por cita?
+            </p>
+            <p style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#686560' }}>
+              Crea tu página de reservas en{' '}
+              <span style={{ color: '#9A9994' }}>boki.mx</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Form */}
+        {done ? (
+          <p style={{ fontSize: '10px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#686560' }}>
+            te avisamos pronto ✓
+          </p>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: 'flex', alignItems: 'center', flex: 1, maxWidth: '380px', minWidth: '220px' }}
           >
-            {loading ? '...' : 'Quiero la mía →'}
-          </button>
-        </form>
-      )}
+            <input
+              type="email"
+              required
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '1px solid rgba(255,255,255,0.12)',
+                padding: '8px 0',
+                fontSize: '11px',
+                letterSpacing: '0.08em',
+                color: '#A0A09C',
+                outline: 'none',
+              }}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                background: 'none',
+                border: 'none',
+                borderBottom: '1px solid rgba(255,255,255,0.12)',
+                padding: '8px 0 8px 16px',
+                fontSize: '9px',
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                color: loading ? '#404040' : '#888884',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'color 0.2s',
+              }}
+            >
+              {loading ? '...' : 'Quiero la mía →'}
+            </button>
+          </form>
+        )}
+
+      </div>
     </section>
   );
 }
