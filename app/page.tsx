@@ -45,26 +45,26 @@ function BokiLeadCapture() {
 
   return (
     <section style={{
-      background: '#16181E',
-      borderTop: '1px solid rgba(255,255,255,0.05)',
+      background: '#0D0E10',
+      borderTop: '1px solid rgba(255,255,255,0.07)',
       padding: '52px 24px',
       textAlign: 'center',
     }}>
-      <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#2E2E2E', marginBottom: '10px' }}>
+      <p style={{ fontSize: '9px', letterSpacing: '0.5em', textTransform: 'uppercase', color: '#505050', marginBottom: '10px' }}>
         reservas por
       </p>
-      <p style={{ fontSize: '13px', letterSpacing: '0.3em', color: '#363636', marginBottom: '32px', fontWeight: 400 }}>
+      <p style={{ fontSize: '14px', letterSpacing: '0.35em', color: '#888884', marginBottom: '32px', fontWeight: 300 }}>
         boki.mx
       </p>
 
       {done ? (
-        <p style={{ fontSize: '10px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#505050' }}>
+        <p style={{ fontSize: '10px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#686560' }}>
           te avisamos pronto
         </p>
       ) : (
         <form
           onSubmit={handleSubmit}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0', maxWidth: '340px', margin: '0 auto' }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', maxWidth: '340px', margin: '0 auto' }}
         >
           <input
             type="email"
@@ -76,11 +76,11 @@ function BokiLeadCapture() {
               flex: 1,
               background: 'transparent',
               border: 'none',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
-              padding: '8px 0',
+              borderBottom: '1px solid rgba(255,255,255,0.12)',
+              padding: '10px 0',
               fontSize: '11px',
               letterSpacing: '0.1em',
-              color: '#686560',
+              color: '#A0A09C',
               outline: 'none',
             }}
           />
@@ -90,12 +90,12 @@ function BokiLeadCapture() {
             style={{
               background: 'none',
               border: 'none',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
-              padding: '8px 0 8px 20px',
+              borderBottom: '1px solid rgba(255,255,255,0.12)',
+              padding: '10px 0 10px 20px',
               fontSize: '9px',
               letterSpacing: '0.35em',
               textTransform: 'uppercase',
-              color: loading ? '#2E2E2E' : '#505050',
+              color: loading ? '#404040' : '#686560',
               cursor: loading ? 'not-allowed' : 'pointer',
               whiteSpace: 'nowrap',
               transition: 'color 0.2s',
@@ -721,8 +721,6 @@ export default function Home() {
       </section>
 
       {/* ── BOKI ── */}
-      <BokiLeadCapture />
-
       {/* ── FOOTER ── */}
       <footer
         className="px-6 md:px-16 flex items-end justify-between gap-6 flex-wrap"
@@ -772,6 +770,8 @@ export default function Home() {
           </a>
         </div>
       </footer>
+
+      <BokiLeadCapture />
 
     </main>
   );
