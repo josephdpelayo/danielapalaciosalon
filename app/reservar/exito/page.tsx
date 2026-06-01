@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import { PoweredByBoki } from '@/components/powered-by-boki';
 import Link from 'next/link';
 
 const RECS = [
@@ -313,8 +314,11 @@ function ExitoContent() {
 
 export default function ExitoPage() {
   return (
-    <Suspense>
-      <ExitoContent />
-    </Suspense>
+    <>
+      <Suspense>
+        <ExitoContent />
+      </Suspense>
+      <PoweredByBoki />
+    </>
   );
 }

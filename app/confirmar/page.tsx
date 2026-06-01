@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { PoweredByBoki } from '@/components/powered-by-boki';
 
 type State = 'loading' | 'success' | 'error';
 
@@ -159,8 +160,11 @@ function ConfirmarContent() {
 
 export default function ConfirmarPage() {
   return (
-    <Suspense>
-      <ConfirmarContent />
-    </Suspense>
+    <>
+      <Suspense>
+        <ConfirmarContent />
+      </Suspense>
+      <PoweredByBoki />
+    </>
   );
 }

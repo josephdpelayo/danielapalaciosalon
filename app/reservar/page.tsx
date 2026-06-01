@@ -11,6 +11,7 @@ import { MOCK_SERVICES, MOCK_SCHEDULE } from '@/lib/mock-data';
 import { Service, TimeSlot } from '@/lib/types';
 import { formatTime, formatDuration, formatPrice } from '@/lib/slots';
 import 'react-day-picker/dist/style.css';
+import { PoweredByBoki } from '@/components/powered-by-boki';
 
 type Step = 'service' | 'date' | 'time' | 'info' | 'confirm';
 const STEPS_LIST: Step[] = ['service', 'date', 'time', 'info', 'confirm'];
@@ -851,8 +852,11 @@ function BookingContent() {
 
 export default function ReservarPage() {
   return (
-    <Suspense>
-      <BookingContent />
-    </Suspense>
+    <>
+      <Suspense>
+        <BookingContent />
+      </Suspense>
+      <PoweredByBoki />
+    </>
   );
 }

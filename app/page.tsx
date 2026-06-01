@@ -26,9 +26,9 @@ const REVIEWS = [
 function BokiLeadCapture() {
   return (
     <section style={{
-      background: '#0D0E10',
+      background: '#0A0A0C',
       borderTop: '1px solid rgba(255,255,255,0.07)',
-      padding: '18px 24px',
+      padding: '28px 24px',
     }}>
       <div style={{
         maxWidth: '960px',
@@ -36,38 +36,45 @@ function BokiLeadCapture() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '16px',
+        gap: '20px',
         flexWrap: 'wrap',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Image
             src="/boki-symbol.png"
             alt="boki"
-            width={22}
-            height={22}
-            style={{ filter: 'brightness(0) invert(1)', opacity: 0.22, flexShrink: 0 }}
+            width={24}
+            height={24}
+            style={{ filter: 'brightness(0) invert(1)', opacity: 0.3, flexShrink: 0 }}
           />
-          <p style={{ fontSize: '11px', color: '#888884', letterSpacing: '0.05em' }}>
-            ¿Tienes un negocio por cita? Crea tu propia página de reservas.
-          </p>
+          <div>
+            <p style={{ fontSize: '12px', color: '#C0BEB8', marginBottom: '3px' }}>
+              ¿Tienes un salón, estudio o negocio por cita?
+            </p>
+            <p style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#686560' }}>
+              Crea tu propia página de reservas
+            </p>
+          </div>
         </div>
         <a
           href="https://boki.mx"
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            fontSize: '9px',
-            letterSpacing: '0.35em',
+            display: 'inline-block',
+            background: '#F0EDE8',
+            color: '#16181E',
+            fontSize: '10px',
+            letterSpacing: '0.3em',
             textTransform: 'uppercase',
-            color: '#686560',
-            borderBottom: '1px solid rgba(255,255,255,0.12)',
-            paddingBottom: '2px',
-            whiteSpace: 'nowrap',
-            transition: 'color 0.2s',
+            fontWeight: 600,
+            padding: '12px 28px',
             textDecoration: 'none',
+            whiteSpace: 'nowrap',
+            transition: 'opacity 0.2s',
           }}
         >
-          boki.mx →
+          boki.mx
         </a>
       </div>
     </section>

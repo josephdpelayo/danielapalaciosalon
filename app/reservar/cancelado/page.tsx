@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { PoweredByBoki } from '@/components/powered-by-boki';
 
 function CanceladoContent() {
   const searchParams = useSearchParams();
@@ -56,5 +57,5 @@ function CanceladoContent() {
 }
 
 export default function CanceladoPage() {
-  return <Suspense><CanceladoContent /></Suspense>;
+  return <><Suspense><CanceladoContent /></Suspense><PoweredByBoki /></>;
 }

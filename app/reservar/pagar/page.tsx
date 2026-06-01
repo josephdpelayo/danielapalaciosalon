@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CreditCard, Lock, Check, X } from 'lucide-react';
+import { PoweredByBoki } from '@/components/powered-by-boki';
 
 function PagarContent() {
   const searchParams = useSearchParams();
@@ -184,5 +185,5 @@ function PagarContent() {
 }
 
 export default function PagarPage() {
-  return <Suspense><PagarContent /></Suspense>;
+  return <><Suspense><PagarContent /></Suspense><PoweredByBoki /></>;
 }
