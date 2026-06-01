@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ blocked_dates: blocked });
   }
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
 
   // 1. Global schedule (which days of week the salon is open)
   const { data: scheduleRows } = await supabase.from('dp_schedule').select('day_of_week, is_active');

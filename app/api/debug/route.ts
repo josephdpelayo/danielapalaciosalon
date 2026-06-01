@@ -6,7 +6,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Supabase not configured' });
   }
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
 
   const [
     { data: staff, error: e1 },
