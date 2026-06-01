@@ -42,3 +42,6 @@ next-env.d.ts
 
 # brand source files (PDFs, raw exports — not needed in repo)
 /archivosdescargados
+
+# claude worktrees
+.claude/

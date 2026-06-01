@@ -9,6 +9,7 @@ function PagarContent() {
   const router = useRouter();
 
   const id      = searchParams.get('id') ?? '';
+  const token   = searchParams.get('token') ?? '';
   const amount  = searchParams.get('amount') ?? '200';
   const service = searchParams.get('service') ?? 'Servicio';
   const date    = searchParams.get('date') ?? '';
@@ -37,13 +38,9 @@ function PagarContent() {
     // Simulate network delay
     await new Promise((r) => setTimeout(r, 2000));
 
-    // Mark appointment as confirmed via API
+    // Mark appointment as confirmed via HMAC token
     try {
-      await fetch('/api/admin', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: 'confirmed', payment_status: 'approved', payment_id: 'MOCK-' + Date.now() }),
-      });
+      await fetch(`/api/confirm?id=${id}&token=${token}`);
     } catch {}
 
     const exitoP = new URLSearchParams({ id });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
+import { makeConfirmToken } from '@/app/api/confirm/route';
 
 const PENDING_PAYMENT_TTL_MS = 35 * 60 * 1000;
 
@@ -14,8 +15,14 @@ export async function POST(req: NextRequest) {
   const hasMercadoPago = !!process.env.MERCADOPAGO_ACCESS_TOKEN;
   const initialStatus = hasMercadoPago ? 'pending_payment' : 'pending';
 
+  // Validate appointment date is in the future
+  const apptDateTime = new Date(appointment_date + 'T' + start_time);
+  if (apptDateTime < new Date()) {
+    return NextResponse.json({ error: 'La fecha de la cita debe ser en el futuro.' }, { status: 400 });
+  }
+
   if ((await import("@/lib/supabase")).supabaseReady) {
-    const { supabase } = await import('@/lib/supabase');
+    const { supabaseAdmin: supabase } = await import('@/lib/supabase');
     const staleThreshold = new Date(Date.now() - PENDING_PAYMENT_TTL_MS).toISOString();
     const phoneNorm = client_phone.replace(/\D/g, '').slice(-10);
 
@@ -87,6 +94,8 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    const confirm_token = makeConfirmToken(data.id);
+
     // ── Auto-register / update client record ──
     try {
       await supabase.from('dp_clients').upsert({
@@ -108,7 +117,7 @@ export async function POST(req: NextRequest) {
       });
     } catch {}
 
-    return NextResponse.json(data);
+    return NextResponse.json({ ...data, confirm_token });
   }
 
   const mockId = 'mock-' + Date.now();

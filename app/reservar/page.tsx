@@ -172,11 +172,7 @@ function BookingContent() {
 
       // 2. Trusted client — confirm directly, no payment
       if (isTrusted) {
-        await fetch('/api/admin', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: appt.id, status: 'confirmed' }),
-        });
+        await fetch(`/api/confirm?id=${appt.id}&token=${appt.confirm_token ?? ''}`);
         const exitoP = new URLSearchParams({
           id: appt.id, trusted: '1',
           service: selectedService.name,
@@ -212,6 +208,7 @@ function BookingContent() {
       } else {
         const params = new URLSearchParams({
           id: appt.id,
+          token: appt.confirm_token ?? '',
           amount: String(selectedService.deposit_amount),
           service: selectedService.name,
           date: format(selectedDate, "d 'de' MMMM", { locale: es }),
@@ -240,7 +237,7 @@ function BookingContent() {
       const res  = await fetch(`/api/available-dates?service_id=${svc.id}&from=${from}&days=60`);
       const data = await res.json();
       setBlockedDates(new Set(data.blocked_dates ?? []));
-    } catch { /* keep existing set */ }
+    } catch { setBlockedDates(new Set()); }
   };
 
   const handleServiceSelect = async (svc: Service) => {
@@ -680,7 +677,7 @@ function BookingContent() {
                                 service_id: selectedService?.id,
                                 preferred_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null,
                                 client_name: waitlistName.trim(),
-                                client_phone: '52' + waitlistPhone,
+                                client_phone: countryCode + waitlistPhone,
                               }),
                             });
                             setWaitlistDone(true);
@@ -731,7 +728,7 @@ function BookingContent() {
           <div>
             <div className="mb-5">
               <button
-                onClick={() => setStep('info')}
+                onClick={() => { setBookingError(''); setStep('info'); }}
                 className="flex items-center gap-2 text-[#666] hover:text-[#81807F] transition-colors text-xs tracking-wider mb-4"
               >
                 <ArrowLeft size={13} /> Atrás

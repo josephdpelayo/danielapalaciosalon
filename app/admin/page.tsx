@@ -63,6 +63,8 @@ function WaButton({ href, label }: { href: string; label: string }) {
 function StatusBadge({ status }: { status: string }) {
   if (status === 'confirmed')
     return <span className="text-[9px] tracking-[0.12em] uppercase text-emerald-700 border border-emerald-300 px-1.5 py-0.5">Confirmada</span>;
+  if (status === 'completed')
+    return <span className="text-[9px] tracking-[0.12em] uppercase text-violet-700 border border-violet-300 px-1.5 py-0.5">Completada</span>;
   if (status === 'cancelled')
     return <span className="text-[9px] tracking-[0.12em] uppercase text-black/30 border border-black/10 px-1.5 py-0.5">Cancelada</span>;
   if (status === 'pending_payment')
@@ -235,6 +237,24 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
         body: JSON.stringify({ id, status }),
       });
       setAppointments((prev) => prev.map((a) => a.id === id ? { ...a, status } : a));
+    } finally { setUpdating(null); }
+  };
+
+  const markCompleted = async (apt: Appointment) => {
+    setUpdating(apt.id);
+    try {
+      await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ id: apt.id, status: 'completed' }),
+      });
+      // Auto-stamp loyalty card
+      await fetch('/api/loyalty/stamp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ phone: apt.client_phone, appointment_id: apt.id, stamped_by: 'auto' }),
+      }).catch(() => {});
+      setAppointments((prev) => prev.map((a) => a.id === apt.id ? { ...a, status: 'completed' as Appointment['status'] } : a));
     } finally { setUpdating(null); }
   };
 
@@ -494,6 +514,12 @@ function InicioTab({ adminSecret }: { adminSecret: string }) {
                         className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-emerald-300 text-emerald-700 px-3 py-1.5 hover:bg-emerald-50 transition-colors disabled:opacity-40">
                         <Check size={10} /> Confirmar
                       </button>
+                      {apt.status !== 'completed' && apt.status !== 'cancelled' && (
+                        <button onClick={() => markCompleted(apt)} disabled={updating === apt.id}
+                          className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-violet-300 text-violet-700 px-3 py-1.5 hover:bg-violet-50 transition-colors disabled:opacity-40">
+                          <Star size={10} /> Completada
+                        </button>
+                      )}
                       <button onClick={() => updateStatus(apt.id, 'cancelled')} disabled={updating === apt.id}
                         className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-red-300 text-red-500 px-3 py-1.5 hover:bg-red-50 transition-colors disabled:opacity-40">
                         <X size={10} /> Cancelar
@@ -798,6 +824,23 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
         return;
       }
       setAppointments((prev) => prev.map((a) => a.id === id ? { ...a, status } : a));
+    } finally { setUpdating(null); }
+  };
+
+  const markCompleted = async (apt: Appointment) => {
+    setUpdating(apt.id);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ id: apt.id, status: 'completed' }),
+      });
+      if (!res.ok) { alert('Error al actualizar'); return; }
+      await fetch('/api/loyalty/stamp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+        body: JSON.stringify({ phone: apt.client_phone, appointment_id: apt.id, stamped_by: 'auto' }),
+      }).catch(() => {});
+      setAppointments((prev) => prev.map((a) => a.id === apt.id ? { ...a, status: 'completed' as Appointment['status'] } : a));
     } finally { setUpdating(null); }
   };
 
@@ -1139,10 +1182,16 @@ function AgendaTab({ adminSecret }: { adminSecret: string }) {
                             </div>
                           )}
                           {apt.status === 'confirmed' && (
-                            <button onClick={() => updateStatus(apt.id, 'cancelled')} disabled={updating === apt.id}
-                              className="mt-3 flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-black/8 text-[#9A9590] px-2.5 py-1.5 hover:border-red-300 hover:text-red-500 transition-colors disabled:opacity-40">
-                              <X size={10} /> Cancelar cita
-                            </button>
+                            <div className="mt-3 flex gap-2 flex-wrap">
+                              <button onClick={() => markCompleted(apt)} disabled={updating === apt.id}
+                                className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-violet-300 text-violet-700 px-2.5 py-1.5 hover:bg-violet-50 transition-colors disabled:opacity-40">
+                                <Star size={10} /> Completada
+                              </button>
+                              <button onClick={() => updateStatus(apt.id, 'cancelled')} disabled={updating === apt.id}
+                                className="flex items-center gap-1 text-[9px] tracking-[0.12em] uppercase border border-black/8 text-[#9A9590] px-2.5 py-1.5 hover:border-red-300 hover:text-red-500 transition-colors disabled:opacity-40">
+                                <X size={10} /> Cancelar cita
+                              </button>
+                            </div>
                           )}
                         </div>
                       );
@@ -1574,6 +1623,8 @@ interface ClientRecord {
   email: string | null;
   appt_count: number;
   last_appt: string | null;
+  loyalty_visits?: number;
+  loyalty_token?: string | null;
 }
 type ClientFilter = 'todos' | 'nuevos' | 'frecuentes';
 type ClientSort   = 'az' | 'za' | 'visitas' | 'ultima';
@@ -1600,6 +1651,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
   const [editNotes, setEditNotes]         = useState('');
   const [editSaving, setEditSaving]       = useState(false);
   const [editingInFicha, setEditingInFicha] = useState(false);
+  const [stampingPhone, setStampingPhone]  = useState<string | null>(null);
   // add form
   const [loadError, setLoadError]         = useState<string | null>(null);
   const [showForm, setShowForm]           = useState(false);
@@ -1636,7 +1688,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
       }
 
       const clientsData = await clientsRes.json();
-      const rawClients: { name: string; phone: string; phone_normalized: string; email?: string | null }[] =
+      const rawClients: { name: string; phone: string; phone_normalized: string; email?: string | null; loyalty_visits?: number; loyalty_token?: string | null }[] =
         clientsData.clients?.length > 0
           ? clientsData.clients
           : [...new Map(appts.map(a => [a.client_phone.replace(/\D/g, '').slice(-10),
@@ -1647,6 +1699,8 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
         name: c.name, phone: c.phone, phone_normalized: c.phone_normalized, email: c.email ?? null,
         appt_count: visitMap.get(c.phone_normalized)?.count ?? 0,
         last_appt: visitMap.get(c.phone_normalized)?.last ?? null,
+        loyalty_visits: c.loyalty_visits ?? 0,
+        loyalty_token: c.loyalty_token ?? null,
       })).sort((a, b) => a.name.localeCompare(b.name)));
     } catch { setLoadError('Error al cargar clientes. Intenta de nuevo.'); }
     finally { setLoading(false); }
@@ -1833,6 +1887,7 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
 
   const statusStyle = (status: string) => {
     if (status === 'confirmed')       return { label: 'Confirmada', color: 'text-emerald-700', dot: 'bg-emerald-400' };
+    if (status === 'completed')       return { label: 'Completada', color: 'text-violet-700',  dot: 'bg-violet-400'  };
     if (status === 'cancelled')       return { label: 'Cancelada',  color: 'text-red-500',     dot: 'bg-red-400'     };
     if (status === 'pending_payment') return { label: 'Pago pend.', color: 'text-amber-600',   dot: 'bg-amber-400'   };
     return                                   { label: 'Pendiente',  color: 'text-amber-600',   dot: 'bg-amber-300'   };
@@ -1994,6 +2049,73 @@ function ClientesTab({ adminSecret }: { adminSecret: string }) {
                   )}
                 </div>
               </div>
+
+              {/* Loyalty card */}
+              {(selectedClient.loyalty_visits !== undefined) && (
+                <div className="border border-black/8 p-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#1C1A19,#24201C)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[9px] tracking-[0.25em] uppercase text-[#81807F]">Tarjeta fidelidad</p>
+                    {selectedClient.loyalty_token && (
+                      <a
+                        href={`/tarjeta/${selectedClient.loyalty_token}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="text-[9px] tracking-wider text-[#81807F] underline hover:text-[#F0EDE8] transition-colors"
+                      >
+                        Ver tarjeta →
+                      </a>
+                    )}
+                  </div>
+                  {/* Stamp grid */}
+                  <div className="grid grid-cols-10 gap-1 mb-3">
+                    {Array.from({ length: 10 }).map((_, i) => {
+                      const cycle = (selectedClient.loyalty_visits ?? 0) % 10;
+                      const filled = i < cycle;
+                      return (
+                        <div key={i}
+                          className="aspect-square rounded-full border flex items-center justify-center"
+                          style={{ borderColor: filled ? 'rgba(240,237,232,0.4)' : 'rgba(240,237,232,0.1)', background: filled ? 'rgba(240,237,232,0.08)' : 'transparent' }}
+                        >
+                          {filled && <div className="w-1 h-1 rounded-full bg-[#F0EDE8]/60" />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[#81807F] text-[10px]">
+                      <span className="text-[#F0EDE8]">{selectedClient.loyalty_visits ?? 0}</span> visitas totales
+                    </p>
+                    <button
+                      disabled={stampingPhone === selectedClient.phone_normalized}
+                      onClick={async () => {
+                        setStampingPhone(selectedClient.phone_normalized);
+                        try {
+                          const res = await fetch('/api/loyalty/stamp', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+                            body: JSON.stringify({ phone: selectedClient.phone, stamped_by: 'admin' }),
+                          });
+                          if (res.ok) {
+                            const d = await res.json();
+                            setAllClients(prev => prev.map(c =>
+                              c.phone_normalized === selectedClient.phone_normalized
+                                ? { ...c, loyalty_visits: d.visit_count }
+                                : c
+                            ));
+                            setSelectedClient(prev => prev ? { ...prev, loyalty_visits: d.visit_count } : null);
+                          }
+                        } finally { setStampingPhone(null); }
+                      }}
+                      className="flex items-center gap-1 text-[9px] tracking-[0.15em] uppercase border border-[#F0EDE8]/20 text-[#F0EDE8]/60 px-2.5 py-1.5 hover:border-[#F0EDE8]/40 hover:text-[#F0EDE8] transition-colors disabled:opacity-40"
+                    >
+                      {stampingPhone === selectedClient.phone_normalized
+                        ? <div className="w-3 h-3 border border-[#F0EDE8]/40 border-t-transparent rounded-full animate-spin" />
+                        : <Star size={9} />
+                      }
+                      Sellar visita
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Stats grid */}
               <div>

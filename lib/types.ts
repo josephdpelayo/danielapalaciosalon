@@ -40,7 +40,7 @@ export interface Appointment {
   appointment_date: string;
   start_time: string;
   end_time: string;
-  status: 'pending_payment' | 'pending' | 'confirmed' | 'cancelled';
+  status: 'pending_payment' | 'pending' | 'confirmed' | 'cancelled' | 'completed';
   payment_id: string | null;
   payment_status: string | null;
   deposit_amount: number | null;
