@@ -125,12 +125,11 @@ function BookingContent() {
     const dow = getDay(date);
     const daySchedule = scheduleList.find((s) => s.day_of_week === dow);
     if (!daySchedule?.is_active) return true;
-    // If we have service-specific blocked dates loaded, apply them
-    if (blockedDates.size > 0) {
-      return blockedDates.has(format(date, 'yyyy-MM-dd'));
-    }
     return false;
   };
+
+  // Blocked dates as Date objects passed directly to DayPicker (avoids stale closure issues)
+  const blockedDateObjects = [...blockedDates].map((d) => parseISO(d + 'T12:00:00'));
 
   const checkTrustedPhone = async (phone: string) => {
     const full = countryCode + phone;
@@ -541,7 +540,7 @@ function BookingContent() {
                 selected={selectedDate}
                 onSelect={setSelectedDate}
                 locale={es}
-                disabled={isDisabledDay}
+                disabled={[isDisabledDay, ...blockedDateObjects]}
                 startMonth={startOfToday()}
                 endMonth={addDays(startOfToday(), 60)}
                 modifiersStyles={{
