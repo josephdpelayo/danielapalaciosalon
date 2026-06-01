@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import { MOCK_SERVICES } from '@/lib/mock-data';
 
-export async function GET(req: NextRequest) {
-  const authErr = requireAdmin(req);
-  if (authErr) return authErr;
-
+export async function GET(_req: NextRequest) {
   if ((await import('@/lib/supabase')).supabaseReady) {
     const { supabase } = await import('@/lib/supabase');
     const { data, error } = await supabase
