@@ -2645,7 +2645,14 @@ function StaffCard({
   const [localName, setLocalName]         = useState(member.name);
   const [localPhone, setLocalPhone]       = useState(member.phone ?? '');
   const [localSvcs, setLocalSvcs]         = useState<string[]>(member.service_ids);
-  const [localSched, setLocalSched]       = useState<ScheduleDay[]>(member.schedule as ScheduleDay[]);
+  const [localSched, setLocalSched]       = useState<ScheduleDay[]>(
+    (member.schedule as ScheduleDay[]).length > 0
+      ? (member.schedule as ScheduleDay[])
+      : DAYS_ORDER.map((dow) => {
+          const g = MOCK_SCHEDULE.find((s) => s.day_of_week === dow);
+          return { day_of_week: dow, is_active: g?.is_active ?? false, start_time: g?.start_time ?? '10:00', end_time: g?.end_time ?? '19:00', break_start: null, break_end: null };
+        })
+  );
   const [dirty, setDirty]                 = useState(false);
   const [absences, setAbsences]           = useState<string[]>([]);
   const [absenceError, setAbsenceError]   = useState('');
@@ -2787,7 +2794,14 @@ function StaffCard({
     setLocalName(member.name);
     setLocalPhone(member.phone ?? '');
     setLocalSvcs(member.service_ids);
-    setLocalSched(member.schedule as ScheduleDay[]);
+    setLocalSched(
+      (member.schedule as ScheduleDay[]).length > 0
+        ? (member.schedule as ScheduleDay[])
+        : DAYS_ORDER.map((dow) => {
+            const g = MOCK_SCHEDULE.find((s) => s.day_of_week === dow);
+            return { day_of_week: dow, is_active: g?.is_active ?? false, start_time: g?.start_time ?? '10:00', end_time: g?.end_time ?? '19:00', break_start: null, break_end: null };
+          })
+    );
     setDirty(false);
   }, [member]);
 
@@ -3015,7 +3029,11 @@ function StaffCard({
 
           {dirty && (
             <button
-              onClick={() => { onSave({ name: localName, phone: localPhone || null, schedule: localSched as StaffWithDetails['schedule'], service_ids: localSvcs }); setDirty(false); }}
+              onClick={() => {
+                const fullSched = DAYS_ORDER.map((dow) => getDaySchedule(dow));
+                onSave({ name: localName, phone: localPhone || null, schedule: fullSched as StaffWithDetails['schedule'], service_ids: localSvcs });
+                setDirty(false);
+              }}
               disabled={saving}
               className="flex items-center gap-2 bg-[#F0EDE8] text-[#16181E] px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#E0DBD4] transition-colors disabled:opacity-40"
             >
