@@ -24,30 +24,11 @@ const REVIEWS = [
 ];
 
 function BokiLeadCapture() {
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email) return;
-    setLoading(true);
-    try {
-      await fetch('https://boki.mx/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, from_slug: 'danielapalacio' }),
-      });
-    } catch {}
-    setDone(true);
-    setLoading(false);
-  }
-
   return (
     <section style={{
       background: '#0D0E10',
       borderTop: '1px solid rgba(255,255,255,0.07)',
-      padding: '20px 24px',
+      padding: '18px 24px',
     }}>
       <div style={{
         maxWidth: '960px',
@@ -55,80 +36,39 @@ function BokiLeadCapture() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '20px',
+        gap: '16px',
         flexWrap: 'wrap',
       }}>
-
-        {/* Logo + copy */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Image
             src="/boki-symbol.png"
             alt="boki"
-            width={28}
-            height={28}
-            style={{ filter: 'brightness(0) invert(1)', opacity: 0.25, flexShrink: 0 }}
+            width={22}
+            height={22}
+            style={{ filter: 'brightness(0) invert(1)', opacity: 0.22, flexShrink: 0 }}
           />
-          <div>
-            <p style={{ fontSize: '12px', color: '#B0AFA9', lineHeight: 1.4, marginBottom: '2px' }}>
-              ¿Tienes un salón, estudio o negocio por cita?
-            </p>
-            <p style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#686560' }}>
-              Crea tu página de reservas en{' '}
-              <span style={{ color: '#9A9994' }}>boki.mx</span>
-            </p>
-          </div>
-        </div>
-
-        {/* Form */}
-        {done ? (
-          <p style={{ fontSize: '10px', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#686560' }}>
-            te avisamos pronto ✓
+          <p style={{ fontSize: '11px', color: '#888884', letterSpacing: '0.05em' }}>
+            ¿Tienes un negocio por cita? Crea tu propia página de reservas.
           </p>
-        ) : (
-          <form
-            onSubmit={handleSubmit}
-            style={{ display: 'flex', alignItems: 'center', flex: 1, maxWidth: '380px', minWidth: '220px' }}
-          >
-            <input
-              type="email"
-              required
-              placeholder="tu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                flex: 1,
-                background: 'transparent',
-                border: 'none',
-                borderBottom: '1px solid rgba(255,255,255,0.12)',
-                padding: '8px 0',
-                fontSize: '11px',
-                letterSpacing: '0.08em',
-                color: '#A0A09C',
-                outline: 'none',
-              }}
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                background: 'none',
-                border: 'none',
-                borderBottom: '1px solid rgba(255,255,255,0.12)',
-                padding: '8px 0 8px 16px',
-                fontSize: '9px',
-                letterSpacing: '0.3em',
-                textTransform: 'uppercase',
-                color: loading ? '#404040' : '#888884',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'color 0.2s',
-              }}
-            >
-              {loading ? '...' : 'Quiero la mía →'}
-            </button>
-          </form>
-        )}
-
+        </div>
+        <a
+          href="https://boki.mx"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            fontSize: '9px',
+            letterSpacing: '0.35em',
+            textTransform: 'uppercase',
+            color: '#686560',
+            borderBottom: '1px solid rgba(255,255,255,0.12)',
+            paddingBottom: '2px',
+            whiteSpace: 'nowrap',
+            transition: 'color 0.2s',
+            textDecoration: 'none',
+          }}
+        >
+          boki.mx →
+        </a>
       </div>
     </section>
   );
