@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   let blockedSlots: Array<{ start_time: string | null; end_time: string | null; all_day: boolean }> = [];
 
   if ((await import('@/lib/supabase')).supabaseReady) {
-    const { supabase } = await import('@/lib/supabase');
+    const { supabaseAdmin: supabase } = await import('@/lib/supabase');
 
     // Fetch global blocked slots (apply to all staff)
     const blockRes = await supabase
