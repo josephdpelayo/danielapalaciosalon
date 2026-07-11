@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
   const { error } = await supabase.from('dp_schedule').upsert(
     { day_of_week, ...updates },
     { onConflict: 'day_of_week' }

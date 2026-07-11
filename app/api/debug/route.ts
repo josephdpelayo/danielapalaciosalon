@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
 
 // GET /api/debug — muestra el estado real de las tablas de staff en Supabase
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authErr = requireAdmin(req);
+  if (authErr) return authErr;
+
   if (!(await import('@/lib/supabase')).supabaseReady) {
     return NextResponse.json({ error: 'Supabase not configured' });
   }

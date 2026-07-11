@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest) {
   if (payment_id)     updateFields.payment_id     = payment_id;
 
   if ((await import('@/lib/supabase')).supabaseReady) {
-    const { supabase } = await import('@/lib/supabase');
+    const { supabaseAdmin: supabase } = await import('@/lib/supabase');
     const { data, error } = await supabase
       .from('dp_appointments')
       .update(updateFields)

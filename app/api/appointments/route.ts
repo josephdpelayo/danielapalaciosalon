@@ -129,7 +129,7 @@ export async function PATCH(req: NextRequest) {
   if (authErr) return authErr;
 
   const body = await req.json();
-  const { id, appointment_date, start_time, end_time, notes, service_id } = body;
+  const { id, appointment_date, start_time, end_time, notes, service_id, reminder_sent_at } = body;
 
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
@@ -204,6 +204,8 @@ export async function PATCH(req: NextRequest) {
     notes:            newNotes,
     service_id:       newServiceId,
   };
+
+  if (reminder_sent_at !== undefined) updatePayload.reminder_sent_at = reminder_sent_at;
 
   const { data, error } = await supabase
     .from('dp_appointments')

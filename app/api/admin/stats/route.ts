@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ stats: null });
   }
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
 
   // Current month bounds
   const now = new Date();

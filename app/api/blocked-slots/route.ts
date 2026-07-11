@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
 
   if (!(await import('@/lib/supabase')).supabaseReady) return NextResponse.json({ blocks: [] });
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
   const today = new Date().toISOString().split('T')[0];
   const { data, error } = await supabase
     .from('dp_blocked_slots')
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ id: 'mock-' + Date.now(), block_date, all_day, reason });
   }
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
   const { data, error } = await supabase
     .from('dp_blocked_slots')
     .insert({ block_date, start_time: all_day ? null : start_time, end_time: all_day ? null : end_time, reason, all_day: !!all_day })
@@ -52,7 +52,7 @@ export async function DELETE(req: NextRequest) {
 
   if (!(await import('@/lib/supabase')).supabaseReady) return NextResponse.json({ ok: true });
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
   const { error } = await supabase.from('dp_blocked_slots').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

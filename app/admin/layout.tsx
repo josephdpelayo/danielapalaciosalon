@@ -1,17 +1,29 @@
 import type { Metadata } from 'next';
+import { AuthGate } from './_components/auth-gate';
+import { AdminShell } from './_components/admin-shell';
+import { ToastProvider } from '@/components/ui/toast-provider';
+import { ConfirmProvider } from '@/components/ui/confirm-dialog';
 
 export const metadata: Metadata = {
   manifest: '/admin-manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'DP Admin',
   },
   other: {
-    'theme-color': '#F7F5F2',
+    'theme-color': '#0D0D0D',
   },
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <ToastProvider>
+      <ConfirmProvider>
+        <AuthGate>
+          <AdminShell>{children}</AdminShell>
+        </AuthGate>
+      </ConfirmProvider>
+    </ToastProvider>
+  );
 }

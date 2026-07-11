@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   if (!(await import('@/lib/supabase')).supabaseReady) {
     return NextResponse.json({ settings: {} });
   }
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
   const { data } = await supabase.from('dp_settings').select('key, value');
   const settings = Object.fromEntries((data ?? []).map((r: { key: string; value: string }) => [r.key, r.value]));
   return NextResponse.json({ settings });
@@ -23,7 +23,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
   const now = new Date().toISOString();
   const rows = Object.entries(body as Record<string, string>).map(([key, value]) => ({
     key, value: String(value), updated_at: now,

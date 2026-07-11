@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
+import { addDays, format } from 'date-fns';
 
 export async function GET(req: NextRequest) {
   const authErr = requireAdmin(req);
@@ -31,41 +32,82 @@ export async function POST(req: NextRequest) {
   if (!(await import('@/lib/supabase')).supabaseReady)
     return NextResponse.json({ error: 'DB not configured' }, { status: 503 });
 
-  const { staff_id, absence_date } = await req.json();
+  const { staff_id, absence_date, end_date } = await req.json();
   if (!staff_id || !absence_date) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
 
   const { supabaseAdmin: supabase } = await import('@/lib/supabase');
 
-  // Check for existing appointments on this day before marking as absent
-  const { data: conflicting, error: conflictError } = await supabase
-    .from('dp_appointments')
-    .select('id')
-    .eq('staff_id', staff_id)
-    .eq('appointment_date', absence_date)
-    .in('status', ['confirmed', 'pending']);
+  // ── Single-day path (unchanged behavior when end_date is not provided) ──
+  if (!end_date) {
+    // Check for existing appointments on this day before marking as absent
+    const { data: conflicting, error: conflictError } = await supabase
+      .from('dp_appointments')
+      .select('id')
+      .eq('staff_id', staff_id)
+      .eq('appointment_date', absence_date)
+      .in('status', ['confirmed', 'pending']);
 
-  if (conflictError) return NextResponse.json({ error: conflictError.message }, { status: 500 });
+    if (conflictError) return NextResponse.json({ error: conflictError.message }, { status: 500 });
 
-  if (conflicting && conflicting.length > 0) {
-    const count = conflicting.length;
-    return NextResponse.json(
-      {
-        conflict: true,
-        count,
-        error: `Este staff tiene ${count} cita(s) confirmadas ese día. Cancélalas primero o procede con precaución.`,
-      },
-      { status: 409 }
-    );
+    if (conflicting && conflicting.length > 0) {
+      const count = conflicting.length;
+      return NextResponse.json(
+        {
+          conflict: true,
+          count,
+          error: `Este staff tiene ${count} cita(s) confirmadas ese día. Cancélalas primero o procede con precaución.`,
+        },
+        { status: 409 }
+      );
+    }
+
+    const { data, error } = await supabase
+      .from('dp_staff_absences')
+      .insert({ staff_id, absence_date })
+      .select()
+      .single();
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ absence: data });
   }
 
-  const { data, error } = await supabase
-    .from('dp_staff_absences')
-    .insert({ staff_id, absence_date })
-    .select()
-    .single();
+  // ── Range path: iterate every day from absence_date to end_date inclusive ──
+  const startDate = new Date(absence_date + 'T12:00:00');
+  const endDate    = new Date(end_date + 'T12:00:00');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ absence: data });
+  const dateRange: string[] = [];
+  for (let d = startDate; d <= endDate; d = addDays(d, 1)) {
+    dateRange.push(format(d, 'yyyy-MM-dd'));
+  }
+
+  const conflicts: { date: string; count: number }[] = [];
+  let created = 0;
+
+  for (const date of dateRange) {
+    // Same conflict check as the single-day path, per day
+    const { data: conflicting, error: conflictError } = await supabase
+      .from('dp_appointments')
+      .select('id')
+      .eq('staff_id', staff_id)
+      .eq('appointment_date', date)
+      .in('status', ['confirmed', 'pending']);
+
+    if (conflictError) return NextResponse.json({ error: conflictError.message }, { status: 500 });
+
+    if (conflicting && conflicting.length > 0) {
+      conflicts.push({ date, count: conflicting.length });
+      continue;
+    }
+
+    // Idempotent: upsert on the existing unique(staff_id, absence_date) constraint
+    const { error: insertError } = await supabase
+      .from('dp_staff_absences')
+      .upsert({ staff_id, absence_date: date }, { onConflict: 'staff_id,absence_date' });
+
+    if (!insertError) created++;
+  }
+
+  return NextResponse.json({ created, conflicts });
 }
 
 export async function DELETE(req: NextRequest) {

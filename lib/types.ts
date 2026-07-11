@@ -45,8 +45,61 @@ export interface Appointment {
   payment_status: string | null;
   deposit_amount: number | null;
   notes: string | null;
+  internal_notes?: string | null;
+  active_minutes?: number | null;
+  reminder_sent_at?: string | null;
   created_at: string;
   dp_services?: Service;
+}
+
+export interface AdminClient {
+  id: string;
+  name: string;
+  phone: string;
+  phone_normalized: string;
+  email: string | null;
+  created_at: string;
+  is_trusted: boolean;
+  trusted_notes: string | null;
+  visit_count: number;
+  loyalty_visits: number;
+  loyalty_token: string | null;
+}
+
+export interface TrustedClient {
+  id: string;
+  name: string;
+  phone: string;
+  phone_normalized: string;
+  email: string | null;
+  notes: string | null;
+}
+
+export interface StaffAbsence {
+  id: string;
+  absence_date: string;
+}
+
+export interface WaitlistEntry {
+  id: string;
+  service_id: string | null;
+  preferred_date: string | null;
+  client_name: string;
+  client_phone: string;
+  client_email: string | null;
+  notes: string | null;
+  status: 'waiting' | 'notified' | 'booked' | 'cancelled';
+  notified_at: string | null;
+  created_at: string;
+  dp_services?: { name: string };
+}
+
+export interface AdminStats {
+  month_revenue: number;
+  month_confirmed: number;
+  total_confirmed: number;
+  week_upcoming: number;
+  top_service: string | null;
 }
 
 export interface ScheduleDay {

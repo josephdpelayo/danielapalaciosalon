@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   if (!(await import('@/lib/supabase')).supabaseReady) return NextResponse.json({ clients: [] });
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
   const { data, error } = await supabase
     .from('dp_trusted_clients')
     .select('*')
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ id: 'mock-' + Date.now(), name, phone, phone_normalized: normalized, notes, email: emailNorm });
   }
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
 
   // Duplicate phone check
   const { data: dupPhone } = await supabase
@@ -85,7 +85,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ id, name, phone, phone_normalized: normalized, email: emailNorm, notes: notes || null });
   }
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
 
   // Duplicate phone check (excluding self)
   const { data: dupPhone } = await supabase
@@ -119,7 +119,7 @@ export async function DELETE(req: NextRequest) {
 
   if (!(await import('@/lib/supabase')).supabaseReady) return NextResponse.json({ ok: true });
 
-  const { supabase } = await import('@/lib/supabase');
+  const { supabaseAdmin: supabase } = await import('@/lib/supabase');
   const { error } = await supabase.from('dp_trusted_clients').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
